@@ -22,26 +22,23 @@ uniform float MovementStrength : hint_range(0.0, 0.1) = 0.03;
 uniform sampler2D CausticTexture : source_color, filter_nearest, repeat_enable;
 uniform vec4 CausticColour : source_color = vec4(0.6, 0.878431, 0.878431, 0.321569);
 
-// --- Caustic highlights (deferred) ---
-// TODO(post-mvp): Enable caustic highlight layer — uncomment and wire CausticTextureHighlights.png
-//uniform sampler2D CausticHighlightTexture : source_color, filter_nearest, repeat_enable;
-//uniform vec4 CausticHighlightColour : source_color = vec4(1.0, 1.0, 1.0, 0.792157);
+// --- Caustic highlights ---
+uniform sampler2D CausticHighlightTexture : source_color, filter_nearest, repeat_enable;
+uniform vec4 CausticHighlightColour : source_color = vec4(1.0, 1.0, 1.0, 0.792157);
 
-// --- Random fade (deferred) ---
-// TODO(post-mvp): Enable random fade — uncomment and wire RandomFadeNoise (NoiseTexture2D)
-//uniform float RandomFadeSpeed = 0.03;
-//uniform float RandomFadeScale = 0.001;
-//uniform sampler2D RandomFadeNoise : source_color, filter_linear, repeat_enable;
-//uniform float RandomFadeStrength = 0.6;
+// --- Random fade (prevents tiling repetition) ---
+uniform float RandomFadeSpeed = 0.03;
+uniform float RandomFadeScale = 0.001;
+uniform sampler2D RandomFadeNoise : source_color, filter_linear, repeat_enable;
+uniform float RandomFadeStrength = 0.6;
 
-// --- Specular highlights (deferred) ---
-// TODO(post-mvp): Enable specular highlights — uncomment and wire SpecularNoiseTextureMoving1/2 (NoiseTexture2D)
-//uniform float SpecularScaleMoving = 0.007;
-//uniform float SpecularSpeed = 0.03;
-//uniform sampler2D SpecularNoiseTextureMoving1 : source_color, filter_linear, repeat_enable;
-//uniform sampler2D SpecularNoiseTextureMoving2 : source_color, filter_linear, repeat_enable;
-//uniform float SpecularThreshold = 0.15;
-//uniform vec4 SpecularColour : source_color = vec4(1.0, 1.0, 1.0, 0.843137);
+// --- Specular highlights ---
+uniform float SpecularScaleMoving = 0.007;
+uniform float SpecularSpeed = 0.03;
+uniform sampler2D SpecularNoiseTextureMoving1 : source_color, filter_linear, repeat_enable;
+uniform sampler2D SpecularNoiseTextureMoving2 : source_color, filter_linear, repeat_enable;
+uniform float SpecularThreshold = 0.15;
+uniform vec4 SpecularColour : source_color = vec4(1.0, 1.0, 1.0, 0.843137);
 
 // --- Edge foam ---
 uniform vec4 FoamColour : source_color = vec4(1.0, 1.0, 1.0, 1.0);
@@ -72,41 +69,42 @@ void fragment() {
 	vec2 causticUV = worldFloor * CausticTextureScale + noiseOffset;
 	vec4 causticResult = texture(CausticTexture, causticUV) * CausticColour;
 
-	// TODO(post-mvp): Caustic highlight layer blended over base caustic
-	// vec4 highlight = texture(CausticHighlightTexture, causticUV) * CausticHighlightColour;
-	// causticResult = mix(causticResult, highlight, vec4(highlight.a));
+	// --- 4. Caustic highlight layer blended over base ---
+	vec4 highlight = texture(CausticHighlightTexture, causticUV) * CausticHighlightColour;
+	causticResult = mix(causticResult, highlight, vec4(highlight.a));
 
-	// TODO(post-mvp): Random fade to prevent tiling repetition
-	// vec2 fadeUV = worldFloor * RandomFadeScale + vec2(TIME * RandomFadeSpeed);
-	// float fadeNoise = texture(RandomFadeNoise, fadeUV).x;
-	// causticResult.a *= fadeNoise * RandomFadeStrength;
+	// --- 5. Random fade to prevent tiling repetition ---
+	vec2 fadeUV = worldFloor * RandomFadeScale + vec2(TIME * RandomFadeSpeed);
+	float fadeNoise = texture(RandomFadeNoise, fadeUV).x;
+	float fadedAlpha = fadeNoise * RandomFadeStrength * causticResult.a;
+	vec4 fadedCaustic = vec4(causticResult.rgb, fadedAlpha);
 
-	// --- 4. Combine with water base colour ---
-	vec4 withWater = mix(WaterColour, causticResult, vec4(causticResult.a));
+	// --- 6. Specular highlights ---
+	vec2 specBase = worldFloor * SpecularScaleMoving;
+	vec2 specTime = vec2(SpecularSpeed * TIME);
+	vec4 spec1 = texture(SpecularNoiseTextureMoving1, specBase - specTime);
+	vec4 spec2 = texture(SpecularNoiseTextureMoving2, specBase + specTime);
+	// Overlay blend of the two noise textures
+	float specBlend;
+	{
+		float base_val = spec1.r; float blend_val = spec2.r;
+		specBlend = (base_val < 0.5)
+			? 2.0 * base_val * blend_val
+			: 1.0 - 2.0 * (1.0 - blend_val) * (1.0 - base_val);
+	}
+	float specMask = step(specBlend, SpecularThreshold);
+	vec4 specResult = vec4(specMask) * SpecularColour;
+	// Only show specular where there is caustic content (masked by faded alpha)
+	float specAlpha = specResult.a * ceil(fadedAlpha);
+	specResult.a = specAlpha;
+	vec4 withSpec = mix(fadedCaustic, specResult, vec4(specAlpha));
 
-	// TODO(post-mvp): Specular highlights
-	// vec2 specBase = worldFloor * SpecularScaleMoving;
-	// vec2 specTime = vec2(SpecularSpeed * TIME);
-	// vec4 spec1 = texture(SpecularNoiseTextureMoving1, specBase - specTime);
-	// vec4 spec2 = texture(SpecularNoiseTextureMoving2, specBase + specTime);
-	// float specBlend;
-	// {
-	//     float base_val = spec1.r; float blend_val = spec2.r;
-	//     specBlend = (base_val < 0.5)
-	//         ? 2.0 * base_val * blend_val
-	//         : 1.0 - 2.0 * (1.0 - blend_val) * (1.0 - base_val);
-	// }
-	// float specMask = step(specBlend, SpecularThreshold);
-	// vec4 specResult = vec4(specMask) * SpecularColour;
-	// float specAlpha = specResult.a * ceil(causticResult.a);
-	// specResult.a = specAlpha;
-	// withWater = mix(withWater, specResult, vec4(specAlpha));
+	// --- 7. Combine with water base colour ---
+	vec4 withWater = mix(WaterColour, withSpec, vec4(withSpec.a));
 
-	// --- 5. Edge foam ---
+	// --- 8. Edge foam ---
 	// Foam height comes from the tile texture's baked edge gradients:
 	// bright pixels = shallow/edge = more foam, dark pixels = deep = no foam.
-	// We sample the tile texture directly rather than using COLOR.x (which in
-	// fragment() already includes texture * modulate — see Godot #69766).
 	// var_VertexColor.x is available as an optional per-tile multiplier.
 	float foamHeight = texture(TEXTURE, UV).r * var_VertexColor.x;
 	float foamNoise = texture(FoamNoiseTexture, var_WorldPos * FoamNoiseScale).x;
@@ -120,7 +118,7 @@ void fragment() {
 	float foamAlpha = foamQ * FoamColour.a;
 	vec4 foamResult = vec4(FoamColour.rgb, foamAlpha);
 
-	// --- 6. Combine foam with result ---
+	// --- 9. Combine foam with result ---
 	vec4 finalColor = mix(withWater, foamResult, vec4(foamAlpha));
 
 	// Multiply by vertex color alpha for tile transparency

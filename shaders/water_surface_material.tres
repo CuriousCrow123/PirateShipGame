@@ -1,7 +1,8 @@
-[gd_resource type="ShaderMaterial" load_steps=8 format=3]
+[gd_resource type="ShaderMaterial" load_steps=14 format=3]
 
 [ext_resource type="Shader" path="res://shaders/water_surface.gdshader" id="1_shader"]
 [ext_resource type="Texture2D" path="res://textures/CausticTexture.png" id="2_caustic"]
+[ext_resource type="Texture2D" path="res://textures/CausticTextureHighlights.png" id="3_highlight"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_movement"]
 frequency = 0.0021
@@ -20,6 +21,40 @@ frequency = 0.0191
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_foam"]
 noise = SubResource("FastNoiseLite_foam")
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_fade"]
+frequency = 0.001
+fractal_octaves = 4
+fractal_lacunarity = 4.0
+fractal_gain = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_fade"]
+generate_mipmaps = false
+seamless = true
+noise = SubResource("FastNoiseLite_fade")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_spec1"]
+frequency = 0.001
+fractal_octaves = 4
+fractal_lacunarity = 4.0
+fractal_gain = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_spec1"]
+generate_mipmaps = false
+seamless = true
+noise = SubResource("FastNoiseLite_spec1")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_spec2"]
+seed = 1
+frequency = 0.0012
+fractal_octaves = 4
+fractal_lacunarity = 4.0
+fractal_gain = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_spec2"]
+generate_mipmaps = false
+seamless = true
+noise = SubResource("FastNoiseLite_spec2")
+
 [resource]
 shader = ExtResource("1_shader")
 shader_parameter/WaterColour = Color(0.372549, 0.54902, 0.768627, 0.796078)
@@ -30,6 +65,18 @@ shader_parameter/MovementStrength = 0.03
 shader_parameter/MovementNoise = SubResource("NoiseTexture2D_movement")
 shader_parameter/CausticTexture = ExtResource("2_caustic")
 shader_parameter/CausticColour = Color(0.6, 0.878431, 0.878431, 0.321569)
+shader_parameter/CausticHighlightTexture = ExtResource("3_highlight")
+shader_parameter/CausticHighlightColour = Color(1, 1, 1, 0.792157)
+shader_parameter/RandomFadeSpeed = 0.03
+shader_parameter/RandomFadeScale = 0.001
+shader_parameter/RandomFadeNoise = SubResource("NoiseTexture2D_fade")
+shader_parameter/RandomFadeStrength = 0.6
+shader_parameter/SpecularScaleMoving = 0.007
+shader_parameter/SpecularSpeed = 0.03
+shader_parameter/SpecularNoiseTextureMoving1 = SubResource("NoiseTexture2D_spec1")
+shader_parameter/SpecularNoiseTextureMoving2 = SubResource("NoiseTexture2D_spec2")
+shader_parameter/SpecularThreshold = 0.15
+shader_parameter/SpecularColour = Color(1, 1, 1, 0.843137)
 shader_parameter/FoamColour = Color(1, 1, 1, 1)
 shader_parameter/FoamWaveSpeed = 5.0
 shader_parameter/FoamNoiseScale = 8e-05
