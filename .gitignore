@@ -1,0 +1,15 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/ios/
+/export/
+*.translation
+
+# GUT test output
+test/results/
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/
