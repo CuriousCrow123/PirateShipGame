@@ -1,0 +1,39 @@
+[gd_resource type="ShaderMaterial" load_steps=8 format=3]
+
+[ext_resource type="Shader" path="res://shaders/water_surface.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://textures/CausticTexture.png" id="2_caustic"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_movement"]
+frequency = 0.0021
+fractal_octaves = 3
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_movement"]
+generate_mipmaps = false
+seamless = true
+seamless_blend_skirt = 0.2
+normalize = false
+noise = SubResource("FastNoiseLite_movement")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_foam"]
+frequency = 0.0191
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_foam"]
+noise = SubResource("FastNoiseLite_foam")
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/WaterColour = Color(0.372549, 0.54902, 0.768627, 0.796078)
+shader_parameter/CausticTextureScale = 0.0055
+shader_parameter/MovementSpeed = 0.25
+shader_parameter/MovementScale = 0.05
+shader_parameter/MovementStrength = 0.03
+shader_parameter/MovementNoise = SubResource("NoiseTexture2D_movement")
+shader_parameter/CausticTexture = ExtResource("2_caustic")
+shader_parameter/CausticColour = Color(0.6, 0.878431, 0.878431, 0.321569)
+shader_parameter/FoamColour = Color(1, 1, 1, 1)
+shader_parameter/FoamWaveSpeed = 5.0
+shader_parameter/FoamNoiseScale = 8e-05
+shader_parameter/FoamNoiseTexture = SubResource("NoiseTexture2D_foam")
+shader_parameter/FoamNoiseAmount = 0.8
+shader_parameter/FoamFrequency = 32.0
+shader_parameter/FoamQuantizeAmount = 4.0
