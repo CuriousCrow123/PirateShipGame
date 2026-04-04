@@ -10,34 +10,17 @@
 
 ### System 1: Water Surface (TileMap shader)
 
-The [water_surface.gdshader](../shaders/water_surface.gdshader) renders animated caustics and edge foam on a TileMap:
+The [water_surface.gdshader](../shaders/water_surface.gdshader) renders a multi-layered water effect on a TileMap:
 
 - **Caustics**: Two-layer noise-driven UV animation samples a caustic texture. `floor(var_WorldPos)` locks textures to world-space pixels so the pattern doesn't swim with camera movement.
+- **Caustic highlights**: A brighter highlight layer blended over the base caustics for added depth.
+- **Random fade**: Noise-driven alpha modulation breaks up tiling repetition in the caustic pattern.
+- **Specular highlights**: Two counter-scrolling noise textures overlay-blended and thresholded to create moving bright spots on the water surface.
 - **Foam**: Reads tile edge gradients from the tile texture. Edge tiles have bright pixels (high foam), center tiles are dark (no foam). Animated via sine wave and quantized for pixel-art steps.
 
 ### System 2: Ripple Trail (SubViewport + Line2D)
 
 The cursor drives a `Line2D` rendered inside a 256x256 SubViewport. A [ripple shader](../shaders/ripple.gdshader) on the displaying Sprite2D animates brightness and quantizes it for a pixel-art look.
-
-## Enabling Deferred Features
-
-Three visual features are commented out in the shader, ready to enable:
-
-### Specular Highlights
-1. Open [water_surface.gdshader](../shaders/water_surface.gdshader)
-2. Uncomment the `Specular` uniform declarations (~lines 34-40)
-3. Uncomment the specular block in `fragment()` (~lines 87-100)
-4. In the ShaderMaterial, add two `NoiseTexture2D` resources for `SpecularNoiseTextureMoving1/2`
-
-### Random Fade (anti-tiling)
-1. Uncomment the `RandomFade` uniform declarations (~lines 28-31)
-2. Uncomment the fade block in `fragment()` (~lines 79-82)
-3. Add a `NoiseTexture2D` resource for `RandomFadeNoise`
-
-### Caustic Highlight Layer
-1. Uncomment the `CausticHighlight` uniform declarations (~lines 24-25)
-2. Uncomment the highlight blend in `fragment()` (~lines 75-77)
-3. Wire `CausticTextureHighlights.png` (already downloaded in `textures/`)
 
 ## Swapping Cursor for Boat
 
@@ -65,6 +48,9 @@ To use a boat or character instead of the mouse cursor:
 | `FoamWaveSpeed` | Foam animation speed | 0.0–10.0 |
 | `FoamFrequency` | Spatial frequency of foam wave | 1.0–64.0 |
 | `FoamQuantizeAmount` | Pixel-art foam steps | 1.0–16.0 (lower = chunkier) |
+| `RandomFadeStrength` | Intensity of anti-tiling fade | 0.0–1.0 |
+| `SpecularThreshold` | Specular cutoff (higher = fewer highlights) | 0.0–1.0 |
+| `SpecularSpeed` | Specular highlight movement speed | 0.01–0.1 |
 
 ### Ripple Trail
 
