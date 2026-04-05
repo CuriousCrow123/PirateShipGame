@@ -11,7 +11,6 @@ fractal_octaves = 3
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_movement"]
 generate_mipmaps = false
 seamless = true
-seamless_blend_skirt = 0.2
 normalize = false
 noise = SubResource("FastNoiseLite_movement")
 
@@ -70,12 +69,12 @@ shader_parameter/CausticHighlightColour = Color(1, 1, 1, 0.792157)
 shader_parameter/RandomFadeSpeed = 0.03
 shader_parameter/RandomFadeScale = 0.001
 shader_parameter/RandomFadeNoise = SubResource("NoiseTexture2D_fade")
-shader_parameter/RandomFadeStrength = 0.6
+shader_parameter/RandomFadeStrength = 0.8
 shader_parameter/SpecularScaleMoving = 0.007
 shader_parameter/SpecularSpeed = 0.03
 shader_parameter/SpecularNoiseTextureMoving1 = SubResource("NoiseTexture2D_spec1")
 shader_parameter/SpecularNoiseTextureMoving2 = SubResource("NoiseTexture2D_spec2")
-shader_parameter/SpecularThreshold = 0.15
+shader_parameter/SpecularThreshold = 0.1
 shader_parameter/SpecularColour = Color(1, 1, 1, 0.843137)
 shader_parameter/FoamColour = Color(1, 1, 1, 1)
 shader_parameter/FoamWaveSpeed = 5.0
