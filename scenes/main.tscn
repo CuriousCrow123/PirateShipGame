@@ -34,6 +34,8 @@ script = ExtResource("3_main")
 
 [node name="Ship" parent="." unique_id=100874112 instance=ExtResource("10_ship")]
 position = Vector2(176, 112)
+thrust = 120.0
+linear_drag = 0.99
 
 [node name="ChunkContainer" type="Node2D" parent="." unique_id=645506179 node_paths=PackedStringArray("ship")]
 script = ExtResource("11_chunks")
@@ -63,7 +65,7 @@ joint_mode = 2
 begin_cap_mode = 2
 end_cap_mode = 2
 script = ExtResource("6_trails")
-max_length = 90
+max_length = 50
 sub_viewport = NodePath("..")
 follow_target = NodePath("../..")
 
