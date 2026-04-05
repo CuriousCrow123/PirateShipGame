@@ -28,6 +28,7 @@ func _ready() -> void:
 	# which is too small for a tool UI. Render at native window resolution.
 	get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	get_window().size = Vector2i(1280, 720)
+	RenderingServer.set_default_clear_color(Color.WHITE)
 
 	assert(_vertical_emitter != null, "VerticalEmitter node not found")
 	assert(_horizontal_emitter != null, "HorizontalEmitter node not found")
