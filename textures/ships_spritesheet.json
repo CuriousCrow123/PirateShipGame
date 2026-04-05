@@ -1,0 +1,918 @@
+{
+  "sheet_size": [
+    546,
+    1033
+  ],
+  "sprites": {
+    "ship (1).png": {
+      "section": "ships",
+      "x": 0,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(0, 0, 66, 113)"
+    },
+    "ship (2).png": {
+      "section": "ships",
+      "x": 66,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(66, 0, 66, 113)"
+    },
+    "ship (3).png": {
+      "section": "ships",
+      "x": 132,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(132, 0, 66, 113)"
+    },
+    "ship (4).png": {
+      "section": "ships",
+      "x": 198,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(198, 0, 66, 113)"
+    },
+    "ship (5).png": {
+      "section": "ships",
+      "x": 264,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(264, 0, 66, 113)"
+    },
+    "ship (6).png": {
+      "section": "ships",
+      "x": 330,
+      "y": 0,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(330, 0, 66, 113)"
+    },
+    "ship (7).png": {
+      "section": "ships",
+      "x": 0,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(0, 113, 66, 113)"
+    },
+    "ship (8).png": {
+      "section": "ships",
+      "x": 66,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(66, 113, 66, 113)"
+    },
+    "ship (9).png": {
+      "section": "ships",
+      "x": 132,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(132, 113, 66, 113)"
+    },
+    "ship (10).png": {
+      "section": "ships",
+      "x": 198,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(198, 113, 66, 113)"
+    },
+    "ship (11).png": {
+      "section": "ships",
+      "x": 264,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(264, 113, 66, 113)"
+    },
+    "ship (12).png": {
+      "section": "ships",
+      "x": 330,
+      "y": 113,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(330, 113, 66, 113)"
+    },
+    "ship (13).png": {
+      "section": "ships",
+      "x": 0,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(0, 226, 66, 113)"
+    },
+    "ship (14).png": {
+      "section": "ships",
+      "x": 66,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(66, 226, 66, 113)"
+    },
+    "ship (15).png": {
+      "section": "ships",
+      "x": 132,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(132, 226, 66, 113)"
+    },
+    "ship (16).png": {
+      "section": "ships",
+      "x": 198,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(198, 226, 66, 113)"
+    },
+    "ship (17).png": {
+      "section": "ships",
+      "x": 264,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(264, 226, 66, 113)"
+    },
+    "ship (18).png": {
+      "section": "ships",
+      "x": 330,
+      "y": 226,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(330, 226, 66, 113)"
+    },
+    "ship (19).png": {
+      "section": "ships",
+      "x": 0,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(0, 339, 66, 113)"
+    },
+    "ship (20).png": {
+      "section": "ships",
+      "x": 66,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(66, 339, 66, 113)"
+    },
+    "ship (21).png": {
+      "section": "ships",
+      "x": 132,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(132, 339, 66, 113)"
+    },
+    "ship (22).png": {
+      "section": "ships",
+      "x": 198,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(198, 339, 66, 113)"
+    },
+    "ship (23).png": {
+      "section": "ships",
+      "x": 264,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(264, 339, 66, 113)"
+    },
+    "ship (24).png": {
+      "section": "ships",
+      "x": 330,
+      "y": 339,
+      "w": 66,
+      "h": 113,
+      "region_rect": "Rect2(330, 339, 66, 113)"
+    },
+    "dinghyLarge1.png": {
+      "section": "dinghy_large",
+      "x": 0,
+      "y": 454,
+      "w": 20,
+      "h": 38,
+      "region_rect": "Rect2(0, 454, 20, 38)"
+    },
+    "dinghyLarge2.png": {
+      "section": "dinghy_large",
+      "x": 20,
+      "y": 454,
+      "w": 20,
+      "h": 38,
+      "region_rect": "Rect2(20, 454, 20, 38)"
+    },
+    "dinghyLarge3.png": {
+      "section": "dinghy_large",
+      "x": 40,
+      "y": 454,
+      "w": 20,
+      "h": 38,
+      "region_rect": "Rect2(40, 454, 20, 38)"
+    },
+    "dinghySmall1.png": {
+      "section": "dinghy_small",
+      "x": 0,
+      "y": 494,
+      "w": 16,
+      "h": 26,
+      "region_rect": "Rect2(0, 494, 16, 26)"
+    },
+    "dinghySmall2.png": {
+      "section": "dinghy_small",
+      "x": 16,
+      "y": 494,
+      "w": 16,
+      "h": 26,
+      "region_rect": "Rect2(16, 494, 16, 26)"
+    },
+    "dinghySmall3.png": {
+      "section": "dinghy_small",
+      "x": 32,
+      "y": 494,
+      "w": 16,
+      "h": 26,
+      "region_rect": "Rect2(32, 494, 16, 26)"
+    },
+    "hullLarge (1).png": {
+      "section": "hull_large",
+      "x": 0,
+      "y": 522,
+      "w": 50,
+      "h": 108,
+      "region_rect": "Rect2(0, 522, 50, 108)"
+    },
+    "hullLarge (2).png": {
+      "section": "hull_large",
+      "x": 50,
+      "y": 522,
+      "w": 50,
+      "h": 108,
+      "region_rect": "Rect2(50, 522, 50, 108)"
+    },
+    "hullLarge (3).png": {
+      "section": "hull_large",
+      "x": 100,
+      "y": 522,
+      "w": 50,
+      "h": 108,
+      "region_rect": "Rect2(100, 522, 50, 108)"
+    },
+    "hullLarge (4).png": {
+      "section": "hull_large",
+      "x": 150,
+      "y": 522,
+      "w": 50,
+      "h": 108,
+      "region_rect": "Rect2(150, 522, 50, 108)"
+    },
+    "hullSmall (1).png": {
+      "section": "hull_small",
+      "x": 0,
+      "y": 632,
+      "w": 40,
+      "h": 108,
+      "region_rect": "Rect2(0, 632, 40, 108)"
+    },
+    "hullSmall (2).png": {
+      "section": "hull_small",
+      "x": 40,
+      "y": 632,
+      "w": 40,
+      "h": 108,
+      "region_rect": "Rect2(40, 632, 40, 108)"
+    },
+    "hullSmall (3).png": {
+      "section": "hull_small",
+      "x": 80,
+      "y": 632,
+      "w": 40,
+      "h": 108,
+      "region_rect": "Rect2(80, 632, 40, 108)"
+    },
+    "hullSmall (4).png": {
+      "section": "hull_small",
+      "x": 120,
+      "y": 632,
+      "w": 40,
+      "h": 108,
+      "region_rect": "Rect2(120, 632, 40, 108)"
+    },
+    "sailLarge (1).png": {
+      "section": "sail_large",
+      "x": 0,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(0, 742, 66, 47)"
+    },
+    "sailLarge (2).png": {
+      "section": "sail_large",
+      "x": 66,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(66, 742, 66, 47)"
+    },
+    "sailLarge (3).png": {
+      "section": "sail_large",
+      "x": 132,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(132, 742, 66, 47)"
+    },
+    "sailLarge (4).png": {
+      "section": "sail_large",
+      "x": 198,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(198, 742, 66, 47)"
+    },
+    "sailLarge (5).png": {
+      "section": "sail_large",
+      "x": 264,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(264, 742, 66, 47)"
+    },
+    "sailLarge (6).png": {
+      "section": "sail_large",
+      "x": 330,
+      "y": 742,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(330, 742, 66, 47)"
+    },
+    "sailLarge (7).png": {
+      "section": "sail_large",
+      "x": 0,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(0, 789, 66, 47)"
+    },
+    "sailLarge (8).png": {
+      "section": "sail_large",
+      "x": 66,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(66, 789, 66, 47)"
+    },
+    "sailLarge (9).png": {
+      "section": "sail_large",
+      "x": 132,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(132, 789, 66, 47)"
+    },
+    "sailLarge (10).png": {
+      "section": "sail_large",
+      "x": 198,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(198, 789, 66, 47)"
+    },
+    "sailLarge (11).png": {
+      "section": "sail_large",
+      "x": 264,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(264, 789, 66, 47)"
+    },
+    "sailLarge (12).png": {
+      "section": "sail_large",
+      "x": 330,
+      "y": 789,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(330, 789, 66, 47)"
+    },
+    "sailLarge (13).png": {
+      "section": "sail_large",
+      "x": 0,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(0, 836, 66, 47)"
+    },
+    "sailLarge (14).png": {
+      "section": "sail_large",
+      "x": 66,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(66, 836, 66, 47)"
+    },
+    "sailLarge (15).png": {
+      "section": "sail_large",
+      "x": 132,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(132, 836, 66, 47)"
+    },
+    "sailLarge (16).png": {
+      "section": "sail_large",
+      "x": 198,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(198, 836, 66, 47)"
+    },
+    "sailLarge (17).png": {
+      "section": "sail_large",
+      "x": 264,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(264, 836, 66, 47)"
+    },
+    "sailLarge (18).png": {
+      "section": "sail_large",
+      "x": 330,
+      "y": 836,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(330, 836, 66, 47)"
+    },
+    "sailLarge (19).png": {
+      "section": "sail_large",
+      "x": 0,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(0, 883, 66, 47)"
+    },
+    "sailLarge (20).png": {
+      "section": "sail_large",
+      "x": 66,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(66, 883, 66, 47)"
+    },
+    "sailLarge (21).png": {
+      "section": "sail_large",
+      "x": 132,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(132, 883, 66, 47)"
+    },
+    "sailLarge (22).png": {
+      "section": "sail_large",
+      "x": 198,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(198, 883, 66, 47)"
+    },
+    "sailLarge (23).png": {
+      "section": "sail_large",
+      "x": 264,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(264, 883, 66, 47)"
+    },
+    "sailLarge (24).png": {
+      "section": "sail_large",
+      "x": 330,
+      "y": 883,
+      "w": 66,
+      "h": 47,
+      "region_rect": "Rect2(330, 883, 66, 47)"
+    },
+    "sailSmall (1).png": {
+      "section": "sail_small",
+      "x": 0,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(0, 932, 42, 9)"
+    },
+    "sailSmall (2).png": {
+      "section": "sail_small",
+      "x": 42,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(42, 932, 42, 9)"
+    },
+    "sailSmall (3).png": {
+      "section": "sail_small",
+      "x": 84,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(84, 932, 42, 9)"
+    },
+    "sailSmall (4).png": {
+      "section": "sail_small",
+      "x": 126,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(126, 932, 42, 9)"
+    },
+    "sailSmall (5).png": {
+      "section": "sail_small",
+      "x": 168,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(168, 932, 42, 9)"
+    },
+    "sailSmall (6).png": {
+      "section": "sail_small",
+      "x": 210,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(210, 932, 42, 9)"
+    },
+    "sailSmall (7).png": {
+      "section": "sail_small",
+      "x": 252,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(252, 932, 42, 9)"
+    },
+    "sailSmall (8).png": {
+      "section": "sail_small",
+      "x": 294,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(294, 932, 42, 9)"
+    },
+    "sailSmall (9).png": {
+      "section": "sail_small",
+      "x": 336,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(336, 932, 42, 9)"
+    },
+    "sailSmall (10).png": {
+      "section": "sail_small",
+      "x": 378,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(378, 932, 42, 9)"
+    },
+    "sailSmall (11).png": {
+      "section": "sail_small",
+      "x": 420,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(420, 932, 42, 9)"
+    },
+    "sailSmall (12).png": {
+      "section": "sail_small",
+      "x": 462,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(462, 932, 42, 9)"
+    },
+    "sailSmall (13).png": {
+      "section": "sail_small",
+      "x": 504,
+      "y": 932,
+      "w": 42,
+      "h": 9,
+      "region_rect": "Rect2(504, 932, 42, 9)"
+    },
+    "cannon.png": {
+      "section": "cannon",
+      "x": 0,
+      "y": 943,
+      "w": 29,
+      "h": 20,
+      "region_rect": "Rect2(0, 943, 29, 20)"
+    },
+    "cannonBall.png": {
+      "section": "cannon",
+      "x": 29,
+      "y": 943,
+      "w": 29,
+      "h": 20,
+      "region_rect": "Rect2(29, 943, 29, 20)"
+    },
+    "cannonLoose.png": {
+      "section": "cannon",
+      "x": 58,
+      "y": 943,
+      "w": 29,
+      "h": 20,
+      "region_rect": "Rect2(58, 943, 29, 20)"
+    },
+    "cannonMobile.png": {
+      "section": "cannon",
+      "x": 87,
+      "y": 943,
+      "w": 29,
+      "h": 20,
+      "region_rect": "Rect2(87, 943, 29, 20)"
+    },
+    "crew (1).png": {
+      "section": "crew",
+      "x": 0,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(0, 965, 22, 22)"
+    },
+    "crew (2).png": {
+      "section": "crew",
+      "x": 22,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(22, 965, 22, 22)"
+    },
+    "crew (3).png": {
+      "section": "crew",
+      "x": 44,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(44, 965, 22, 22)"
+    },
+    "crew (4).png": {
+      "section": "crew",
+      "x": 66,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(66, 965, 22, 22)"
+    },
+    "crew (5).png": {
+      "section": "crew",
+      "x": 88,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(88, 965, 22, 22)"
+    },
+    "crew (6).png": {
+      "section": "crew",
+      "x": 110,
+      "y": 965,
+      "w": 22,
+      "h": 22,
+      "region_rect": "Rect2(110, 965, 22, 22)"
+    },
+    "flag (1).png": {
+      "section": "flags",
+      "x": 0,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(0, 989, 6, 22)"
+    },
+    "flag (2).png": {
+      "section": "flags",
+      "x": 6,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(6, 989, 6, 22)"
+    },
+    "flag (3).png": {
+      "section": "flags",
+      "x": 12,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(12, 989, 6, 22)"
+    },
+    "flag (4).png": {
+      "section": "flags",
+      "x": 18,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(18, 989, 6, 22)"
+    },
+    "flag (5).png": {
+      "section": "flags",
+      "x": 24,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(24, 989, 6, 22)"
+    },
+    "flag (6).png": {
+      "section": "flags",
+      "x": 30,
+      "y": 989,
+      "w": 6,
+      "h": 22,
+      "region_rect": "Rect2(30, 989, 6, 22)"
+    },
+    "nest.png": {
+      "section": "misc",
+      "x": 0,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(0, 1013, 26, 18)"
+    },
+    "pole.png": {
+      "section": "misc",
+      "x": 26,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(26, 1013, 26, 18)"
+    },
+    "wood (1).png": {
+      "section": "misc",
+      "x": 52,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(52, 1013, 26, 18)"
+    },
+    "wood (2).png": {
+      "section": "misc",
+      "x": 78,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(78, 1013, 26, 18)"
+    },
+    "wood (3).png": {
+      "section": "misc",
+      "x": 104,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(104, 1013, 26, 18)"
+    },
+    "wood (4).png": {
+      "section": "misc",
+      "x": 130,
+      "y": 1013,
+      "w": 26,
+      "h": 18,
+      "region_rect": "Rect2(130, 1013, 26, 18)"
+    }
+  },
+  "sections": [
+    {
+      "id": "ships",
+      "label": "Complete ships (66\u00d7113 each, 6 cols \u00d7 4 rows)",
+      "x": 0,
+      "y": 0,
+      "w": 396,
+      "h": 452,
+      "cell_w": 66,
+      "cell_h": 113,
+      "cols": 6,
+      "rows": 4
+    },
+    {
+      "id": "dinghy_large",
+      "label": "Dinghy large \u2014 damage states 1\u21923 (20\u00d738 each)",
+      "x": 0,
+      "y": 454,
+      "w": 60,
+      "h": 38,
+      "cell_w": 20,
+      "cell_h": 38,
+      "cols": 3,
+      "rows": 1
+    },
+    {
+      "id": "dinghy_small",
+      "label": "Dinghy small \u2014 damage states 1\u21923 (16\u00d726 each)",
+      "x": 0,
+      "y": 494,
+      "w": 48,
+      "h": 26,
+      "cell_w": 16,
+      "cell_h": 26,
+      "cols": 3,
+      "rows": 1
+    },
+    {
+      "id": "hull_large",
+      "label": "Hull large \u2014 damage states 1\u21924 (50\u00d7108 each)",
+      "x": 0,
+      "y": 522,
+      "w": 200,
+      "h": 108,
+      "cell_w": 50,
+      "cell_h": 108,
+      "cols": 4,
+      "rows": 1
+    },
+    {
+      "id": "hull_small",
+      "label": "Hull small \u2014 damage states 1\u21924 (40\u00d7108 each)",
+      "x": 0,
+      "y": 632,
+      "w": 160,
+      "h": 108,
+      "cell_w": 40,
+      "cell_h": 108,
+      "cols": 4,
+      "rows": 1
+    },
+    {
+      "id": "sail_large",
+      "label": "Sail large \u2014 24 variants (66\u00d747 cell, 6 cols \u00d7 4 rows)",
+      "x": 0,
+      "y": 742,
+      "w": 396,
+      "h": 188,
+      "cell_w": 66,
+      "cell_h": 47,
+      "cols": 6,
+      "rows": 4
+    },
+    {
+      "id": "sail_small",
+      "label": "Sail small \u2014 13 variants (42\u00d79 cell, single row)",
+      "x": 0,
+      "y": 932,
+      "w": 546,
+      "h": 9,
+      "cell_w": 42,
+      "cell_h": 9,
+      "cols": 13,
+      "rows": 1
+    },
+    {
+      "id": "cannon",
+      "label": "Cannon variants (row, natural sizes, padded to 29\u00d720 cell)",
+      "x": 0,
+      "y": 943,
+      "w": 116,
+      "h": 20,
+      "cell_w": 29,
+      "cell_h": 20,
+      "cols": 4,
+      "rows": 1
+    },
+    {
+      "id": "crew",
+      "label": "Crew \u2014 6 variants (22\u00d722 cell)",
+      "x": 0,
+      "y": 965,
+      "w": 132,
+      "h": 22,
+      "cell_w": 22,
+      "cell_h": 22,
+      "cols": 6,
+      "rows": 1
+    },
+    {
+      "id": "flags",
+      "label": "Flags \u2014 6 variants (6\u00d722 cell)",
+      "x": 0,
+      "y": 989,
+      "w": 36,
+      "h": 22,
+      "cell_w": 6,
+      "cell_h": 22,
+      "cols": 6,
+      "rows": 1
+    },
+    {
+      "id": "misc",
+      "label": "Misc parts \u2014 nest, pole, wood 1-4 (row, natural sizes, 26\u00d718 max cell)",
+      "x": 0,
+      "y": 1013,
+      "w": 156,
+      "h": 18,
+      "cell_w": 26,
+      "cell_h": 18,
+      "cols": 6,
+      "rows": 1
+    }
+  ]
+}
