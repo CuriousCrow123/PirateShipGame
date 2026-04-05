@@ -158,11 +158,11 @@ These were in the original plan but cut for simplicity. Add when needed:
 
 ### Camera
 
-- Camera2D as child of Ship with `position_smoothing_enabled = true`
+- Camera2D as child of Ship, no smoothing (instant follow)
 - Remove existing Camera2D from Main
 - `ignore_rotation = true` (default) — camera stays axis-aligned while ship rotates
 
-**Pixel snapping concern:** At 320×180 with `snap_2d_transforms_to_pixel`, camera smoothing can cause 1px jitter where the snapped position oscillates between two integer values. Test early and tune `position_smoothing_speed` (default 5.0) — higher values reduce jitter by snapping to target faster. If jitter is visible, consider drag margins instead of smoothing.
+**Pixel snapping resolved:** Camera smoothing + `snap_2d_transforms_to_pixel` caused visible jitter. Fix: disable smoothing entirely — camera snaps to ship position each frame. Viewport doubled to 640×360 (from 320×180) to give the ship more room.
 
 ### Z-Ordering
 
