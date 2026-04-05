@@ -1,9 +1,10 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Material" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
 [ext_resource type="Texture2D" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
 [ext_resource type="Script" path="res://scripts/main.gd" id="3_main"]
 [ext_resource type="Script" path="res://scripts/follow_cursor.gd" id="4_cursor"]
+[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="10_ship"]
 [ext_resource type="Material" path="res://shaders/ripple_material.tres" id="5_ripple_mat"]
 [ext_resource type="Script" path="res://scripts/trails.gd" id="6_trails"]
 [ext_resource type="Texture2D" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
@@ -32,7 +33,7 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 [node name="Main" type="Node2D"]
 script = ExtResource("3_main")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Ship" parent="." instance=ExtResource("10_ship")]
 position = Vector2(176, 112)
 
 [node name="TileMap" type="TileMap" parent="."]

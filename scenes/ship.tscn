@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ship.gd" id="1_ship"]
+[ext_resource type="Texture2D" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
+
+[node name="Ship" type="CharacterBody2D"]
+z_index = 2
+script = ExtResource("1_ship")
+
+[node name="ShipSprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 0, 66, 113)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
