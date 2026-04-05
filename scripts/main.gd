@@ -4,6 +4,8 @@ extends Node2D
 
 
 func _ready() -> void:
-	var vt := ViewportTexture.new()
-	vt.viewport_path = $WaterTrail/SubViewport.get_path()
-	$WaterTrail/TrailSprite.texture = vt
+	$WaterTrail/TrailSprite.texture = $WaterTrail/SubViewport.get_texture()
+
+
+func _process(_delta: float) -> void:
+	$WaterTrail.global_position = $Ship.global_position

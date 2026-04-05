@@ -1,16 +1,15 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene format=3 uid="uid://c07o0ig82xamg"]
 
-[ext_resource type="Material" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
-[ext_resource type="Texture2D" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
-[ext_resource type="Script" path="res://scripts/main.gd" id="3_main"]
-[ext_resource type="Script" path="res://scripts/follow_cursor.gd" id="4_cursor"]
-[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="10_ship"]
-[ext_resource type="Script" path="res://scripts/water_chunks.gd" id="11_chunks"]
+[ext_resource type="Material" uid="uid://c7pgx6whoa71c" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
+[ext_resource type="Texture2D" uid="uid://cc5dhih7uiadk" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
+[ext_resource type="Script" uid="uid://dpyk84570f83m" path="res://scripts/main.gd" id="3_main"]
 [ext_resource type="Material" path="res://shaders/ripple_material.tres" id="5_ripple_mat"]
-[ext_resource type="Script" path="res://scripts/trails.gd" id="6_trails"]
-[ext_resource type="Texture2D" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
-[ext_resource type="Texture2D" path="res://textures/CircleBlur64x64.png" id="8_circle"]
+[ext_resource type="Script" uid="uid://chrbausaxfaw5" path="res://scripts/trails.gd" id="6_trails"]
+[ext_resource type="Texture2D" uid="uid://cj35g5w3umv1r" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
+[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="8_circle"]
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
+[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="10_ship"]
+[ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://scripts/water_chunks.gd" id="11_chunks"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -25,38 +24,36 @@ texture = ExtResource("2_tiles_tex")
 1:20/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_water"]
-tile_size = Vector2i(16, 16)
 sources/0 = SubResource("TileSetAtlasSource_water")
 
 [sub_resource type="Gradient" id="Gradient_trail"]
 colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=1806187773]
 script = ExtResource("3_main")
 
-[node name="Ship" parent="." instance=ExtResource("10_ship")]
+[node name="Ship" parent="." unique_id=100874112 instance=ExtResource("10_ship")]
 position = Vector2(176, 112)
 
-[node name="ChunkContainer" type="Node2D" parent="." node_paths=PackedStringArray("ship")]
+[node name="ChunkContainer" type="Node2D" parent="." unique_id=645506179 node_paths=PackedStringArray("ship")]
 script = ExtResource("11_chunks")
 ship = NodePath("../Ship")
 tile_set = SubResource("TileSet_water")
 water_material = ExtResource("1_water_mat")
 
-[node name="WaterTrail" type="Node2D" parent="."]
+[node name="WaterTrail" type="Node2D" parent="." unique_id=504310721]
 z_index = 1
-script = ExtResource("4_cursor")
 
-[node name="TrailSprite" type="Sprite2D" parent="WaterTrail"]
+[node name="TrailSprite" type="Sprite2D" parent="WaterTrail" unique_id=1971517214]
 material = ExtResource("5_ripple_mat")
 
-[node name="SubViewport" type="SubViewport" parent="WaterTrail"]
+[node name="SubViewport" type="SubViewport" parent="WaterTrail" unique_id=536503636]
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 0
 size = Vector2i(256, 256)
 
-[node name="Line2D" type="Line2D" parent="WaterTrail/SubViewport" node_paths=PackedStringArray("sub_viewport", "follow_target")]
+[node name="Line2D" type="Line2D" parent="WaterTrail/SubViewport" unique_id=993120582 node_paths=PackedStringArray("sub_viewport", "follow_target")]
 width = 28.0
 width_curve = ExtResource("9_curve")
 gradient = SubResource("Gradient_trail")
@@ -69,7 +66,7 @@ script = ExtResource("6_trails")
 sub_viewport = NodePath("..")
 follow_target = NodePath("../..")
 
-[node name="Circle" type="Sprite2D" parent="WaterTrail/SubViewport"]
+[node name="Circle" type="Sprite2D" parent="WaterTrail/SubViewport" unique_id=156054920]
 position = Vector2(128, 128)
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("8_circle")

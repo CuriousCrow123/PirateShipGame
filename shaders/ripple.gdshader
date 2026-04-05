@@ -1,7 +1,7 @@
 shader_type canvas_item;
-// Forward+ SubViewport with transparent_bg outputs premultiplied alpha.
-// Without this, semi-transparent ripple areas render too dark.
-// See Godot #99715.
+// SubViewport.get_texture() may return non-premultiplied data where RGB is
+// undefined at alpha=0. We use blend_premul_alpha for correct compositing
+// and guard reads with tex.a to discard garbage in transparent areas.
 render_mode blend_premul_alpha;
 
 uniform float InitialAlpha : hint_range(0.0, 1.0) = 0.46;
@@ -21,15 +21,18 @@ void fragment() {
 	vec2 pixUV = pixelate_uv(UV, TEXTURE_PIXEL_SIZE);
 	vec4 tex = texture(TEXTURE, pixUV);
 
+	// Guard: discard garbage RGB where alpha is near zero
+	float safeR = tex.r * step(0.01, tex.a);
+
 	// Animate brightness via sine wave driven by texture r value
 	float timeScaled = TIME / Speed;
-	float sinInput = tex.r * 15.0 + timeScaled;
+	float sinInput = safeR * 15.0 + timeScaled;
 	float sineVal = sin(sinInput);
 	// Remap from [-1,1] to [-0.1, 0.1]
 	float sinRemapped = sineVal * 0.1;
 
 	// Subtract from initial alpha
-	float baseAlpha = tex.r * InitialAlpha;
+	float baseAlpha = safeR * InitialAlpha;
 	float animAlpha = baseAlpha - sinRemapped;
 
 	// Quantize for pixel art steps
@@ -38,6 +41,7 @@ void fragment() {
 	// Apply alpha from texture and brightness offset
 	float finalAlpha = clamp(quantized * pow(tex.a, 2.0) + BrightnessOffset, 0.0, UpperCutoff);
 
-	COLOR.rgb = vec3(1.0);
+	// Premultiply output for blend_premul_alpha
+	COLOR.rgb = vec3(finalAlpha);
 	COLOR.a = finalAlpha;
 }

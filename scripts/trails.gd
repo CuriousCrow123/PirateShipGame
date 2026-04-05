@@ -7,12 +7,12 @@ extends Line2D
 ## top-left (0,0) but we want the trail centered, so we shift by half the
 ## viewport size.
 
-@export var max_length: int = 20
+@export var max_length: int = 130
 @export var sub_viewport: SubViewport
 @export var follow_target: Node2D  ## Node whose position drives the trail
 @export var distance_at_largest_width: float = 16.0 * 6.0
-@export var smallest_tip_width: float = 0.5
-@export var largest_tip_width: float = 1.0
+@export var smallest_tip_width: float = 0.15
+@export var largest_tip_width: float = 0.8
 
 var _queue: Array[Vector2] = []
 var _offset: Vector2 = Vector2.ZERO
@@ -25,7 +25,12 @@ func _ready() -> void:
 		width_curve != null and width_curve.point_count > 0,
 		"Trails: width_curve must have at least one point"
 	)
+	sub_viewport.size = Vector2i(512, 512)
+	var circle: Sprite2D = sub_viewport.get_node("Circle")
+	circle.position = Vector2(256, 256)
+	circle.scale = Vector2(0.45, 0.45)
 	_offset = Vector2(sub_viewport.size) / 2.0
+	width = 36.0
 	# Duplicate the Curve resource so mutations (set_point_value) don't corrupt
 	# other instances sharing the same sub-resource. See plan: "Shared Curve
 	# resource mutation bug".
