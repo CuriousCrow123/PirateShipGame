@@ -79,10 +79,12 @@ func _ready() -> void:
 
 
 ## Convenience factory: spawns an explosion at the given world position.
-static func create(parent: Node, pos: Vector2) -> ExplosionEffect:
+## scale_factor controls the size (0.4 = small muzzle flash, 1.0 = full impact).
+static func create(parent: Node, pos: Vector2, scale_factor: float = 1.0) -> ExplosionEffect:
 	var effect: ExplosionEffect = ExplosionScene.instantiate() as ExplosionEffect
 	parent.add_child(effect)
 	effect.global_position = pos
+	effect.scale = Vector2.ONE * scale_factor
 	return effect
 
 
