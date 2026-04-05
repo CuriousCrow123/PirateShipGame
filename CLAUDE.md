@@ -7,9 +7,9 @@
 
 ## Display Settings
 
-- Viewport: 1280x720 (pixel art native resolution)
-- Window: 1280x720
-- Stretch mode: `viewport`, aspect: `keep`, scale: `integer`
+- Viewport: 640x360
+- Window: 1280x720 (2x integer scale)
+- Stretch mode: `viewport`, scale: `integer`
 - Default texture filter: `Nearest`
 - Pixel snapping: enabled (`snap_2d_transforms_to_pixel`, `snap_2d_vertices_to_pixel`)
 

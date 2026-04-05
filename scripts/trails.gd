@@ -25,12 +25,7 @@ func _ready() -> void:
 		width_curve != null and width_curve.point_count > 0,
 		"Trails: width_curve must have at least one point"
 	)
-	sub_viewport.size = Vector2i(512, 512)
-	var circle: Sprite2D = sub_viewport.get_node("Circle")
-	circle.position = Vector2(256, 256)
-	circle.scale = Vector2(0.45, 0.45)
 	_offset = Vector2(sub_viewport.size) / 2.0
-	width = 36.0
 	# Duplicate the Curve resource so mutations (set_point_value) don't corrupt
 	# other instances sharing the same sub-resource. See plan: "Shared Curve
 	# resource mutation bug".

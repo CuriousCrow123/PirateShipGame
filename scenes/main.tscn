@@ -51,10 +51,10 @@ material = ExtResource("5_ripple_mat")
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 0
-size = Vector2i(256, 256)
+size = Vector2i(512, 512)
 
 [node name="Line2D" type="Line2D" parent="WaterTrail/SubViewport" unique_id=993120582 node_paths=PackedStringArray("sub_viewport", "follow_target")]
-width = 28.0
+width = 36.0
 width_curve = ExtResource("9_curve")
 gradient = SubResource("Gradient_trail")
 texture = ExtResource("7_trail_grad")
@@ -67,6 +67,6 @@ sub_viewport = NodePath("..")
 follow_target = NodePath("../..")
 
 [node name="Circle" type="Sprite2D" parent="WaterTrail/SubViewport" unique_id=156054920]
-position = Vector2(128, 128)
-scale = Vector2(0.3, 0.3)
+position = Vector2(256, 256)
+scale = Vector2(0.45, 0.45)
 texture = ExtResource("8_circle")
