@@ -1,0 +1,302 @@
+[gd_scene format=3 uid="uid://dn3wtvnbfihse"]
+
+[ext_resource type="Script" uid="uid://b8xqasqk2dx4r" path="res://scripts/explosion_renderer.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://14mjfyewwpkm" path="res://shaders/explosion_dissolve_material.tres" id="2_material"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vertical"]
+direction = Vector3(0, 1, 0)
+spread = 15.0
+initial_velocity_min = 15.0
+initial_velocity_max = 25.0
+angular_velocity_min = -360.0
+angular_velocity_max = 360.0
+damping_min = 15.0
+damping_max = 25.0
+scale_max = 2.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_1"]
+material = ExtResource("2_material")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_horizontal"]
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.1
+emission_ring_radius = 0.5
+emission_ring_inner_radius = 0.0
+emission_ring_cone_angle = 90.0
+direction = Vector3(0, 0, 0)
+spread = 180.0
+initial_velocity_min = 5.0
+initial_velocity_max = 10.0
+angular_velocity_min = -360.0
+angular_velocity_max = 360.0
+damping_min = 50.0
+damping_max = 75.0
+scale_min = 1.5
+scale_max = 2.5
+
+[node name="ExplosionRenderer" type="Control" unique_id=2048050413]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1356233933]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer" unique_id=244121235]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/PanelContainer" unique_id=641198047]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/ScrollContainer" unique_id=716562573]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="LabelDarkColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=232416606]
+layout_mode = 2
+text = "Dark Color"
+
+[node name="DarkColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=991443969]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(0.3, 0.3, 0.3, 1)
+
+[node name="LabelFireColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1506624143]
+layout_mode = 2
+text = "Fire Color"
+
+[node name="FireColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=219932755]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(1, 0.5, 0, 1)
+
+[node name="LabelEmission" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1828808179]
+layout_mode = 2
+text = "Emission Intensity"
+
+[node name="EmissionSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=219001712]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 10.0
+step = 0.1
+value = 3.0
+
+[node name="LabelSmoothStep" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=2134112117]
+layout_mode = 2
+text = "Dissolve Softness"
+
+[node name="SmoothStepSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1658216656]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 0.5
+step = 0.01
+value = 0.15
+
+[node name="LabelSpeed" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=500555536]
+layout_mode = 2
+text = "Speed"
+
+[node name="SpeedSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1183762825]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.1
+max_value = 3.0
+step = 0.1
+value = 1.0
+
+[node name="LabelBrightDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=252872726]
+layout_mode = 2
+text = "Dissolve Speed"
+
+[node name="BrightDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1182548739]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.5
+max_value = 3.0
+step = 0.01
+value = 1.5
+
+[node name="LabelDarkDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1209829997]
+layout_mode = 2
+text = "Edge Glow Width"
+
+[node name="DarkDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1423048316]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 0.3
+step = 0.01
+value = 0.08
+
+[node name="Separator1" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=32259869]
+layout_mode = 2
+
+[node name="LabelCamOrbit" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1563486499]
+layout_mode = 2
+text = "Camera Orbit"
+
+[node name="CamOrbitSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1425927128]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = -180.0
+max_value = 180.0
+
+[node name="LabelCamElevation" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=937240005]
+layout_mode = 2
+text = "Camera Elevation"
+
+[node name="CamElevationSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1874161913]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = -89.0
+max_value = 89.0
+value = 20.0
+
+[node name="LabelCamDistance" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1317007585]
+layout_mode = 2
+text = "Camera Distance"
+
+[node name="CamDistanceSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1256308571]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 2.0
+max_value = 20.0
+step = 0.5
+value = 8.0
+
+[node name="Separator2" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=433554169]
+layout_mode = 2
+
+[node name="LabelVertVelocity" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=293425842]
+layout_mode = 2
+text = "Vert Velocity"
+
+[node name="VertVelocitySlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=213117992]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 40.0
+step = 0.5
+value = 25.0
+
+[node name="LabelVertDamping" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=755679833]
+layout_mode = 2
+text = "Vert Damping"
+
+[node name="VertDampingSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=308491556]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+value = 25.0
+
+[node name="LabelVertSpread" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=140876862]
+layout_mode = 2
+text = "Vert Spread"
+
+[node name="VertSpreadSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1557502812]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 180.0
+value = 15.0
+
+[node name="Separator3" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1894235707]
+layout_mode = 2
+
+[node name="LabelHorizVelocity" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=622052078]
+layout_mode = 2
+text = "Horiz Velocity"
+
+[node name="HorizVelocitySlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=2012244352]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 40.0
+step = 0.5
+value = 10.0
+
+[node name="LabelHorizDamping" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1881809901]
+layout_mode = 2
+text = "Horiz Damping"
+
+[node name="HorizDampingSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=316480900]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+value = 75.0
+
+[node name="Separator4" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1258243992]
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1427791835]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Play"
+
+[node name="CaptureButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=360601258]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Capture"
+
+[node name="StatusLabel" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=564241152]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ready"
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer" unique_id=1734678397]
+layout_mode = 2
+size_flags_horizontal = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/SubViewportContainer" unique_id=1235993330]
+unique_name_in_owner = true
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(96, 180)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="HBoxContainer/SubViewportContainer/SubViewport" unique_id=1334852840]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.9397, 0.342, 0, -0.342, 0.9397, 0, 3, 8)
+fov = 50.0
+
+[node name="VerticalEmitter" type="GPUParticles3D" parent="HBoxContainer/SubViewportContainer/SubViewport" unique_id=1911602871]
+unique_name_in_owner = true
+emitting = false
+amount = 30
+lifetime = 2.0
+one_shot = true
+explosiveness = 1.0
+use_fixed_seed = true
+seed = 12345
+process_material = SubResource("ParticleProcessMaterial_vertical")
+draw_pass_1 = SubResource("SphereMesh_1")
+
+[node name="HorizontalEmitter" type="GPUParticles3D" parent="HBoxContainer/SubViewportContainer/SubViewport" unique_id=1040106611]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
+emitting = false
+amount = 30
+lifetime = 2.0
+one_shot = true
+explosiveness = 1.0
+use_fixed_seed = true
+seed = 54321
+process_material = SubResource("ParticleProcessMaterial_horizontal")
+draw_pass_1 = SubResource("SphereMesh_1")
+
+[node name="LoopTimer" type="Timer" parent="." unique_id=995076096]
+unique_name_in_owner = true
+wait_time = 2.5
