@@ -1,11 +1,28 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://dn3wtvnbfihse"]
 
-[ext_resource type="Script" path="res://scripts/explosion_renderer.gd" id="1_script"]
-[ext_resource type="ShaderMaterial" path="res://shaders/explosion_dissolve_material.tres" id="2_material"]
+[ext_resource type="Script" uid="uid://b8xqasqk2dx4r" path="res://scripts/explosion_renderer.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://14mjfyewwpkm" path="res://shaders/explosion_dissolve_material.tres" id="2_material"]
 
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vertical"]
 emission_shape = 1
-emission_sphere_radius = 0.5
+emission_sphere_radius = 0.3
+direction = Vector3(0, 1, 0)
+spread = 45.0
+initial_velocity_min = 5.0
+initial_velocity_max = 10.0
+angular_velocity_min = -360.0
+angular_velocity_max = 360.0
+damping_min = 50.0
+damping_max = 75.0
+scale_min = 1.5
+scale_max = 2.5
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_horizontal"]
+emission_shape = 6
+emission_ring_radius = 0.5
+emission_ring_inner_radius = 0.0
+emission_ring_height = 0.1
+emission_ring_axis = Vector3(0, 1, 0)
 direction = Vector3(0, 0, 0)
 spread = 180.0
 initial_velocity_min = 5.0
@@ -14,15 +31,13 @@ angular_velocity_min = -360.0
 angular_velocity_max = 360.0
 damping_min = 50.0
 damping_max = 75.0
-scale_min = 0.3
-scale_max = 0.5
+scale_min = 1.5
+scale_max = 2.5
 
 [sub_resource type="SphereMesh" id="SphereMesh_1"]
 material = ExtResource("2_material")
-radius = 0.5
-height = 1.0
 
-[node name="ExplosionRenderer" type="Control"]
+[node name="ExplosionRenderer" type="Control" unique_id=2048050413]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +46,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1356233933]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,52 +54,51 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer" unique_id=244121235]
 custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/PanelContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/PanelContainer" unique_id=641198047]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/ScrollContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/ScrollContainer" unique_id=716562573]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="LabelDarkColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelDarkColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=232416606]
 layout_mode = 2
 text = "Dark Color"
 
-[node name="DarkColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="DarkColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=991443969]
 unique_name_in_owner = true
 layout_mode = 2
 color = Color(0.3, 0.3, 0.3, 1)
 
-[node name="LabelFireColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelFireColor" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1506624143]
 layout_mode = 2
 text = "Fire Color"
 
-[node name="FireColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="FireColorPicker" type="ColorPickerButton" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=219932755]
 unique_name_in_owner = true
 layout_mode = 2
 color = Color(1, 0.5, 0, 1)
 
-[node name="LabelSmoothStep" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelSmoothStep" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=2134112117]
 layout_mode = 2
 text = "Smooth Step Edge"
 
-[node name="SmoothStepSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="SmoothStepSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1658216656]
 unique_name_in_owner = true
 layout_mode = 2
 max_value = 1.0
 step = 0.01
-value = 0.0
 
-[node name="LabelSpeed" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelSpeed" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=500555536]
 layout_mode = 2
 text = "Speed"
 
-[node name="SpeedSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="SpeedSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1183762825]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.1
@@ -92,11 +106,11 @@ max_value = 3.0
 step = 0.1
 value = 1.0
 
-[node name="LabelBrightDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelBrightDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=252872726]
 layout_mode = 2
 text = "Bright Dissolve Scale"
 
-[node name="BrightDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="BrightDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1182548739]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.5
@@ -104,11 +118,11 @@ max_value = 2.0
 step = 0.01
 value = 1.2
 
-[node name="LabelDarkDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="LabelDarkDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1209829997]
 layout_mode = 2
 text = "Dark Dissolve Scale"
 
-[node name="DarkDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="DarkDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1423048316]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.5
@@ -116,48 +130,62 @@ max_value = 2.0
 step = 0.01
 value = 0.8
 
-[node name="Separator" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="Separator" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1992211600]
 layout_mode = 2
 
-[node name="PlayButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="PlayButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1427791835]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Play"
 
-[node name="CaptureButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="CaptureButton" type="Button" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=360601258]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Capture"
 
-[node name="StatusLabel" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer"]
+[node name="StatusLabel" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=564241152]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Ready"
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer" unique_id=1734678397]
 layout_mode = 2
 size_flags_horizontal = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="HBoxContainer/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/SubViewportContainer" unique_id=1235993330]
 unique_name_in_owner = true
 own_world_3d = true
 transparent_bg = true
-size = Vector2i(32, 32)
-render_target_update_mode = 3
+handle_input_locally = false
+size = Vector2i(96, 180)
+render_target_update_mode = 4
 
-[node name="Camera3D" type="Camera3D" parent="HBoxContainer/SubViewportContainer/SubViewport"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
-fov = 40.0
+[node name="Camera3D" type="Camera3D" parent="HBoxContainer/SubViewportContainer/SubViewport" unique_id=1334852840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+fov = 50.0
 
-[node name="Emitter" type="GPUParticles3D" parent="HBoxContainer/SubViewportContainer/SubViewport"]
+[node name="VerticalEmitter" type="GPUParticles3D" parent="HBoxContainer/SubViewportContainer/SubViewport"]
 unique_name_in_owner = true
-amount = 40
+emitting = false
+amount = 30
 lifetime = 2.0
 one_shot = true
 explosiveness = 1.0
-fixed_fps = 30
 use_fixed_seed = true
 seed = 12345
-process_material = SubResource("ParticleProcessMaterial_1")
+process_material = SubResource("ParticleProcessMaterial_vertical")
+draw_pass_1 = SubResource("SphereMesh_1")
+
+[node name="HorizontalEmitter" type="GPUParticles3D" parent="HBoxContainer/SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
+emitting = false
+amount = 30
+lifetime = 2.0
+one_shot = true
+explosiveness = 1.0
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
+use_fixed_seed = true
+seed = 54321
+process_material = SubResource("ParticleProcessMaterial_horizontal")
 draw_pass_1 = SubResource("SphereMesh_1")

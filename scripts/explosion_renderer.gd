@@ -9,7 +9,8 @@ const OUTPUT_PATH: String = "res://textures/explosion_strip.png"
 var _material: ShaderMaterial
 var _capturing: bool = false
 
-@onready var _emitter: GPUParticles3D = %Emitter
+@onready var _vertical_emitter: GPUParticles3D = %VerticalEmitter
+@onready var _horizontal_emitter: GPUParticles3D = %HorizontalEmitter
 @onready var _sub_viewport: SubViewport = %SubViewport
 @onready var _status_label: Label = %StatusLabel
 @onready var _play_button: Button = %PlayButton
@@ -23,7 +24,8 @@ var _capturing: bool = false
 
 
 func _ready() -> void:
-	assert(_emitter != null, "Emitter node not found")
+	assert(_vertical_emitter != null, "VerticalEmitter node not found")
+	assert(_horizontal_emitter != null, "HorizontalEmitter node not found")
 	assert(_sub_viewport != null, "SubViewport node not found")
 	assert(_status_label != null, "StatusLabel node not found")
 	assert(_play_button != null, "PlayButton node not found")
@@ -31,9 +33,11 @@ func _ready() -> void:
 
 	# Duplicate material to avoid mutating the .tres on disk.
 	# NoiseTexture inside is intentionally shared (read-only).
-	var base_mat: ShaderMaterial = _emitter.draw_pass_1.surface_get_material(0)
+	# Both emitters share one duplicate so slider changes affect both.
+	var base_mat: ShaderMaterial = _vertical_emitter.draw_pass_1.surface_get_material(0)
 	_material = base_mat.duplicate() as ShaderMaterial
-	_emitter.draw_pass_1.surface_set_material(0, _material)
+	_vertical_emitter.draw_pass_1.surface_set_material(0, _material)
+	_horizontal_emitter.draw_pass_1.surface_set_material(0, _material)
 
 	# Connect UI signals
 	_play_button.pressed.connect(_on_play_pressed)
@@ -61,8 +65,10 @@ func _ready() -> void:
 
 
 func _play_explosion() -> void:
-	_emitter.emitting = false
-	_emitter.restart()
+	_vertical_emitter.emitting = false
+	_horizontal_emitter.emitting = false
+	_vertical_emitter.restart()
+	_horizontal_emitter.restart()
 
 
 func _set_controls_enabled(enabled: bool) -> void:
@@ -101,7 +107,7 @@ func _on_capture_pressed() -> void:
 	await get_tree().create_timer(WARMUP_DELAY).timeout
 
 	var strip: Image = Image.create(FRAME_SIZE * FRAME_COUNT, FRAME_SIZE, false, Image.FORMAT_RGBA8)
-	var capture_duration: float = _emitter.lifetime
+	var capture_duration: float = _vertical_emitter.lifetime
 	var interval: float = (capture_duration - WARMUP_DELAY) / float(FRAME_COUNT)
 
 	for i: int in FRAME_COUNT:
@@ -110,6 +116,9 @@ func _on_capture_pressed() -> void:
 			_capturing = false
 			return
 		var img: Image = _sub_viewport.get_texture().get_image()
+		# SubViewportContainer stretch resizes the viewport; resize to output size
+		if img.get_width() != FRAME_SIZE or img.get_height() != FRAME_SIZE:
+			img.resize(FRAME_SIZE, FRAME_SIZE, Image.INTERPOLATE_NEAREST)
 		strip.blit_rect(img, Rect2i(0, 0, FRAME_SIZE, FRAME_SIZE), Vector2i(i * FRAME_SIZE, 0))
 		_status_label.text = "Frame %d/%d..." % [i + 1, FRAME_COUNT]
 
@@ -151,7 +160,8 @@ func _on_smoothstep_changed(value: float) -> void:
 func _on_speed_changed(value: float) -> void:
 	if _capturing:
 		return
-	_emitter.speed_scale = value
+	_vertical_emitter.speed_scale = value
+	_horizontal_emitter.speed_scale = value
 
 
 func _on_bright_dissolve_changed(value: float) -> void:

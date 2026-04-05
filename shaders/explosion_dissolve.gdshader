@@ -47,10 +47,11 @@ void fragment() {
 	float bright_mask = smoothstep(0.0, SmoothStepEdge, bright_raw);
 
 	// --- Combine layers ---
+	// Tutorial: dark_mask controls alpha (defines silhouette).
+	// Bright layer adds fire colour within the dark layer's shape.
 	vec3 color = dark_mask * DarkColour + bright_mask * FireColour;
-	float alpha = max(dark_mask, bright_mask);
 
 	ALBEDO = color;
-	ALPHA = alpha;
+	ALPHA = dark_mask;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 }
