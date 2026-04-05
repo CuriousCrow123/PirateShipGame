@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://6ebljhrp06hw"]
+
+[ext_resource type="Script" uid="uid://bgw01ft1rdw0c" path="res://scripts/cannonball.gd" id="1_cannonball"]
+[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 3.0
+
+[node name="Cannonball" type="Area2D" unique_id=1013208636]
+z_index = 3
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_cannonball")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=956281406]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(29, 943, 29, 20)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1497841811]
+shape = SubResource("CircleShape2D_hit")
