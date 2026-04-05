@@ -24,6 +24,11 @@ var _capturing: bool = false
 
 
 func _ready() -> void:
+	# Override project display settings — the game uses 640x360 viewport
+	# which is too small for a tool UI. Render at native window resolution.
+	get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+	get_window().size = Vector2i(1280, 720)
+
 	assert(_vertical_emitter != null, "VerticalEmitter node not found")
 	assert(_horizontal_emitter != null, "HorizontalEmitter node not found")
 	assert(_sub_viewport != null, "SubViewport node not found")
