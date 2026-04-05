@@ -28,4 +28,4 @@ func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	var ball: Cannonball = CannonballScene.instantiate()
 	add_child(ball)
 	ball.setup(pos, dir)
-	ExplosionEffect.create(self, pos, 0.4)  # Muzzle flash
+	ExplosionEffect.create(self, pos)

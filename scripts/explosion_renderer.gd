@@ -5,19 +5,23 @@ const FRAME_COUNT: int = 16
 const FRAME_SIZE: int = 32
 const WARMUP_DELAY: float = 0.05
 const OUTPUT_PATH: String = "res://textures/explosion_strip.png"
+const MODEL_SCENE_PATH: String = "res://scenes/explosion_model.tscn"
 
 var _material: ShaderMaterial
 var _capturing: bool = false
 var _vert_process_mat: ParticleProcessMaterial
 var _horiz_process_mat: ParticleProcessMaterial
 
-@onready var _vertical_emitter: GPUParticles3D = %VerticalEmitter
-@onready var _horizontal_emitter: GPUParticles3D = %HorizontalEmitter
-@onready var _sub_viewport: SubViewport = %SubViewport
-@onready var _camera: Camera3D = %Camera3D
+@onready var _model: SubViewport = $HBoxContainer/SubViewportContainer/ExplosionModel
+@onready
+var _vertical_emitter: GPUParticles3D = $HBoxContainer/SubViewportContainer/ExplosionModel/VerticalEmitter
+@onready
+var _horizontal_emitter: GPUParticles3D = $HBoxContainer/SubViewportContainer/ExplosionModel/HorizontalEmitter
+@onready var _camera: Camera3D = $HBoxContainer/SubViewportContainer/ExplosionModel/Camera3D
 @onready var _status_label: Label = %StatusLabel
 @onready var _play_button: Button = %PlayButton
 @onready var _capture_button: Button = %CaptureButton
+@onready var _save_model_button: Button = %SaveModelButton
 @onready var _dark_color_picker: ColorPickerButton = %DarkColorPicker
 @onready var _fire_color_picker: ColorPickerButton = %FireColorPicker
 @onready var _emission_slider: HSlider = %EmissionSlider
@@ -43,13 +47,14 @@ func _ready() -> void:
 	get_window().size = Vector2i(1280, 720)
 	RenderingServer.set_default_clear_color(Color.WHITE)
 
+	assert(_model != null, "ExplosionModel not found")
 	assert(_vertical_emitter != null, "VerticalEmitter node not found")
 	assert(_horizontal_emitter != null, "HorizontalEmitter node not found")
-	assert(_sub_viewport != null, "SubViewport node not found")
 	assert(_camera != null, "Camera3D node not found")
 	assert(_status_label != null, "StatusLabel node not found")
 	assert(_play_button != null, "PlayButton node not found")
 	assert(_capture_button != null, "CaptureButton node not found")
+	assert(_save_model_button != null, "SaveModelButton node not found")
 
 	# Add WorldEnvironment with glow to the SubViewport (created in code
 	# because Godot strips it from .tscn on re-save).
@@ -62,7 +67,7 @@ func _ready() -> void:
 	env.glow_bloom = 0.3
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
-	_sub_viewport.add_child(world_env)
+	_model.add_child(world_env)
 
 	# Override particle lifetime in code (Godot reverts .tscn edits on re-save)
 	_vertical_emitter.lifetime = 1.2
@@ -104,6 +109,7 @@ func _ready() -> void:
 	# Connect UI signals
 	_play_button.pressed.connect(_on_play_pressed)
 	_capture_button.pressed.connect(_on_capture_pressed)
+	_save_model_button.pressed.connect(_on_save_model_pressed)
 	_dark_color_picker.color_changed.connect(_on_dark_color_changed)
 	_fire_color_picker.color_changed.connect(_on_fire_color_changed)
 	_emission_slider.value_changed.connect(_on_emission_changed)
@@ -157,6 +163,7 @@ func _play_explosion() -> void:
 func _set_controls_enabled(enabled: bool) -> void:
 	_play_button.disabled = not enabled
 	_capture_button.disabled = not enabled
+	_save_model_button.disabled = not enabled
 	_dark_color_picker.disabled = not enabled
 	_fire_color_picker.disabled = not enabled
 	_smoothstep_slider.editable = enabled
@@ -168,6 +175,54 @@ func _set_controls_enabled(enabled: bool) -> void:
 	_vert_spread_slider.editable = enabled
 	_horiz_velocity_slider.editable = enabled
 	_horiz_damping_slider.editable = enabled
+
+
+# --- Save model ---
+
+
+func _on_save_model_pressed() -> void:
+	if _capturing:
+		return
+	# Load a fresh instance, apply current slider values, and save.
+	# This avoids saving runtime-only state (duplicated materials, color ramps, etc).
+	var source: PackedScene = load(MODEL_SCENE_PATH) as PackedScene
+	var fresh: SubViewport = source.instantiate() as SubViewport
+
+	var vert: GPUParticles3D = fresh.get_node("VerticalEmitter") as GPUParticles3D
+	var horiz: GPUParticles3D = fresh.get_node("HorizontalEmitter") as GPUParticles3D
+	var cam: Camera3D = fresh.get_node("Camera3D") as Camera3D
+
+	# Apply particle params from sliders
+	var vert_pm: ParticleProcessMaterial = vert.process_material as ParticleProcessMaterial
+	vert_pm.initial_velocity_min = _vert_velocity_slider.value * 0.6
+	vert_pm.initial_velocity_max = _vert_velocity_slider.value
+	vert_pm.damping_min = _vert_damping_slider.value * 0.6
+	vert_pm.damping_max = _vert_damping_slider.value
+	vert_pm.spread = _vert_spread_slider.value
+
+	var horiz_pm: ParticleProcessMaterial = horiz.process_material as ParticleProcessMaterial
+	horiz_pm.initial_velocity_min = _horiz_velocity_slider.value * 0.5
+	horiz_pm.initial_velocity_max = _horiz_velocity_slider.value
+	horiz_pm.damping_min = _horiz_damping_slider.value * 0.6
+	horiz_pm.damping_max = _horiz_damping_slider.value
+
+	# Apply camera transform
+	cam.transform = _camera.transform
+
+	var packed := PackedScene.new()
+	var pack_err: Error = packed.pack(fresh)
+	if pack_err != OK:
+		_status_label.text = "Pack error: %s" % error_string(pack_err)
+		fresh.free()
+		return
+
+	var save_err: Error = ResourceSaver.save(packed, MODEL_SCENE_PATH)
+	fresh.free()
+
+	if save_err == OK:
+		_status_label.text = "Model saved!"
+	else:
+		_status_label.text = "Save error: %s" % error_string(save_err)
 
 
 # --- Signal callbacks ---
@@ -208,10 +263,10 @@ func _on_capture_pressed() -> void:
 
 	for i: int in FRAME_COUNT:
 		await RenderingServer.frame_post_draw
-		if not is_instance_valid(_sub_viewport):
+		if not is_instance_valid(_model):
 			_capturing = false
 			return
-		var img: Image = _sub_viewport.get_texture().get_image()
+		var img: Image = _model.get_texture().get_image()
 		# SubViewportContainer stretch resizes the viewport; resize to output size
 		if img.get_width() != FRAME_SIZE or img.get_height() != FRAME_SIZE:
 			img.resize(FRAME_SIZE, FRAME_SIZE, Image.INTERPOLATE_NEAREST)

@@ -6,13 +6,14 @@ extends Node2D
 const LIFETIME: float = 1.2
 const ExplosionScene: PackedScene = preload("res://scenes/explosion_effect.tscn")
 
-@onready var _sub_viewport: SubViewport = %SubViewport
-@onready var _vertical_emitter: GPUParticles3D = %VerticalEmitter
-@onready var _horizontal_emitter: GPUParticles3D = %HorizontalEmitter
+@onready var _model: SubViewport = $SubViewportContainer/ExplosionModel
+@onready var _vertical_emitter: GPUParticles3D = $SubViewportContainer/ExplosionModel/VerticalEmitter
+@onready
+var _horizontal_emitter: GPUParticles3D = $SubViewportContainer/ExplosionModel/HorizontalEmitter
 
 
 func _ready() -> void:
-	assert(_sub_viewport != null, "SubViewport not found")
+	assert(_model != null, "ExplosionModel not found")
 	assert(_vertical_emitter != null, "VerticalEmitter not found")
 	assert(_horizontal_emitter != null, "HorizontalEmitter not found")
 
@@ -26,7 +27,7 @@ func _ready() -> void:
 	env.glow_bloom = 0.3
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
-	_sub_viewport.add_child(world_env)
+	_model.add_child(world_env)
 
 	# Override lifetime
 	_vertical_emitter.lifetime = LIFETIME
@@ -79,12 +80,10 @@ func _ready() -> void:
 
 
 ## Convenience factory: spawns an explosion at the given world position.
-## scale_factor controls the size (0.4 = small muzzle flash, 1.0 = full impact).
-static func create(parent: Node, pos: Vector2, scale_factor: float = 1.0) -> ExplosionEffect:
+static func create(parent: Node, pos: Vector2) -> ExplosionEffect:
 	var effect: ExplosionEffect = ExplosionScene.instantiate() as ExplosionEffect
 	parent.add_child(effect)
 	effect.global_position = pos
-	effect.scale = Vector2.ONE * scale_factor
 	return effect
 
 
