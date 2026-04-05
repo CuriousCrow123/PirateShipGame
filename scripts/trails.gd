@@ -7,7 +7,7 @@ extends Line2D
 ## top-left (0,0) but we want the trail centered, so we shift by half the
 ## viewport size.
 
-@export var max_length: int = 130
+@export var max_length: int = 300
 @export var sub_viewport: SubViewport
 @export var follow_target: Node2D  ## Node whose position drives the trail
 @export var distance_at_largest_width: float = 16.0 * 6.0
