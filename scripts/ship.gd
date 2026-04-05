@@ -17,7 +17,7 @@ func _physics_process(delta: float) -> void:
 	var is_braking: bool = Input.is_action_pressed("move_back")
 
 	if not is_braking and Input.is_action_pressed("move_forward"):
-		velocity += -transform.y * thrust * delta
+		velocity += transform.y * thrust * delta
 
 	if is_braking:
 		velocity = velocity.move_toward(Vector2.ZERO, brake_decel * delta)
