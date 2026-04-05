@@ -1,57 +1,58 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode unshaded, cull_disabled, blend_mix;
 
 // --- Noise ---
 uniform sampler2D NoiseTexture : hint_default_white, filter_linear;
+uniform float NoiseStrength : hint_range(0.0, 1.0) = 0.3;
 
 // --- Colours ---
-uniform vec3 DarkColour : source_color = vec3(0.3, 0.3, 0.3);
+uniform vec3 DarkColour : source_color = vec3(0.2, 0.15, 0.1);
 uniform vec3 FireColour : source_color = vec3(1.0, 0.5, 0.0);
 
 // --- Dissolve control ---
-uniform float SmoothStepEdge : hint_range(0.0, 1.0) = 0.0;
-uniform float BrightDissolveScale : hint_range(0.5, 2.0) = 1.2;
-uniform float DarkDissolveScale : hint_range(0.5, 2.0) = 0.8;
+uniform float DissolveSoftness : hint_range(0.01, 0.5) = 0.15;
+uniform float DissolveSpeed : hint_range(0.5, 3.0) = 1.5;
 
-// --- Fresnel ---
-uniform float FresnelPowerBright : hint_range(0.0, 8.0) = 1.0;
-uniform float FresnelPowerDark : hint_range(0.0, 8.0) = 0.5;
+// --- Emission / Glow ---
+uniform float EmissionIntensity : hint_range(0.0, 10.0) = 4.0;
+uniform float EdgeGlowWidth : hint_range(0.01, 0.3) = 0.08;
 
 // INSTANCE_CUSTOM is only available in vertex(); pass to fragment() via varying.
+// COLOR carries the color_ramp from ParticleProcessMaterial.
 varying float dissolve_progress;
-
-float fresnel(float power, vec3 normal, vec3 view) {
-	return pow(1.0 - clamp(dot(normalize(normal), normalize(view)), 0.0, 1.0), power);
-}
+varying vec4 particle_color;
 
 void vertex() {
-	// ParticleProcessMaterial sets INSTANCE_CUSTOM.y to normalized lifetime (0→1).
 	dissolve_progress = INSTANCE_CUSTOM.y;
+	particle_color = COLOR;
 }
 
 void fragment() {
+	// --- Radial gradient: 0 at center, 1 at edges ---
+	float radial = length(UV - vec2(0.5)) * 2.0;
+
+	// --- Noise adds organic breakup to the dissolve ---
 	float noise_val = texture(NoiseTexture, UV).r;
+	float dissolve_mask = radial + noise_val * NoiseStrength;
 
-	// --- Dark layer (fresnel power 0.5, slower dissolve) ---
-	float dark_fresnel = fresnel(FresnelPowerDark, NORMAL, VIEW);
-	float dark_base = (1.0 - dark_fresnel) + noise_val;
-	float dark_dissolve = dissolve_progress * DarkDissolveScale * 2.0;
-	float dark_raw = dark_base - dark_dissolve;
-	float dark_mask = smoothstep(0.0, SmoothStepEdge, dark_raw);
+	// --- Dissolve threshold increases over lifetime ---
+	float threshold = dissolve_progress * DissolveSpeed;
 
-	// --- Bright layer (fresnel power 1.0, faster dissolve) ---
-	float bright_fresnel = fresnel(FresnelPowerBright, NORMAL, VIEW);
-	float bright_base = (1.0 - bright_fresnel) + noise_val;
-	float bright_dissolve = dissolve_progress * BrightDissolveScale * 2.0;
-	float bright_raw = bright_base - bright_dissolve;
-	float bright_mask = smoothstep(0.0, SmoothStepEdge, bright_raw);
+	// --- Soft alpha: feathered edge instead of hard scissor ---
+	float alpha = 1.0 - smoothstep(threshold - DissolveSoftness, threshold + DissolveSoftness, dissolve_mask);
 
-	// --- Combine layers ---
-	// Tutorial: dark_mask controls alpha (defines silhouette).
-	// Bright layer adds fire colour within the dark layer's shape.
-	vec3 color = dark_mask * DarkColour + bright_mask * FireColour;
+	// --- Edge glow: bright band at the dissolve front ---
+	float edge = smoothstep(threshold - EdgeGlowWidth, threshold, dissolve_mask)
+	           * (1.0 - smoothstep(threshold, threshold + EdgeGlowWidth, dissolve_mask));
+
+	// --- Initial flash: blinding at start, fades by 30% lifetime ---
+	float flash = pow(max(1.0 - dissolve_progress * 3.0, 0.0), 2.0);
+
+	// --- Combine: particle_color carries the color_ramp lifecycle ---
+	vec3 base_color = particle_color.rgb;
+	vec3 color = base_color + edge * FireColour * 2.0 + flash * vec3(1.0);
 
 	ALBEDO = color;
-	ALPHA = dark_mask;
-	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	EMISSION = (edge * FireColour + flash * vec3(1.0, 0.9, 0.7)) * EmissionIntensity;
+	ALPHA = alpha * particle_color.a;
 }
