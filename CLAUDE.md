@@ -7,7 +7,7 @@
 
 ## Display Settings
 
-- Viewport: 320x180 (pixel art native resolution)
+- Viewport: 1280x720 (pixel art native resolution)
 - Window: 1280x720
 - Stretch mode: `viewport`, aspect: `keep`, scale: `integer`
 - Default texture filter: `Nearest`
