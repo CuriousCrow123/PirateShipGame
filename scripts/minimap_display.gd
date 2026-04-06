@@ -1,3 +1,4 @@
+class_name MinimapDisplay
 extends Control
 ## Circular radar HUD showing nearby entities relative to the player ship.
 ## Uses _draw() for lightweight rendering — no SubViewport needed.
@@ -57,15 +58,10 @@ func setup(player: CharacterBody2D) -> void:
 
 
 func _draw_group_entities(group_name: StringName, color: Color) -> void:
-	for node: Node in get_tree().get_nodes_in_group(group_name):
-		if not is_instance_valid(node) or node.is_queued_for_deletion():
+	for node: Node2D in get_tree().get_nodes_in_group(group_name):
+		if node is EnemyShip and node.is_destroyed():
 			continue
-		var entity := node as Node2D
-		if entity == null:
-			continue
-		if entity is EnemyShip and entity._is_destroyed:
-			continue
-		_draw_entity_dot(entity, color)
+		_draw_entity_dot(node, color)
 
 
 func _draw_entity_dot(entity: Node2D, color: Color) -> void:

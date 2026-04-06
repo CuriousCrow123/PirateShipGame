@@ -37,6 +37,10 @@ func _ready() -> void:
 	add_to_group("enemy_ships")
 
 
+func is_destroyed() -> bool:
+	return _is_destroyed
+
+
 func setup(target: Node2D) -> void:
 	_target = target
 

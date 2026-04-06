@@ -19,12 +19,14 @@ var _wake_distance: float = 0.0
 var _last_wake_pos: Vector2 = Vector2.ZERO
 
 @onready var _ship: CharacterBody2D = $Ship
+@onready var _minimap_display: MinimapDisplay = $Minimap/MinimapDisplay
 @onready var _displacement_vp: SubViewport = $DisplacementViewport/SubViewport
 @onready var _displacement_stamps: Node2D = $DisplacementViewport/SubViewport/Stamps
 
 
 func _ready() -> void:
 	assert(_ship != null, "Main: Ship node is missing")
+	assert(_minimap_display != null, "Main: MinimapDisplay node not found")
 	assert(_displacement_vp != null, "Main: DisplacementViewport/SubViewport not found")
 	assert(_displacement_stamps != null, "Main: Stamps node not found")
 
@@ -41,7 +43,7 @@ func _ready() -> void:
 	_last_wake_pos = _ship.global_position
 	_ship.cannon_fired.connect(_on_cannon_fired)
 	_ship.mine_dropped.connect(_on_mine_dropped)
-	$Minimap/MinimapDisplay.setup(_ship)
+	_minimap_display.setup(_ship)
 
 
 func _process(_delta: float) -> void:
@@ -148,7 +150,7 @@ func _on_enemy_tree_exiting(enemy: EnemyShip) -> void:
 
 func _despawn_distant_enemies() -> void:
 	for enemy: EnemyShip in _enemies.duplicate():
-		if enemy._is_destroyed:
+		if enemy.is_destroyed():
 			continue
 		if enemy.global_position.distance_to(_ship.global_position) > despawn_distance:
 			_enemies.erase(enemy)
