@@ -5,6 +5,7 @@ extends Node2D
 
 const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
 const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
+const SeaMineScene: PackedScene = preload("res://scenes/sea_mine.tscn")
 
 @export var max_enemies: int = 4
 @export var spawn_interval: float = 8.0
@@ -12,6 +13,7 @@ const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
 @export var despawn_distance: float = 1000.0
 
 var _enemies: Array[EnemyShip] = []
+var _mines: Array[SeaMine] = []
 var _spawn_timer: float = 2.0
 
 @onready var _ship: CharacterBody2D = $Ship
@@ -21,6 +23,7 @@ func _ready() -> void:
 	assert(_ship != null, "Main: Ship node is missing")
 	$WaterTrail/TrailSprite.texture = $WaterTrail/SubViewport.get_texture()
 	_ship.cannon_fired.connect(_on_cannon_fired)
+	_ship.mine_dropped.connect(_on_mine_dropped)
 
 
 func _process(_delta: float) -> void:
@@ -47,9 +50,34 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	var ball: Cannonball = CannonballScene.instantiate()
+	ball.water_impacted.connect(_on_cannonball_water_impacted)
 	add_child(ball)
 	ball.setup(pos, dir)
 	ExplosionEffect.create(self, pos, dir, 0, 0.25, 100, _ship.velocity * 0.75)
+
+
+func _on_cannonball_water_impacted(impact_pos: Vector2) -> void:
+	for mine: SeaMine in _mines.duplicate():
+		mine.check_water_impact(impact_pos)
+
+
+func _on_mine_dropped(pos: Vector2) -> void:
+	var mine: SeaMine = SeaMineScene.instantiate()
+	mine.destroyed.connect(_on_mine_destroyed)
+	mine.tree_exiting.connect(_on_mine_tree_exiting.bind(mine))
+	add_child(mine)
+	mine.global_position = pos
+	mine.reset_physics_interpolation()
+	mine.setup()
+	_mines.append(mine)
+
+
+func _on_mine_destroyed(_mine: SeaMine) -> void:
+	_mines.erase(_mine)
+
+
+func _on_mine_tree_exiting(mine: SeaMine) -> void:
+	_mines.erase(mine)
 
 
 func _try_spawn_enemy() -> void:

@@ -3,6 +3,8 @@ extends Area2D
 ## Projectile fired from a cannon. Travels a randomized distance
 ## then impacts with an explosion effect. Detects enemy ship collisions.
 
+signal water_impacted(pos: Vector2)
+
 @export var speed: float = 200.0
 @export var max_range: float = 150.0
 @export var range_randomness: float = 0.3
@@ -51,5 +53,6 @@ func _impact() -> void:
 	if _impacted:
 		return
 	_impacted = true
+	water_impacted.emit(global_position)
 	ExplosionEffect.create(get_parent(), global_position, _direction, 45.0, 1.0, 15.0)
 	queue_free()

@@ -5,6 +5,7 @@ extends CharacterBody2D
 ## Broadside cannons fire perpendicular to the ship (Q = port, E = starboard).
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
+signal mine_dropped(pos: Vector2)
 
 @export var config: ShipConfig
 @export var thrust: float = 80.0
@@ -12,9 +13,11 @@ signal cannon_fired(pos: Vector2, dir: Vector2)
 @export var linear_drag: float = 0.97
 @export var brake_decel: float = 120.0
 @export var broadside_cooldown: float = 0.5
+@export var mine_cooldown: float = 2.5
 
 var _port_ready: bool = true
 var _starboard_ready: bool = true
+var _mine_ready: bool = true
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -60,6 +63,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_broadside("port")
 	elif event.is_action_pressed("fire_starboard") and _starboard_ready:
 		_fire_broadside("starboard")
+	elif event.is_action_pressed("drop_mine") and _mine_ready:
+		_drop_mine()
 
 
 ## Applies a new ship configuration, updating sprites and cannon slots.
@@ -104,3 +109,9 @@ func _fire_broadside(side: String) -> void:
 		get_tree().create_timer(broadside_cooldown).timeout.connect(
 			func() -> void: _starboard_ready = true
 		)
+
+
+func _drop_mine() -> void:
+	mine_dropped.emit(global_position)
+	_mine_ready = false
+	get_tree().create_timer(mine_cooldown).timeout.connect(func() -> void: _mine_ready = true)
