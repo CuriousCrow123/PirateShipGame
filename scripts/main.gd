@@ -14,16 +14,19 @@ const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
 var _enemies: Array[EnemyShip] = []
 var _spawn_timer: float = 2.0
 
+@onready var _ship: CharacterBody2D = $Ship
+
 
 func _ready() -> void:
+	assert(_ship != null, "Main: Ship node is missing")
 	$WaterTrail/TrailSprite.texture = $WaterTrail/SubViewport.get_texture()
-	$Ship.cannon_fired.connect(_on_cannon_fired)
+	_ship.cannon_fired.connect(_on_cannon_fired)
 
 
 func _process(_delta: float) -> void:
 	# WaterTrail must follow ship position (not rotation) so trails.gd's
 	# to_local() produces axis-aligned SubViewport coordinates.
-	$WaterTrail.global_position = $Ship.global_position
+	$WaterTrail.global_position = _ship.global_position
 
 
 func _physics_process(delta: float) -> void:
@@ -46,14 +49,14 @@ func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	var ball: Cannonball = CannonballScene.instantiate()
 	add_child(ball)
 	ball.setup(pos, dir)
-	ExplosionEffect.create(self, pos, dir, 0, 0.25, 100, $Ship.velocity * 0.75)
+	ExplosionEffect.create(self, pos, dir, 0, 0.25, 100, _ship.velocity * 0.75)
 
 
 func _try_spawn_enemy() -> void:
 	if _enemies.size() >= max_enemies:
 		return
 	var angle: float = randf() * TAU
-	var spawn_pos: Vector2 = $Ship.global_position + Vector2.from_angle(angle) * spawn_distance
+	var spawn_pos: Vector2 = _ship.global_position + Vector2.from_angle(angle) * spawn_distance
 	var enemy: EnemyShip = EnemyShipScene.instantiate()
 	enemy.rotation = randf() * TAU
 	enemy.destroyed.connect(_on_enemy_destroyed)
@@ -73,6 +76,8 @@ func _on_enemy_tree_exiting(enemy: EnemyShip) -> void:
 
 func _despawn_distant_enemies() -> void:
 	for enemy: EnemyShip in _enemies.duplicate():
-		if enemy.global_position.distance_to($Ship.global_position) > despawn_distance:
+		if enemy._is_destroyed:
+			continue
+		if enemy.global_position.distance_to(_ship.global_position) > despawn_distance:
 			_enemies.erase(enemy)
 			enemy.queue_free()

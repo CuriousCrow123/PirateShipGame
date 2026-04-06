@@ -32,7 +32,7 @@ func _physics_process(delta: float) -> void:
 	global_position += _direction * step
 	_distance_traveled += step
 	if _distance_traveled >= _target_distance:
-		_on_impact()
+		_impact()
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -47,7 +47,7 @@ func _on_body_entered(body: Node2D) -> void:
 		queue_free()
 
 
-func _on_impact() -> void:
+func _impact() -> void:
 	if _impacted:
 		return
 	_impacted = true

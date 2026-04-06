@@ -41,7 +41,7 @@ func _physics_process(delta: float) -> void:
 
 
 func take_damage(_from_direction: Vector2) -> void:
-	if _is_destroyed:
+	if _is_destroyed or is_queued_for_deletion():
 		return
 	_health -= 1
 	if _health <= 0:
