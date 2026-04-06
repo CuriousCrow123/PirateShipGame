@@ -34,6 +34,7 @@ func _ready() -> void:
 	_health = max_health
 	_original_hull_pos = _hull_sprite.position
 	_randomize_appearance()
+	add_to_group("enemy_ships")
 
 
 func setup(target: Node2D) -> void:

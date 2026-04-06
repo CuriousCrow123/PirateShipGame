@@ -41,6 +41,7 @@ func _ready() -> void:
 	_last_wake_pos = _ship.global_position
 	_ship.cannon_fired.connect(_on_cannon_fired)
 	_ship.mine_dropped.connect(_on_mine_dropped)
+	$Minimap/MinimapDisplay.setup(_ship)
 
 
 func _process(_delta: float) -> void:
