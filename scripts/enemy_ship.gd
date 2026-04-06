@@ -75,7 +75,7 @@ func _destroy() -> void:
 	_collision_shape.set_deferred("disabled", true)
 	# Large destruction explosion — parented to get_parent() (Main) so it
 	# survives this node's queue_free
-	ExplosionEffect.create(get_parent(), global_position, Vector2.UP, 360, 1.5, 80.0, velocity)
+	ExplosionEffect.create(get_parent(), global_position, Vector2.UP, 360, 1.0, 55.0, velocity)
 	destroyed.emit(self)
 	# Fade out then remove
 	var tween: Tween = create_tween()
