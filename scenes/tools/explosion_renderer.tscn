@@ -50,27 +50,15 @@ unique_name_in_owner = true
 layout_mode = 2
 color = Color(1, 0.5, 0, 1)
 
-[node name="LabelEmission" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=524050750]
+[node name="LabelSmoothStep" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1696435611]
 layout_mode = 2
-text = "Emission Intensity"
+text = "Smooth Step Edge"
 
-[node name="EmissionSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1400991075]
+[node name="SmoothStepSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=80295636]
 unique_name_in_owner = true
 layout_mode = 2
-max_value = 10.0
-step = 0.1
-value = 3.0
-
-[node name="LabelSmoothStep" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1139954264]
-layout_mode = 2
-text = "Dissolve Softness"
-
-[node name="SmoothStepSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1436304214]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 0.5
+max_value = 1.0
 step = 0.01
-value = 0.15
 
 [node name="LabelSpeed" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1844310527]
 layout_mode = 2
@@ -84,28 +72,29 @@ max_value = 3.0
 step = 0.1
 value = 1.0
 
-[node name="LabelBrightDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1890775754]
+[node name="LabelBrightDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=807063939]
 layout_mode = 2
-text = "Dissolve Speed"
+text = "Bright Dissolve Scale"
 
-[node name="BrightDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=752591046]
+[node name="BrightDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1908960855]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.5
-max_value = 3.0
+max_value = 2.0
 step = 0.01
-value = 1.5
+value = 1.2
 
-[node name="LabelDarkDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=2008949812]
+[node name="LabelDarkDissolve" type="Label" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=1498993978]
 layout_mode = 2
-text = "Edge Glow Width"
+text = "Dark Dissolve Scale"
 
-[node name="DarkDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=972556528]
+[node name="DarkDissolveSlider" type="HSlider" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=24456054]
 unique_name_in_owner = true
 layout_mode = 2
-max_value = 0.3
+min_value = 0.5
+max_value = 2.0
 step = 0.01
-value = 0.08
+value = 0.8
 
 [node name="Separator1" type="HSeparator" parent="HBoxContainer/PanelContainer/ScrollContainer/VBoxContainer" unique_id=112529501]
 layout_mode = 2

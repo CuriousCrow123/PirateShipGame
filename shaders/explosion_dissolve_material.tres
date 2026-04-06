@@ -1,11 +1,11 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://14mjfyewwpkm"]
 
-[ext_resource type="Shader" uid="uid://r76nopbnxfdb" path="res://shaders/explosion_dissolve.gdshader" id="1_shader"]
+[ext_resource type="Shader" uid="uid://dxj2puikrrs77" path="res://shaders/explosion_dissolve.gdshader" id="1_shader"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_dissolve"]
-noise_type = 0
-frequency = 0.008
-fractal_octaves = 1
+noise_type = 3
+frequency = 0.05
+fractal_octaves = 3
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_dissolve"]
 generate_mipmaps = false
@@ -16,10 +16,10 @@ seamless = true
 render_priority = 0
 shader = ExtResource("1_shader")
 shader_parameter/NoiseTexture = SubResource("NoiseTexture2D_dissolve")
-shader_parameter/NoiseStrength = 0.3
-shader_parameter/DarkColour = Color(0.2, 0.15, 0.1, 1)
+shader_parameter/DarkColour = Color(0.3, 0.3, 0.3, 1)
 shader_parameter/FireColour = Color(1, 0.5, 0, 1)
-shader_parameter/DissolveSoftness = 0.15
-shader_parameter/DissolveSpeed = 1.5
-shader_parameter/EmissionIntensity = 4.0
-shader_parameter/EdgeGlowWidth = 0.08
+shader_parameter/SmoothStepEdge = 0.0
+shader_parameter/BrightDissolveScale = 1.2
+shader_parameter/DarkDissolveScale = 0.8
+shader_parameter/FresnelPowerBright = 1.0
+shader_parameter/FresnelPowerDark = 0.5

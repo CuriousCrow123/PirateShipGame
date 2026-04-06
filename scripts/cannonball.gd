@@ -29,5 +29,5 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_impact() -> void:
-	ExplosionEffect.create(get_parent(), global_position)
+	ExplosionEffect.create(get_parent(), global_position, _direction)
 	queue_free()

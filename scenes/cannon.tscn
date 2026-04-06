@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://bbdtkmcxp17m2"]
+[gd_scene format=3 uid="uid://crkk3p72st73n"]
 
-[ext_resource type="Script" uid="uid://cifh21m4lb6ml" path="res://scripts/cannon.gd" id="1_cannon"]
+[ext_resource type="Script" path="res://scripts/cannon.gd" id="1_cannon"]
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
 
 [node name="Cannon" type="Node2D" unique_id=553273077]
@@ -13,4 +13,4 @@ region_enabled = true
 region_rect = Rect2(58, 943, 29, 20)
 
 [node name="Muzzle" type="Marker2D" parent="." unique_id=921227324]
-position = Vector2(4, 0)
+position = Vector2(12, 0)

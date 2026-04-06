@@ -24,7 +24,6 @@ var _horizontal_emitter: GPUParticles3D = $HBoxContainer/SubViewportContainer/Ex
 @onready var _save_model_button: Button = %SaveModelButton
 @onready var _dark_color_picker: ColorPickerButton = %DarkColorPicker
 @onready var _fire_color_picker: ColorPickerButton = %FireColorPicker
-@onready var _emission_slider: HSlider = %EmissionSlider
 @onready var _smoothstep_slider: HSlider = %SmoothStepSlider
 @onready var _speed_slider: HSlider = %SpeedSlider
 @onready var _bright_dissolve_slider: HSlider = %BrightDissolveSlider
@@ -95,12 +94,12 @@ func _ready() -> void:
 	_horiz_process_mat.scale_curve = scale_curve
 
 	# Turbulence for organic motion
-	_vert_process_mat.turbulence_enabled = true
+	_vert_process_mat.turbulence_enabled = false
 	_vert_process_mat.turbulence_noise_strength = 3.0
 	_vert_process_mat.turbulence_noise_scale = 6.0
 	_vert_process_mat.turbulence_influence_min = 0.1
 	_vert_process_mat.turbulence_influence_max = 0.25
-	_horiz_process_mat.turbulence_enabled = true
+	_horiz_process_mat.turbulence_enabled = false
 	_horiz_process_mat.turbulence_noise_strength = 3.0
 	_horiz_process_mat.turbulence_noise_scale = 6.0
 	_horiz_process_mat.turbulence_influence_min = 0.1
@@ -112,7 +111,6 @@ func _ready() -> void:
 	_save_model_button.pressed.connect(_on_save_model_pressed)
 	_dark_color_picker.color_changed.connect(_on_dark_color_changed)
 	_fire_color_picker.color_changed.connect(_on_fire_color_changed)
-	_emission_slider.value_changed.connect(_on_emission_changed)
 	_smoothstep_slider.value_changed.connect(_on_smoothstep_changed)
 	_speed_slider.value_changed.connect(_on_speed_changed)
 	_bright_dissolve_slider.value_changed.connect(_on_bright_dissolve_changed)
@@ -252,7 +250,7 @@ func _on_capture_pressed() -> void:
 
 	# Restart explosion for capture
 	_play_explosion()
-	_loop_timer.stop()  # Don't loop during capture
+	_loop_timer.stop() # Don't loop during capture
 
 	# Wait warmup for GPU particle latency
 	await get_tree().create_timer(WARMUP_DELAY).timeout
@@ -275,7 +273,7 @@ func _on_capture_pressed() -> void:
 
 		# Wait remaining interval before next frame
 		if i < FRAME_COUNT - 1:
-			var wait_time: float = interval - (1.0 / 60.0)  # subtract approx frame time
+			var wait_time: float = interval - (1.0 / 60.0) # subtract approx frame time
 			if wait_time > 0.0:
 				await get_tree().create_timer(wait_time).timeout
 
@@ -288,7 +286,7 @@ func _on_capture_pressed() -> void:
 	_capture_button.text = "Capture"
 	_set_controls_enabled(true)
 	_capturing = false
-	_loop_timer.start()  # Resume looping
+	_loop_timer.start() # Resume looping
 
 
 func _on_dark_color_changed(color: Color) -> void:
@@ -303,16 +301,10 @@ func _on_fire_color_changed(color: Color) -> void:
 	_material.set_shader_parameter("FireColour", Vector3(color.r, color.g, color.b))
 
 
-func _on_emission_changed(value: float) -> void:
-	if _capturing:
-		return
-	_material.set_shader_parameter("EmissionIntensity", value)
-
-
 func _on_smoothstep_changed(value: float) -> void:
 	if _capturing:
 		return
-	_material.set_shader_parameter("DissolveSoftness", value)
+	_material.set_shader_parameter("SmoothStepEdge", value)
 
 
 func _on_speed_changed(value: float) -> void:
@@ -325,13 +317,13 @@ func _on_speed_changed(value: float) -> void:
 func _on_bright_dissolve_changed(value: float) -> void:
 	if _capturing:
 		return
-	_material.set_shader_parameter("DissolveSpeed", value)
+	_material.set_shader_parameter("BrightDissolveScale", value)
 
 
 func _on_dark_dissolve_changed(value: float) -> void:
 	if _capturing:
 		return
-	_material.set_shader_parameter("EdgeGlowWidth", value)
+	_material.set_shader_parameter("DarkDissolveScale", value)
 
 
 func _on_vert_velocity_changed(value: float) -> void:
@@ -396,12 +388,12 @@ static func _create_explosion_color_ramp() -> GradientTexture1D:
 	gradient.offsets = PackedFloat32Array([0.0, 0.1, 0.3, 0.55, 0.8, 1.0])
 	gradient.colors = PackedColorArray(
 		[
-			Color(1.0, 1.0, 0.95, 1.0),  # White flash
-			Color(1.0, 0.85, 0.3, 1.0),  # Bright yellow
-			Color(1.0, 0.45, 0.05, 1.0),  # Orange fire
-			Color(0.5, 0.12, 0.0, 0.9),  # Dark red
-			Color(0.2, 0.15, 0.1, 0.5),  # Smoke
-			Color(0.1, 0.08, 0.05, 0.0),  # Fade out
+			Color(1.0, 1.0, 0.95, 1.0), # White flash
+			Color(1.0, 0.85, 0.3, 1.0), # Bright yellow
+			Color(1.0, 0.45, 0.05, 1.0), # Orange fire
+			Color(0.5, 0.12, 0.0, 0.9), # Dark red
+			Color(0.2, 0.15, 0.1, 0.5), # Smoke
+			Color(0.1, 0.08, 0.05, 0.0), # Fade out
 		]
 	)
 	var tex := GradientTexture1D.new()
@@ -411,10 +403,10 @@ static func _create_explosion_color_ramp() -> GradientTexture1D:
 
 static func _create_explosion_scale_curve() -> CurveTexture:
 	var curve := Curve.new()
-	curve.add_point(Vector2(0.0, 0.1))  # Start small
-	curve.add_point(Vector2(0.15, 1.0))  # Quick grow
-	curve.add_point(Vector2(0.5, 0.7))  # Hold
-	curve.add_point(Vector2(1.0, 0.1))  # Shrink away
+	curve.add_point(Vector2(0.0, 0.1)) # Start small
+	curve.add_point(Vector2(0.15, 1.0)) # Quick grow
+	curve.add_point(Vector2(0.5, 0.7)) # Hold
+	curve.add_point(Vector2(1.0, 0.1)) # Shrink away
 	var tex := CurveTexture.new()
 	tex.curve = curve
 	return tex
