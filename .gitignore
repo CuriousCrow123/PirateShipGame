@@ -13,3 +13,4 @@ test/results/
 
 # Claude Code
 .claude/
+.mcp.json
