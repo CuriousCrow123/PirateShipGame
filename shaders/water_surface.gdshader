@@ -40,6 +40,13 @@ uniform sampler2D SpecularNoiseTextureMoving2 : source_color, filter_linear, rep
 uniform float SpecularThreshold = 0.15;
 uniform vec4 SpecularColour : source_color = vec4(1.0, 1.0, 1.0, 0.843137);
 
+// --- Displacement map (SubViewport ripple distortion) ---
+// filter_linear for smooth displacement (math input, not player-visible texture)
+uniform sampler2D DisplacementMap : filter_linear;
+uniform vec2 DisplacementOrigin = vec2(0.0);
+uniform float DisplacementViewportSize = 1024.0;
+uniform float DisplacementStrength : hint_range(0.0, 20.0) = 5.0;
+
 // --- Edge foam ---
 uniform vec4 FoamColour : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float FoamWaveSpeed : hint_range(0.0, 10.0) = 5.0;
@@ -61,12 +68,23 @@ void fragment() {
 	// floor() locks textures to world-space pixels so pattern doesn't swim with camera.
 	vec2 worldFloor = floor(var_WorldPos);
 
+	// --- 1b. Displacement map (ripple UV distortion) ---
+	vec2 disp_uv = (worldFloor - DisplacementOrigin + DisplacementViewportSize * 0.5)
+		/ DisplacementViewportSize;
+	float in_bounds = step(0.0, disp_uv.x) * step(disp_uv.x, 1.0)
+		* step(0.0, disp_uv.y) * step(disp_uv.y, 1.0);
+	vec2 displacement = (texture(DisplacementMap, disp_uv).rg - 0.5) * 2.0
+		* DisplacementStrength * in_bounds;
+	displacement = floor(displacement + 0.5);
+	// distortedWorldFloor warps caustics/specular; foam uses undisplaced worldFloor.
+	vec2 dWorldFloor = worldFloor + displacement;
+
 	// --- 2. Animated UV offset from noise ---
-	vec2 moveUV = worldFloor * MovementScale + vec2(TIME * MovementSpeed);
+	vec2 moveUV = dWorldFloor * MovementScale + vec2(TIME * MovementSpeed);
 	vec2 noiseOffset = texture(MovementNoise, moveUV).xy * MovementStrength;
 
 	// --- 3. Caustic texture sampling ---
-	vec2 causticUV = worldFloor * CausticTextureScale + noiseOffset;
+	vec2 causticUV = dWorldFloor * CausticTextureScale + noiseOffset;
 	vec4 causticResult = texture(CausticTexture, causticUV) * CausticColour;
 
 	// --- 4. Caustic highlight layer blended over base ---
@@ -74,13 +92,13 @@ void fragment() {
 	causticResult = mix(causticResult, highlight, vec4(highlight.a));
 
 	// --- 5. Random fade to prevent tiling repetition ---
-	vec2 fadeUV = worldFloor * RandomFadeScale + vec2(TIME * RandomFadeSpeed);
+	vec2 fadeUV = dWorldFloor * RandomFadeScale + vec2(TIME * RandomFadeSpeed);
 	float fadeNoise = texture(RandomFadeNoise, fadeUV).x;
 	float fadedAlpha = fadeNoise * RandomFadeStrength * causticResult.a;
 	vec4 fadedCaustic = vec4(causticResult.rgb, fadedAlpha);
 
 	// --- 6. Specular highlights ---
-	vec2 specBase = worldFloor * SpecularScaleMoving;
+	vec2 specBase = dWorldFloor * SpecularScaleMoving;
 	vec2 specTime = vec2(SpecularSpeed * TIME);
 	vec4 spec1 = texture(SpecularNoiseTextureMoving1, specBase - specTime);
 	vec4 spec2 = texture(SpecularNoiseTextureMoving2, specBase + specTime);

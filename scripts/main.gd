@@ -1,7 +1,7 @@
 extends Node2D
-## Scene root — wires the WaterTrail SubViewport texture, keeps the
-## trail node tracking the ship's position, spawns cannonballs, and
-## manages enemy ship spawning/despawning.
+## Scene root — wires the displacement SubViewport to the water shader,
+## keeps the displacement viewport tracking the ship, spawns cannonballs,
+## and manages enemy ship spawning/despawning.
 
 const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
 const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
@@ -15,21 +15,50 @@ const SeaMineScene: PackedScene = preload("res://scenes/sea_mine.tscn")
 var _enemies: Array[EnemyShip] = []
 var _mines: Array[SeaMine] = []
 var _spawn_timer: float = 2.0
+var _wake_distance: float = 0.0
+var _last_wake_pos: Vector2 = Vector2.ZERO
 
 @onready var _ship: CharacterBody2D = $Ship
+@onready var _displacement_vp: SubViewport = $DisplacementViewport/SubViewport
+@onready var _displacement_stamps: Node2D = $DisplacementViewport/SubViewport/Stamps
 
 
 func _ready() -> void:
 	assert(_ship != null, "Main: Ship node is missing")
-	$WaterTrail/TrailSprite.texture = $WaterTrail/SubViewport.get_texture()
+	assert(_displacement_vp != null, "Main: DisplacementViewport/SubViewport not found")
+	assert(_displacement_stamps != null, "Main: Stamps node not found")
+
+	# Wire displacement SubViewport texture to the shared water material.
+	# Intentionally shared: all water chunks use the same DisplacementMap.
+	# NOT duplicated — uniform updates propagate to every chunk simultaneously.
+	var water_mat: ShaderMaterial = $ChunkContainer.water_material as ShaderMaterial
+	water_mat.set_shader_parameter("DisplacementMap", _displacement_vp.get_texture())
+
+	_last_wake_pos = _ship.global_position
 	_ship.cannon_fired.connect(_on_cannon_fired)
 	_ship.mine_dropped.connect(_on_mine_dropped)
 
 
 func _process(_delta: float) -> void:
-	# WaterTrail must follow ship position (not rotation) so trails.gd's
-	# to_local() produces axis-aligned SubViewport coordinates.
-	$WaterTrail.global_position = _ship.global_position
+	# Displacement viewport follows ship position so stamps stay centered.
+	$DisplacementViewport.global_position = _ship.global_position
+
+	# Update the water shader's origin to match the ship position.
+	var water_mat: ShaderMaterial = $ChunkContainer.water_material as ShaderMaterial
+	water_mat.set_shader_parameter("DisplacementOrigin", _ship.global_position)
+
+	# Ship wake: spawn a stamp every ~8px of movement
+	_wake_distance += _ship.global_position.distance_to(_last_wake_pos)
+	_last_wake_pos = _ship.global_position
+	if _wake_distance >= 8.0 and _ship.velocity.length() > 5.0:
+		_wake_distance = 0.0
+		_displacement_stamps.spawn_wake(_ship.global_position)
+
+	# Mine idle bob displacement
+	for mine: SeaMine in _mines:
+		if mine._is_detonated:
+			continue
+		_displacement_stamps.spawn_bob(mine.global_position, mine.get_bob_phase())
 
 
 func _physics_process(delta: float) -> void:
@@ -57,6 +86,7 @@ func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 
 
 func _on_cannonball_water_impacted(impact_pos: Vector2) -> void:
+	_displacement_stamps.spawn_impact(impact_pos, 64.0, 2.0)
 	for mine: SeaMine in _mines.duplicate():
 		mine.check_water_impact(impact_pos)
 
@@ -72,8 +102,9 @@ func _on_mine_dropped(pos: Vector2) -> void:
 	_mines.append(mine)
 
 
-func _on_mine_destroyed(_mine: SeaMine) -> void:
-	_mines.erase(_mine)
+func _on_mine_destroyed(mine: SeaMine) -> void:
+	_displacement_stamps.spawn_impact(mine.global_position, 128.0, 2.5)
+	_mines.erase(mine)
 
 
 func _on_mine_tree_exiting(mine: SeaMine) -> void:

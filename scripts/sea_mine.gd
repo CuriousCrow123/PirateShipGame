@@ -28,7 +28,6 @@ var _mine_body: Node3D = null
 
 @onready var _viewport_container: SubViewportContainer = $MineSubViewportContainer
 @onready var _sub_viewport: SubViewport = $MineSubViewportContainer/SeaMineModel
-@onready var _ripple_sprite: Sprite2D = $RippleSprite
 @onready var _proximity_shape: CollisionShape2D = $ProximityShape
 @onready var _visible_notifier: VisibleOnScreenNotifier2D = $VisibleNotifier
 
@@ -36,18 +35,13 @@ var _mine_body: Node3D = null
 func _ready() -> void:
 	assert(_viewport_container != null, "SeaMine: MineSubViewportContainer not found")
 	assert(_sub_viewport != null, "SeaMine: SubViewport not found")
-	assert(_ripple_sprite != null, "SeaMine: RippleSprite not found")
 	assert(_proximity_shape != null, "SeaMine: ProximityShape not found")
 	assert(_visible_notifier != null, "SeaMine: VisibleNotifier not found")
 
 	add_to_group("sea_mines")
 
-	# Duplicate shader materials for per-instance uniforms
+	# Duplicate shader material for per-instance uniforms
 	_viewport_container.material = _viewport_container.material.duplicate()
-	_ripple_sprite.material = _ripple_sprite.material.duplicate()
-
-	# Create a white pixel texture for the ripple shader to draw on
-	_ripple_sprite.texture = _create_white_texture()
 
 	# Prepare blast shape resource (not added to scene tree)
 	_blast_shape = CircleShape2D.new()
@@ -81,7 +75,14 @@ func setup() -> void:
 	_base_y = global_position.y
 
 
+func get_bob_phase() -> float:
+	return sin(_bob_phase)
+
+
 func _process(delta: float) -> void:
+	if _is_detonated:
+		return
+
 	# Bobbing
 	_bob_phase += delta * bob_frequency * TAU
 	var bob_offset: float = sin(_bob_phase) * bob_amplitude
@@ -91,10 +92,6 @@ func _process(delta: float) -> void:
 	var normalized_bob: float = bob_offset / (bob_amplitude * 2.0 + 0.001)
 	var mat: ShaderMaterial = _viewport_container.material as ShaderMaterial
 	mat.set_shader_parameter("BobOffset", normalized_bob * 0.04)
-
-	# Update ripple shader bob phase
-	var ripple_mat: ShaderMaterial = _ripple_sprite.material as ShaderMaterial
-	ripple_mat.set_shader_parameter("BobPhase", sin(_bob_phase))
 
 	# Rotate 3D model
 	if _mine_body:
@@ -161,9 +158,6 @@ func _detonate() -> void:
 	_state = State.DETONATING
 	_proximity_shape.set_deferred("disabled", true)
 
-	# Spawn explosion ripple on parent so it survives queue_free
-	_spawn_explosion_ripple()
-
 	# Spawn explosion VFX on parent so it survives queue_free
 	ExplosionEffect.create(get_parent(), global_position, Vector2.UP, 360, 1.5, 80.0)
 
@@ -211,52 +205,6 @@ func _trigger_chain_reactions() -> void:
 					if is_instance_valid(chain_mine) and not chain_mine.is_queued_for_deletion():
 						chain_mine.trigger_detonation()
 			)
-
-
-func _spawn_explosion_ripple() -> void:
-	# Fixed-size sprite — rings expand via shader uniform, not sprite scale.
-	# This keeps ring thickness consistent in screen pixels.
-	var ripple := Sprite2D.new()
-	var tex_size: int = 512
-	ripple.texture = _create_white_texture(tex_size)
-	ripple.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var mat: ShaderMaterial = _ripple_sprite.material.duplicate() as ShaderMaterial
-	mat.set_shader_parameter("RingCount", 3.0)
-	mat.set_shader_parameter("RingThickness", 0.003)
-	mat.set_shader_parameter("ExpandSpeed", 0.0)
-	mat.set_shader_parameter("MaxRadius", 0.02)
-	mat.set_shader_parameter("RingColor", Color(0.85, 0.92, 1.0, 0.18))
-	mat.set_shader_parameter("BobPhase", 1.0)
-	mat.set_shader_parameter("PixelSnap", float(tex_size))
-	ripple.material = mat
-	ripple.global_position = global_position
-	get_parent().add_child(ripple)
-
-	var tween: Tween = ripple.create_tween()
-	tween.set_parallel(true)
-	(
-		tween
-		. tween_method(
-			func(val: float) -> void: mat.set_shader_parameter("MaxRadius", val), 0.02, 0.49, 2.5
-		)
-		. set_ease(Tween.EASE_OUT)
-		. set_trans(Tween.TRANS_EXPO)
-	)
-	tween.tween_method(
-		func(val: float) -> void:
-			mat.set_shader_parameter("RingColor", Color(0.85, 0.92, 1.0, val)),
-		0.18,
-		0.0,
-		1.5,
-	)
-	tween.set_parallel(false)
-	tween.tween_callback(ripple.queue_free)
-
-
-static func _create_white_texture(size: int = 32) -> ImageTexture:
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Color.WHITE)
-	return ImageTexture.create_from_image(img)
 
 
 func _build_triggers() -> void:
