@@ -10,6 +10,7 @@
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
 [ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
 [ext_resource type="Script" path="res://scripts/water_chunks.gd" id="11_chunks"]
+[ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="12_overlay"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -73,3 +74,5 @@ follow_target = NodePath("../..")
 position = Vector2(512, 512)
 scale = Vector2(0.45, 0.45)
 texture = ExtResource("8_circle")
+
+[node name="ControlsOverlay" parent="." instance=ExtResource("12_overlay")]

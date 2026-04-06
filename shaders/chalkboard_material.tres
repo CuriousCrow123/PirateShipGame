@@ -1,0 +1,37 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://shaders/chalkboard.gdshader" id="1_shader"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_grain"]
+noise_type = 0
+frequency = 0.05
+fractal_octaves = 3
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_grain"]
+generate_mipmaps = false
+noise = SubResource("FastNoiseLite_grain")
+seamless = true
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_smudge"]
+noise_type = 0
+frequency = 0.008
+fractal_octaves = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_smudge"]
+generate_mipmaps = false
+noise = SubResource("FastNoiseLite_smudge")
+seamless = true
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/BoardColour = Color(0.14, 0.22, 0.16, 1)
+shader_parameter/GrainNoise = SubResource("NoiseTexture2D_grain")
+shader_parameter/GrainScale = 3.0
+shader_parameter/GrainStrength = 0.06
+shader_parameter/SmudgeNoise = SubResource("NoiseTexture2D_smudge")
+shader_parameter/SmudgeScale = 0.5
+shader_parameter/SmudgeStrength = 0.12
+shader_parameter/SmudgeColour = Color(0.85, 0.88, 0.82, 1)
+shader_parameter/VignetteRadius = 0.75
+shader_parameter/VignetteSoftness = 0.35
+shader_parameter/VignetteStrength = 0.4

@@ -1,0 +1,157 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/controls_overlay.gd" id="1_script"]
+[ext_resource type="ShaderMaterial" path="res://shaders/chalkboard_material.tres" id="2_material"]
+[ext_resource type="FontFile" path="res://resources/fonts/kims_bit_hand.ttf" id="3_font"]
+
+[node name="ControlsOverlay" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+material = ExtResource("2_material")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -120.0
+offset_right = 200.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="Content"]
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.93, 0.85, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 24
+text = "Captain's Orders"
+
+[node name="Spacer" type="Control" parent="Content"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ControlsList" type="GridContainer" parent="Content"]
+columns = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 6
+
+[node name="Key1" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "W / Up"
+
+[node name="Action1" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Sail Forward"
+
+[node name="Key2" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "S"
+
+[node name="Action2" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Sail Backward"
+
+[node name="Key3" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "A"
+
+[node name="Action3" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Turn Left"
+
+[node name="Key4" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "D"
+
+[node name="Action4" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Turn Right"
+
+[node name="Key5" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Q / Left"
+
+[node name="Action5" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Fire Port Cannons"
+
+[node name="Key6" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "E / Right"
+
+[node name="Action6" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Fire Starboard Cannons"
+
+[node name="Key7" type="Label" parent="Content/ControlsList"]
+custom_minimum_size = Vector2(120, 0)
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Down"
+
+[node name="Action7" type="Label" parent="Content/ControlsList"]
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Drop Sea Mine"
+
+[node name="Spacer2" type="Control" parent="Content"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="DismissPrompt" type="Label" parent="Content" node_paths=PackedStringArray()]
+unique_name_in_owner = true
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 12
+text = "Press any key to set sail..."
