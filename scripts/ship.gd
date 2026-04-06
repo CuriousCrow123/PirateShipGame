@@ -46,6 +46,14 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
+	# Bounce off enemy ships on collision
+	for i: int in range(get_slide_collision_count()):
+		var collision: KinematicCollision2D = get_slide_collision(i)
+		var collider: Object = collision.get_collider()
+		if collider is EnemyShip:
+			var push: Vector2 = collision.get_normal() * 50.0
+			velocity += push
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("fire_port") and _port_ready:

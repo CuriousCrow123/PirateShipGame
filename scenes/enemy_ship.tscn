@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://c2enemyship01"]
+
+[ext_resource type="Script" uid="uid://dhh4bsq5v8nwf" path="res://scripts/enemy_ship.gd" id="1_enemy_ship"]
+[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
+size = Vector2(25, 54)
+
+[node name="EnemyShip" type="CharacterBody2D"]
+z_index = 2
+scale = Vector2(0.5, 0.5)
+collision_layer = 2
+collision_mask = 1
+motion_mode = 1
+script = ExtResource("1_enemy_ship")
+
+[node name="HullSprite" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 522, 50, 108)
+
+[node name="SailSprite" type="Sprite2D" parent="."]
+z_index = 2
+position = Vector2(0, -6)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 742, 66, 47)
+
+[node name="CollisionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_hull")

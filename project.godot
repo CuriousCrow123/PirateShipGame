@@ -65,6 +65,12 @@ toggle_fullscreen={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="player"
+2d_physics/layer_2="enemies"
+2d_physics/layer_3="player_projectiles"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

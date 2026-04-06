@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://cj35g5w3umv1r" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
 [ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="8_circle"]
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
-[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="10_ship"]
+[ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
 [ext_resource type="Script" path="res://scripts/water_chunks.gd" id="11_chunks"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]

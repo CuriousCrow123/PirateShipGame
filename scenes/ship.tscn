@@ -5,9 +5,14 @@
 [ext_resource type="PackedScene" uid="uid://bbdtkmcxp17m2" path="res://scenes/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://resources/default_ship_config.tres" id="4_config"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
+size = Vector2(25, 54)
+
 [node name="Ship" type="CharacterBody2D" unique_id=602171339]
 z_index = 2
 scale = Vector2(0.5, 0.5)
+collision_layer = 1
+collision_mask = 2
 script = ExtResource("1_ship")
 config = ExtResource("4_config")
 
@@ -79,6 +84,9 @@ scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_spritesheet")
 region_enabled = true
 region_rect = Rect2(0, 1013, 26, 18)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_hull")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=996880019]
 zoom = Vector2(1.2, 1.2)
