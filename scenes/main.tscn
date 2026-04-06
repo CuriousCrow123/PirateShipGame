@@ -1,16 +1,18 @@
-[gd_scene format=3 uid="uid://cycvuk82jfs5d"]
+[gd_scene format=3]
 
-[ext_resource type="Material" uid="uid://c7pgx6whoa71c" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
-[ext_resource type="Texture2D" uid="uid://cc5dhih7uiadk" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
-[ext_resource type="Script" uid="uid://dpyk84570f83m" path="res://scripts/main.gd" id="3_main"]
-[ext_resource type="Material" uid="uid://cv70dajtpq3hy" path="res://shaders/ripple_material.tres" id="5_ripple_mat"]
+[ext_resource type="Material" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
+[ext_resource type="Texture2D" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="3_main"]
+[ext_resource type="Script" path="res://scripts/ship.gd" id="3_trceg"]
+[ext_resource type="Resource" path="res://resources/default_ship_config.tres" id="4_a8y0u"]
+[ext_resource type="Material" path="res://shaders/ripple_material.tres" id="5_ripple_mat"]
 [ext_resource type="Script" path="res://scripts/trails.gd" id="6_trails"]
-[ext_resource type="Texture2D" uid="uid://cj35g5w3umv1r" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
-[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="8_circle"]
+[ext_resource type="Texture2D" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
+[ext_resource type="Texture2D" path="res://textures/CircleBlur64x64.png" id="8_circle"]
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
-[ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
-[ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://scripts/water_chunks.gd" id="11_chunks"]
-[ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
+[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="10_ship"]
+[ext_resource type="Script" path="res://scripts/water_chunks.gd" id="11_chunks"]
+[ext_resource type="Script" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
@@ -34,8 +36,13 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 [node name="Main" type="Node2D" unique_id=1211575893]
 script = ExtResource("3_main")
 
-[node name="Ship" parent="." unique_id=1211440340 instance=ExtResource("10_ship")]
+[node name="Ship" type="CharacterBody2D" parent="." unique_id=1211440340 instance=ExtResource("10_ship")]
+z_index = 2
 position = Vector2(176, 112)
+scale = Vector2(0.5, 0.5)
+collision_mask = 2
+script = ExtResource("3_trceg")
+config = ExtResource("4_a8y0u")
 thrust = 120.0
 linear_drag = 0.99
 
