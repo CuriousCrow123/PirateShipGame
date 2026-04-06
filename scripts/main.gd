@@ -63,6 +63,7 @@ func _try_spawn_enemy() -> void:
 	enemy.tree_exiting.connect(_on_enemy_tree_exiting.bind(enemy))
 	add_child(enemy)
 	enemy.global_position = spawn_pos
+	enemy.setup(_ship)
 	_enemies.append(enemy)
 
 

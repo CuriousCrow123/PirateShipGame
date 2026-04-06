@@ -1,6 +1,6 @@
 class_name EnemyShip
 extends CharacterBody2D
-## Dummy enemy ship that drifts randomly and can be damaged by cannonballs.
+## Enemy ship that chases the player and circles at broadside range.
 ## Takes 4 hits to destroy, with progressive hull damage visuals.
 
 signal destroyed(ship: EnemyShip)
@@ -8,8 +8,10 @@ signal destroyed(ship: EnemyShip)
 const SHAKE_DURATION: float = 0.3
 const SHAKE_MAX_INTENSITY: float = 3.0
 
-@export var drift_speed: float = 30.0
-@export var turn_speed: float = 0.3
+@export var chase_speed: float = 50.0
+@export var circle_speed: float = 40.0
+@export var turn_speed: float = 2.0
+@export var circle_radius: float = 120.0
 @export var max_health: int = 4
 
 var _health: int = 0
@@ -18,6 +20,7 @@ var _is_shaking: bool = false
 var _shake_timer: float = 0.0
 var _original_hull_pos: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
+var _target: Node2D = null
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -33,9 +36,13 @@ func _ready() -> void:
 	_randomize_appearance()
 
 
+func setup(target: Node2D) -> void:
+	_target = target
+
+
 func _physics_process(delta: float) -> void:
-	rotation += randf_range(-turn_speed, turn_speed) * delta
-	velocity = -transform.y * drift_speed
+	if _target and is_instance_valid(_target):
+		_steer_toward_target(delta)
 	move_and_slide()
 	_process_shake(delta)
 
@@ -69,6 +76,30 @@ func _destroy() -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(queue_free)
+
+
+func _steer_toward_target(delta: float) -> void:
+	var to_target: Vector2 = _target.global_position - global_position
+	var dist: float = to_target.length()
+	var desired_dir: Vector2
+
+	if dist > circle_radius:
+		# Chase: steer directly toward the player
+		desired_dir = to_target.normalized()
+	else:
+		# Circle: steer perpendicular (clockwise) for broadside orbiting
+		desired_dir = Vector2(to_target.y, -to_target.x).normalized()
+
+	# Smoothly rotate toward desired heading (-transform.y is our forward)
+	var forward: Vector2 = -transform.y
+	var desired_angle: float = desired_dir.angle()
+	var current_angle: float = forward.angle()
+	var angle_diff: float = wrapf(desired_angle - current_angle, -PI, PI)
+	rotation += clampf(angle_diff, -turn_speed * delta, turn_speed * delta)
+
+	# Speed: full chase speed when far, circle speed when orbiting
+	var speed: float = chase_speed if dist > circle_radius else circle_speed
+	velocity = -transform.y * speed
 
 
 func _start_shake() -> void:
