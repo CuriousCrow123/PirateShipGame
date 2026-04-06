@@ -45,7 +45,11 @@ uniform vec4 SpecularColour : source_color = vec4(1.0, 1.0, 1.0, 0.843137);
 uniform sampler2D DisplacementMap : filter_linear;
 uniform vec2 DisplacementOrigin = vec2(0.0);
 uniform float DisplacementViewportSize = 1024.0;
-uniform float DisplacementStrength : hint_range(0.0, 20.0) = 5.0;
+uniform float DisplacementStrength : hint_range(0.0, 20.0) = 20.0;
+
+// --- Wake trail displacement (from WaterTrail SubViewport) ---
+uniform sampler2D WakeTrailMap : filter_linear;
+uniform float WakeTrailStrength : hint_range(0.0, 40.0) = 15.0;
 
 // --- Edge foam ---
 uniform vec4 FoamColour : source_color = vec4(1.0, 1.0, 1.0, 1.0);
@@ -75,6 +79,17 @@ void fragment() {
 		* step(0.0, disp_uv.y) * step(disp_uv.y, 1.0);
 	vec2 displacement = (texture(DisplacementMap, disp_uv).rg - 0.5) * 2.0
 		* DisplacementStrength * in_bounds;
+
+	// --- 1c. Wake trail displacement (gradient pushes water away from trail) ---
+	// The WakeTrailMap shares the same coordinate space as the displacement map.
+	float texel = 1.0 / DisplacementViewportSize;
+	float trail_c = texture(WakeTrailMap, disp_uv).r * in_bounds;
+	float trail_r = texture(WakeTrailMap, disp_uv + vec2(texel, 0.0)).r * in_bounds;
+	float trail_d = texture(WakeTrailMap, disp_uv + vec2(0.0, texel)).r * in_bounds;
+	vec2 wake_gradient = vec2(trail_r - trail_c, trail_d - trail_c);
+	displacement += wake_gradient * WakeTrailStrength;
+
+	// Round to whole pixels for pixel-art consistency (remove for smoother feel).
 	displacement = floor(displacement + 0.5);
 	// distortedWorldFloor warps caustics/specular; foam uses undisplaced worldFloor.
 	vec2 dWorldFloor = worldFloor + displacement;

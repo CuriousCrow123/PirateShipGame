@@ -28,11 +28,15 @@ func _ready() -> void:
 	assert(_displacement_vp != null, "Main: DisplacementViewport/SubViewport not found")
 	assert(_displacement_stamps != null, "Main: Stamps node not found")
 
+	# Wire wake trail SubViewport texture to the TrailSprite display.
+	$WaterTrail/TrailSprite.texture = $WaterTrail/SubViewport.get_texture()
+
 	# Wire displacement SubViewport texture to the shared water material.
 	# Intentionally shared: all water chunks use the same DisplacementMap.
 	# NOT duplicated — uniform updates propagate to every chunk simultaneously.
 	var water_mat: ShaderMaterial = $ChunkContainer.water_material as ShaderMaterial
 	water_mat.set_shader_parameter("DisplacementMap", _displacement_vp.get_texture())
+	water_mat.set_shader_parameter("WakeTrailMap", $WaterTrail/SubViewport.get_texture())
 
 	_last_wake_pos = _ship.global_position
 	_ship.cannon_fired.connect(_on_cannon_fired)
@@ -40,19 +44,25 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	# WaterTrail follows ship so the Line2D trail renders correctly.
+	$WaterTrail.global_position = _ship.global_position
+
 	# Displacement viewport follows ship position so stamps stay centered.
 	$DisplacementViewport.global_position = _ship.global_position
 
-	# Update the water shader's origin to match the ship position.
+	# Update the water shader's displacement origin and speed-scaled wake strength.
 	var water_mat: ShaderMaterial = $ChunkContainer.water_material as ShaderMaterial
 	water_mat.set_shader_parameter("DisplacementOrigin", _ship.global_position)
+	var speed_t: float = clampf(_ship.velocity.length() / 120.0, 0.0, 1.0)
+	water_mat.set_shader_parameter("WakeTrailStrength", lerpf(2.0, 10.0, speed_t))
 
-	# Ship wake: spawn a stamp every ~8px of movement
+	# Wake expanding rings: spawn along the trail path at intervals
 	_wake_distance += _ship.global_position.distance_to(_last_wake_pos)
 	_last_wake_pos = _ship.global_position
-	if _wake_distance >= 8.0 and _ship.velocity.length() > 5.0:
+	if _wake_distance >= 16.0 and _ship.velocity.length() > 5.0:
 		_wake_distance = 0.0
-		_displacement_stamps.spawn_wake(_ship.global_position)
+		var wake_pos: Vector2 = _ship.global_position - _ship.transform.y * 12.0
+		_displacement_stamps.spawn_wake_ring(wake_pos)
 
 	# Mine idle bob displacement
 	for mine: SeaMine in _mines:

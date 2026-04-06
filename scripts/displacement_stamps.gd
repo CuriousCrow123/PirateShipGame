@@ -30,7 +30,7 @@ func spawn_impact(world_pos: Vector2, scale_px: float, duration: float) -> void:
 	var stamp := _create_stamp(world_pos, scale_px)
 	var mat: ShaderMaterial = stamp.material as ShaderMaterial
 	mat.set_shader_parameter("RingWidth", 0.06)
-	mat.set_shader_parameter("Amplitude", 0.5)
+	mat.set_shader_parameter("Amplitude", 0.8)
 
 	var tween: Tween = stamp.create_tween()
 	tween.set_parallel(true)
@@ -48,18 +48,26 @@ func spawn_impact(world_pos: Vector2, scale_px: float, duration: float) -> void:
 	tween.tween_callback(stamp.queue_free)
 
 
-func spawn_wake(world_pos: Vector2) -> void:
-	## Small radial stamp for ship wake trail. Fades quickly.
+func spawn_wake_ring(world_pos: Vector2) -> void:
+	## Expanding ring that spreads outward from a wake trail point.
 	if get_child_count() >= MAX_STAMPS:
 		return
-	var stamp := _create_stamp(world_pos, 24.0)
+	var stamp := _create_stamp(world_pos, 48.0)
 	var mat: ShaderMaterial = stamp.material as ShaderMaterial
-	mat.set_shader_parameter("RingRadius", 0.0)
-	mat.set_shader_parameter("RingWidth", 0.5)
-	mat.set_shader_parameter("Amplitude", 0.25)
+	mat.set_shader_parameter("RingWidth", 0.08)
+	mat.set_shader_parameter("Amplitude", 0.4)
 
 	var tween: Tween = stamp.create_tween()
-	tween.tween_property(stamp, "modulate:a", 0.0, 0.4)
+	tween.set_parallel(true)
+	(
+		tween
+		. tween_property(mat, "shader_parameter/RingRadius", 0.45, 1.5)
+		. from(0.0)
+		. set_ease(Tween.EASE_OUT)
+		. set_trans(Tween.TRANS_QUAD)
+	)
+	tween.tween_property(mat, "shader_parameter/Amplitude", 0.0, 1.5).set_ease(Tween.EASE_IN)
+	tween.set_parallel(false)
 	tween.tween_callback(stamp.queue_free)
 
 
@@ -68,7 +76,7 @@ func spawn_bob(world_pos: Vector2, phase: float) -> void:
 	## Phase modulates amplitude — stronger at bob extremes.
 	if get_child_count() >= MAX_STAMPS:
 		return
-	var amplitude: float = absf(phase) * 0.15
+	var amplitude: float = absf(phase) * 0.35
 	if amplitude < 0.01:
 		return
 	var stamp := _create_stamp(world_pos, 16.0)
