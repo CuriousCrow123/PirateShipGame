@@ -48,7 +48,7 @@ func _draw() -> void:
 	_draw_group_entities(&"enemy_ships", ENEMY_COLOR)
 	# 4. Player arrow — rotates to show ship heading
 	draw_circle(_center, PLAYER_DOT_RADIUS, PLAYER_COLOR)
-	var heading: Vector2 = Vector2.UP.rotated(_player.rotation) * PLAYER_ARROW_LENGTH
+	var heading: Vector2 = Vector2.DOWN.rotated(_player.rotation) * PLAYER_ARROW_LENGTH
 	draw_line(_center, _center + heading, PLAYER_COLOR, 1.0, false)
 	# 5. Border (topmost)
 	draw_arc(_center, SCREEN_RADIUS, 0.0, TAU, 64, BORDER_COLOR, 1.0, false)
