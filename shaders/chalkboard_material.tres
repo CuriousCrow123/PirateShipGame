@@ -24,14 +24,14 @@ seamless = true
 
 [resource]
 shader = ExtResource("1_shader")
-shader_parameter/BoardColour = Color(0.14, 0.22, 0.16, 1)
+shader_parameter/BoardColour = Color(0.08, 0.08, 0.1, 1)
 shader_parameter/GrainNoise = SubResource("NoiseTexture2D_grain")
 shader_parameter/GrainScale = 3.0
-shader_parameter/GrainStrength = 0.06
+shader_parameter/GrainStrength = 0.02
 shader_parameter/SmudgeNoise = SubResource("NoiseTexture2D_smudge")
 shader_parameter/SmudgeScale = 0.5
-shader_parameter/SmudgeStrength = 0.12
-shader_parameter/SmudgeColour = Color(0.85, 0.88, 0.82, 1)
+shader_parameter/SmudgeStrength = 0.04
+shader_parameter/SmudgeColour = Color(0.6, 0.6, 0.62, 1)
 shader_parameter/VignetteRadius = 0.75
 shader_parameter/VignetteSoftness = 0.35
 shader_parameter/VignetteStrength = 0.4

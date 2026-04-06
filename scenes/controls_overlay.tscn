@@ -37,7 +37,7 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.95, 0.93, 0.85, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 24
-text = "Captain's Orders"
+text = "Controls"
 
 [node name="Spacer" type="Control" parent="Content"]
 custom_minimum_size = Vector2(0, 8)
@@ -53,7 +53,7 @@ horizontal_alignment = 2
 theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 16
-text = "W / Up"
+text = "W"
 
 [node name="Action1" type="Label" parent="Content/ControlsList"]
 theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
@@ -109,7 +109,7 @@ horizontal_alignment = 2
 theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 16
-text = "Q / Left"
+text = "Left"
 
 [node name="Action5" type="Label" parent="Content/ControlsList"]
 theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
@@ -123,7 +123,7 @@ horizontal_alignment = 2
 theme_override_colors/font_color = Color(0.85, 0.87, 0.8, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 16
-text = "E / Right"
+text = "Right"
 
 [node name="Action6" type="Label" parent="Content/ControlsList"]
 theme_override_colors/font_color = Color(0.9, 0.92, 0.88, 1)
