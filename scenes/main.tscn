@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
 [ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://scripts/water_chunks.gd" id="11_chunks"]
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
+[ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -92,3 +93,5 @@ color = Color(0.5, 0.5, 0, 1)
 script = ExtResource("12_stamps")
 sub_viewport = NodePath("..")
 follow_target = NodePath("../..")
+
+[node name="ControlsOverlay" parent="." instance=ExtResource("13_overlay")]
