@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/minimap.tscn" id="14_minimap"]
+[ext_resource type="PackedScene" path="res://scenes/debug_overlay.tscn" id="15_debug"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -98,3 +99,5 @@ follow_target = NodePath("../..")
 [node name="Minimap" parent="." unique_id=829893032 instance=ExtResource("14_minimap")]
 
 [node name="ControlsOverlay" parent="." unique_id=1668598696 instance=ExtResource("13_overlay")]
+
+[node name="DebugOverlay" parent="." unique_id=2046880645 instance=ExtResource("15_debug")]
