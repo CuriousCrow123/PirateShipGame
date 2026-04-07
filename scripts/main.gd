@@ -20,10 +20,6 @@ var _mines: Array[SeaMine] = []
 var _spawn_timer: float = 2.0
 var _wake_distance: float = 0.0
 var _last_wake_pos: Vector2 = Vector2.ZERO
-# Maps EnemyShip instance id → its Line2D wake trail (parented under
-# WaterTrail/SubViewport, not under the enemy, so we can fade it out
-# independently of the enemy's queue_free).
-var _enemy_trails: Dictionary = {}
 
 @onready var _ship: Ship = $Ship
 @onready var _minimap_display: MinimapDisplay = $Minimap/MinimapDisplay
@@ -55,7 +51,7 @@ func _ready() -> void:
 	_minimap_display.setup(_ship)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# WaterTrail node still tracks the ship so the TrailSprite overlay stays
 	# centered on the player. Trail rendering math itself is now pivot-based
 	# inside trails.gd and no longer depends on this position.
@@ -82,7 +78,7 @@ func _process(_delta: float) -> void:
 	for enemy: EnemyShip in _enemies:
 		if not is_instance_valid(enemy) or enemy.is_destroyed():
 			continue
-		var traveled: float = enemy.velocity.length() * _delta
+		var traveled: float = enemy.velocity.length() * delta
 		if traveled <= 0.0:
 			continue
 		if enemy.consume_wake_distance(traveled):
@@ -90,7 +86,7 @@ func _process(_delta: float) -> void:
 
 	# Mine idle bob displacement
 	for mine: SeaMine in _mines:
-		if mine._is_detonated:
+		if mine.is_detonated():
 			continue
 		_displacement_stamps.spawn_bob(mine.global_position, mine.get_bob_phase())
 
@@ -165,11 +161,9 @@ func _try_spawn_enemy() -> void:
 	var spawn_pos: Vector2 = _ship.global_position + Vector2.from_angle(angle) * spawn_distance
 	var enemy: EnemyShip = EnemyShipScene.instantiate()
 	enemy.rotation = randf() * TAU
-	enemy.destroyed.connect(_on_enemy_destroyed)
 	enemy.cannon_fired.connect(_on_enemy_cannon_fired)
 	# Single cleanup path: tree_exiting is the only handler that erases from
-	# _enemies and frees the wake trail. The `destroyed` signal is reserved
-	# for gameplay reactions (currently unused beyond the unregister hook).
+	# _enemies and frees the wake trail.
 	enemy.tree_exiting.connect(_on_enemy_tree_exiting.bind(enemy))
 	add_child(enemy)
 	enemy.global_position = spawn_pos
@@ -177,12 +171,6 @@ func _try_spawn_enemy() -> void:
 	enemy.setup(_ship)
 	_enemies.append(enemy)
 	_register_enemy_wake(enemy)
-
-
-func _on_enemy_destroyed(_enemy: EnemyShip) -> void:
-	# Reserved for future gameplay hooks (score, combo, sound). Cleanup
-	# happens via tree_exiting so a single code path owns it.
-	pass
 
 
 func _on_enemy_tree_exiting(enemy: EnemyShip) -> void:
@@ -210,15 +198,16 @@ func _register_enemy_wake(enemy: EnemyShip) -> void:
 	line.follow_target = enemy
 	line.pivot_target = _ship
 	_wake_subviewport.add_child(line)
-	_enemy_trails[enemy.get_instance_id()] = line
+	# Stash the Line2D on the enemy so cleanup can recover it without a
+	# Main-side dictionary indirection.
+	enemy.set_meta("wake_line", line)
 
 
 func _unregister_enemy_wake(enemy: EnemyShip) -> void:
-	var id: int = enemy.get_instance_id()
-	if not _enemy_trails.has(id):
+	if not enemy.has_meta("wake_line"):
 		return
-	var line: Line2D = _enemy_trails[id]
-	_enemy_trails.erase(id)
+	var line: Line2D = enemy.get_meta("wake_line") as Line2D
+	enemy.remove_meta("wake_line")
 	if not is_instance_valid(line):
 		return
 	# Fade the wake trail out instead of snap-clearing — matches the hull

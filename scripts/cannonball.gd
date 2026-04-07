@@ -60,11 +60,15 @@ func _on_body_entered(body: Node2D) -> void:
 	if not is_enemy_owned and body is EnemyShip:
 		_impacted = true
 		(body as EnemyShip).take_damage(_direction)
+		# Emit water_impacted so Main spawns a displacement splash for parity
+		# with the max-range timeout path.
+		water_impacted.emit(global_position)
 		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 		queue_free()
 	elif is_enemy_owned and body is Ship:
 		# Player HP is intentionally out of scope — visual hit only.
 		_impacted = true
+		water_impacted.emit(global_position)
 		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 		queue_free()
 

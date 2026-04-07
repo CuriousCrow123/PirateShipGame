@@ -10,6 +10,7 @@ signal cannon_fired(pos: Vector2, dir: Vector2)
 const SHAKE_DURATION: float = 0.3
 const SHAKE_MAX_INTENSITY: float = 3.0
 const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
+const BROADSIDE_ALIGNMENT_THRESHOLD: float = 0.85  # |dot(starboard, to_target)|
 
 @export var chase_speed: float = 50.0
 @export var circle_speed: float = 40.0
@@ -18,7 +19,6 @@ const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
 @export var max_health: int = 4
 @export var broadside_cooldown: float = 2.0
 @export var broadside_range: float = 130.0  # must be <= Cannonball.max_range
-@export var broadside_alignment_threshold: float = 0.85
 
 var _health: int = 0
 var _is_destroyed: bool = false
@@ -56,6 +56,24 @@ func _ready() -> void:
 	add_to_group("enemy_ships")
 
 
+func _physics_process(delta: float) -> void:
+	# Despawning enemies still get one extra physics tick before queue_free
+	# completes — guard so they cannot fire a final invisible salvo.
+	if is_queued_for_deletion():
+		return
+
+	if _port_cooldown > 0.0:
+		_port_cooldown -= delta
+	if _starboard_cooldown > 0.0:
+		_starboard_cooldown -= delta
+
+	if not _is_destroyed and _target and is_instance_valid(_target):
+		_steer_toward_target(delta)
+		_try_fire_at_target()
+	move_and_slide()
+	_process_shake(delta)
+
+
 func is_destroyed() -> bool:
 	return _is_destroyed
 
@@ -76,19 +94,6 @@ func consume_wake_distance(traveled: float) -> bool:
 
 func get_wake_ring_position() -> Vector2:
 	return global_position - transform.y * 12.0
-
-
-func _physics_process(delta: float) -> void:
-	if _port_cooldown > 0.0:
-		_port_cooldown -= delta
-	if _starboard_cooldown > 0.0:
-		_starboard_cooldown -= delta
-
-	if not _is_destroyed and _target and is_instance_valid(_target):
-		_steer_toward_target(delta)
-		_try_fire_at_target()
-	move_and_slide()
-	_process_shake(delta)
 
 
 func take_damage(_from_direction: Vector2) -> void:
@@ -130,9 +135,9 @@ func _try_fire_at_target() -> void:
 	# Ship right (starboard) is +transform.x; left (port) is -transform.x.
 	var starboard: Vector2 = transform.x
 	var dot: float = starboard.dot(dir_to_target)
-	if dot >= broadside_alignment_threshold and _starboard_cooldown <= 0.0:
+	if dot >= BROADSIDE_ALIGNMENT_THRESHOLD and _starboard_cooldown <= 0.0:
 		_fire_broadside(true)
-	elif dot <= -broadside_alignment_threshold and _port_cooldown <= 0.0:
+	elif dot <= -BROADSIDE_ALIGNMENT_THRESHOLD and _port_cooldown <= 0.0:
 		_fire_broadside(false)
 
 

@@ -16,9 +16,9 @@ signal mine_dropped(pos: Vector2)
 @export var broadside_cooldown: float = 0.5
 @export var mine_cooldown: float = 2.5
 
-var _port_ready: bool = true
-var _starboard_ready: bool = true
-var _mine_ready: bool = true
+var _port_cooldown: float = 0.0
+var _starboard_cooldown: float = 0.0
+var _mine_cooldown_left: float = 0.0
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -35,6 +35,13 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _port_cooldown > 0.0:
+		_port_cooldown -= delta
+	if _starboard_cooldown > 0.0:
+		_starboard_cooldown -= delta
+	if _mine_cooldown_left > 0.0:
+		_mine_cooldown_left -= delta
+
 	var is_braking: bool = Input.is_action_pressed("move_back")
 
 	if not is_braking and Input.is_action_pressed("move_forward"):
@@ -60,11 +67,11 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("fire_port") and _port_ready:
+	if event.is_action_pressed("fire_port") and _port_cooldown <= 0.0:
 		_fire_broadside("port")
-	elif event.is_action_pressed("fire_starboard") and _starboard_ready:
+	elif event.is_action_pressed("fire_starboard") and _starboard_cooldown <= 0.0:
 		_fire_broadside("starboard")
-	elif event.is_action_pressed("drop_mine") and _mine_ready:
+	elif event.is_action_pressed("drop_mine") and _mine_cooldown_left <= 0.0:
 		_drop_mine()
 
 
@@ -101,18 +108,11 @@ func _fire_broadside(side: String) -> void:
 		cannon_fired.emit(result["position"], result["direction"])
 
 	if side == "port":
-		_port_ready = false
-		get_tree().create_timer(broadside_cooldown).timeout.connect(
-			func() -> void: _port_ready = true
-		)
+		_port_cooldown = broadside_cooldown
 	else:
-		_starboard_ready = false
-		get_tree().create_timer(broadside_cooldown).timeout.connect(
-			func() -> void: _starboard_ready = true
-		)
+		_starboard_cooldown = broadside_cooldown
 
 
 func _drop_mine() -> void:
 	mine_dropped.emit(global_position)
-	_mine_ready = false
-	get_tree().create_timer(mine_cooldown).timeout.connect(func() -> void: _mine_ready = true)
+	_mine_cooldown_left = mine_cooldown

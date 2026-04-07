@@ -81,6 +81,10 @@ func setup() -> void:
 	_base_y = global_position.y
 
 
+func is_detonated() -> bool:
+	return _is_detonated
+
+
 func get_bob_phase() -> float:
 	return sin(_bob_phase)
 
