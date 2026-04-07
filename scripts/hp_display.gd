@@ -18,21 +18,28 @@ const CRITICAL_PULSE_INTERVAL: float = 0.35
 const CRITICAL_PULSE_SCALE: Vector2 = Vector2(1.05, 1.05)
 const CRITICAL_FLASH_BRIGHT: Color = Color(1.6, 1.6, 1.6, 1.0)
 const CRITICAL_SHAKE_AMPLITUDE: float = 1.0  # pixels (pixel-snapped)
-const CRITICAL_SHAKE_PROBABILITY: float = 0.35  # chance-per-frame of a jitter step
+const CRITICAL_SHAKE_PROBABILITY: float = 0.8  # chance-per-frame of a jitter step
+
+const GOLD_GLEAM_SHADER: Shader = preload("res://shaders/hp_gold_gleam.gdshader")
+const GOLD_GLEAM_FADE_DURATION: float = 0.35
 
 var _pips: Array[ColorRect] = []
 var _ship: Ship = null
 var _critical_tween: Tween = null
 var _critical_active: bool = false
 var _frame_base_pos: Vector2 = Vector2.ZERO
+var _gold_material: ShaderMaterial = null
+var _gold_tween: Tween = null
 
 @onready var _frame: PanelContainer = $Frame
 @onready var _pip_container: HBoxContainer = %Pips
+@onready var _gold_overlay: ColorRect = %GoldOverlay
 
 
 func _ready() -> void:
 	assert(_frame != null, "HPDisplay: Frame panel not found")
 	assert(_pip_container != null, "HPDisplay: Pips container not found")
+	assert(_gold_overlay != null, "HPDisplay: GoldOverlay not found")
 	_frame_base_pos = _frame.position
 	for child: Node in _pip_container.get_children():
 		var pip: ColorRect = child as ColorRect
@@ -40,6 +47,14 @@ func _ready() -> void:
 		pip.color = COLOR_FULL
 		pip.pivot_offset = pip.size / 2.0
 		_pips.append(pip)
+	# Build the gold gleam material in code so the uniform is instance-owned
+	# (no shared ShaderMaterial mutation). Intensity = 0 keeps it invisible
+	# until the Invincible cheat toggles on.
+	_gold_material = ShaderMaterial.new()
+	_gold_material.shader = GOLD_GLEAM_SHADER
+	_gold_material.set_shader_parameter("Intensity", 0.0)
+	_gold_overlay.material = _gold_material
+	_gold_overlay.color = Color(1.0, 1.0, 1.0, 1.0)  # shader owns final alpha
 
 
 func _process(_delta: float) -> void:
@@ -62,6 +77,25 @@ func setup(ship: Ship) -> void:
 	_ship = ship
 	_ship.health_changed.connect(_on_health_changed)
 	_ship.respawned.connect(_on_respawned)
+	_ship.invincibility_changed.connect(_on_invincibility_changed)
+
+
+func _on_invincibility_changed(active: bool) -> void:
+	if _gold_tween and _gold_tween.is_valid():
+		_gold_tween.kill()
+	var target: float = 1.0 if active else 0.0
+	_gold_tween = create_tween()
+	_gold_tween.tween_method(
+		_set_gold_intensity, _get_gold_intensity(), target, GOLD_GLEAM_FADE_DURATION
+	)
+
+
+func _get_gold_intensity() -> float:
+	return float(_gold_material.get_shader_parameter("Intensity"))
+
+
+func _set_gold_intensity(value: float) -> void:
+	_gold_material.set_shader_parameter("Intensity", value)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:

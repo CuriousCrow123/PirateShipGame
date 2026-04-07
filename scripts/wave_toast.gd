@@ -14,17 +14,26 @@ const SLIDE_OFFSET_Y: float = -40.0
 var _active_tween: Tween = null
 
 @onready var _frame: PanelContainer = $Centerer/Frame
+@onready var _subtitle_label: Label = %Subtitle
 @onready var _wave_label: Label = %WaveLabel
 
 
 func _ready() -> void:
 	assert(_frame != null, "WaveToast: Frame panel not found")
+	assert(_subtitle_label != null, "WaveToast: Subtitle label not found")
 	assert(_wave_label != null, "WaveToast: WaveLabel not found")
 	_frame.modulate.a = 0.0
 
 
 func show_wave(wave: int) -> void:
-	_wave_label.text = "WAVE %d" % wave
+	show_message("INCOMING", "WAVE %d" % wave)
+
+
+## Generic title+subtitle toast. Reused for wave announcements and the
+## secret Invincible toggle — same slide/fade choreography.
+func show_message(subtitle: String, title: String) -> void:
+	_subtitle_label.text = subtitle
+	_wave_label.text = title
 	if _active_tween and _active_tween.is_valid():
 		_active_tween.kill()
 	offset = Vector2(0.0, SLIDE_OFFSET_Y)

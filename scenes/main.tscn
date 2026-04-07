@@ -15,6 +15,10 @@
 [ext_resource type="PackedScene" path="res://scenes/minimap.tscn" id="14_minimap"]
 [ext_resource type="PackedScene" path="res://scenes/debug_overlay.tscn" id="15_debug"]
 [ext_resource type="PackedScene" path="res://scenes/hp_display.tscn" id="16_hp"]
+[ext_resource type="PackedScene" path="res://scenes/wave_toast.tscn" id="17_wave_toast"]
+[ext_resource type="PackedScene" path="res://scenes/lives_display.tscn" id="18_lives"]
+[ext_resource type="PackedScene" path="res://scenes/game_over_screen.tscn" id="19_game_over"]
+[ext_resource type="PackedScene" path="res://scenes/mine_cooldown_display.tscn" id="20_mine_cd"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -105,3 +109,11 @@ follow_target = NodePath("../..")
 [node name="DebugOverlay" parent="." unique_id=2046880645 instance=ExtResource("15_debug")]
 
 [node name="HPDisplay" parent="." instance=ExtResource("16_hp")]
+
+[node name="WaveToast" parent="." instance=ExtResource("17_wave_toast")]
+
+[node name="LivesDisplay" parent="." instance=ExtResource("18_lives")]
+
+[node name="GameOverScreen" parent="." instance=ExtResource("19_game_over")]
+
+[node name="MineCooldownDisplay" parent="." instance=ExtResource("20_mine_cd")]

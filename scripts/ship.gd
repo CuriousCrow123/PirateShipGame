@@ -9,8 +9,11 @@ extends CharacterBody2D
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
 signal health_changed(current: int, maximum: int)
+signal lives_changed(current: int, maximum: int)
 signal died
 signal respawned
+signal game_over
+signal invincibility_changed(active: bool)
 
 const HIT_TRAUMA: float = 0.85
 const HIT_FLASH_DURATION: float = 0.35
@@ -29,6 +32,7 @@ const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
 @export var broadside_cooldown: float = 0.5
 @export var mine_cooldown: float = 2.5
 @export var max_health: int = 4
+@export var max_lives: int = 2
 @export var respawn_delay: float = 2.0
 
 var _port_cooldown: float = 0.0
@@ -45,12 +49,14 @@ var _hit_shake_timer: float = 0.0
 var _hull_original_pos: Vector2 = Vector2.ZERO
 var _sail_original_pos: Vector2 = Vector2.ZERO
 var _health: int = 0
+var _lives: int = 0
 var _iframes_left: float = 0.0
 var _is_dead: bool = false
 var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
 var _spawn_rotation: float = 0.0
 var _blink_tween: Tween = null
+var _invincible: bool = false
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -81,14 +87,16 @@ func _ready() -> void:
 	_spawn_position = global_position
 	_spawn_rotation = rotation
 	_health = max_health
+	_lives = max_lives
 	_apply_config()
 	# Defer so Main has time to wire signals in its own _ready before the
-	# initial health_changed emits.
-	call_deferred("_emit_initial_health")
+	# initial health_changed / lives_changed emit.
+	call_deferred("_emit_initial_status")
 
 
-func _emit_initial_health() -> void:
+func _emit_initial_status() -> void:
 	health_changed.emit(_health, max_health)
+	lives_changed.emit(_lives, max_lives)
 
 
 func _exit_tree() -> void:
@@ -259,6 +267,13 @@ func _spawn_ghost() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Secret Invincible cheat (Shift+5). Checked BEFORE the input_locked
+	# guard so the cheat still toggles during respawn iframes / death.
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key_event: InputEventKey = event
+		if key_event.shift_pressed and key_event.physical_keycode == KEY_5:
+			_toggle_invincibility()
+			return
 	if _input_locked:
 		return
 	if event.is_action_pressed("fire_port") and _port_cooldown <= 0.0:
@@ -271,10 +286,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_dash()
 
 
+## 0.0 = just dropped (fully on cooldown), 1.0 = ready to drop again.
+func get_mine_cooldown_progress() -> float:
+	if mine_cooldown <= 0.0:
+		return 1.0
+	return clampf(1.0 - (_mine_cooldown_left / mine_cooldown), 0.0, 1.0)
+
+
+func _toggle_invincibility() -> void:
+	_invincible = not _invincible
+	invincibility_changed.emit(_invincible)
+
+
 ## Takes a single hit. Respects iframes; decrements HP; fires visual feedback;
 ## triggers death at zero. This is the sole public damage entry point.
 func take_damage(_from_direction: Vector2) -> void:
-	if _is_dead or _iframes_left > 0.0:
+	if _is_dead or _iframes_left > 0.0 or _invincible:
 		return
 	_health -= 1
 	_apply_hit_feedback()
@@ -327,7 +354,14 @@ func _enter_death() -> void:
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
+	_lives -= 1
+	lives_changed.emit(_lives, max_lives)
 	died.emit()
+	if _lives <= 0:
+		# Terminal death — no respawn. Main listens for game_over and shows
+		# the stats screen.
+		game_over.emit()
+		return
 	get_tree().create_timer(respawn_delay).timeout.connect(
 		func() -> void:
 			if is_instance_valid(self):
@@ -418,7 +452,11 @@ func _fire_broadside(side: String) -> void:
 
 
 func _drop_mine() -> void:
-	mine_dropped.emit(global_position)
+	# Drop behind the stern so the mine lands clear of the ship's hull and
+	# reads as "kicked off the back". transform.y is the ship's forward axis
+	# (see the wake ring offset in main.gd which uses the same convention).
+	var drop_pos: Vector2 = global_position - transform.y * 24.0
+	mine_dropped.emit(drop_pos)
 	_mine_cooldown_left = mine_cooldown
 
 

@@ -1,6 +1,8 @@
 class_name ControlsOverlay
 extends CanvasLayer
 
+static var _already_shown: bool = false
+
 var _dismissed: bool = false
 var _pulse_tween: Tween
 
@@ -10,6 +12,12 @@ var _pulse_tween: Tween
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	assert(_dismiss_prompt != null, "ControlsOverlay: DismissPrompt label not found")
+	# Skip on scene reload (e.g. after Game Over → Restart) — the player has
+	# already seen the controls this session.
+	if _already_shown:
+		queue_free()
+		return
+	_already_shown = true
 	get_tree().paused = true
 	_setup_pulse_tween()
 

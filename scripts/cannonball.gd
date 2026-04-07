@@ -4,6 +4,7 @@ extends Area2D
 ## then impacts with an explosion effect. Hits the opposing team's ship.
 
 signal water_impacted(pos: Vector2)
+signal hit_registered  ## Emitted when a PLAYER-owned ball hits an EnemyShip.
 
 # Layer/mask bit math (Godot layers are 1-indexed in UI, 0-indexed for `1 << n`).
 const LAYER_PLAYER_BALL: int = 1 << 2  # layer 3 = player_projectiles
@@ -60,6 +61,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if not is_enemy_owned and body is EnemyShip:
 		_impacted = true
 		(body as EnemyShip).take_damage(_direction)
+		hit_registered.emit()
 		# Emit water_impacted so Main spawns a displacement splash for parity
 		# with the max-range timeout path.
 		water_impacted.emit(global_position)

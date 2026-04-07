@@ -3,6 +3,8 @@ extends Node2D
 ## keeps the displacement viewport tracking the ship, spawns cannonballs,
 ## and manages enemy ship spawning/despawning, wake trails, and displacement.
 
+enum WavePhase { INTERMISSION, SPAWNING, CLEARING }
+
 const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
 const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
 const SeaMineScene: PackedScene = preload("res://scenes/sea_mine.tscn")
@@ -10,16 +12,41 @@ const TrailsScript: Script = preload("res://scripts/trails.gd")
 const TrailWidthCurve: Curve = preload("res://resources/trail_width_curve.tres")
 const TrailGradientTex: Texture2D = preload("res://textures/WaterTrailGradient.png")
 
-@export var max_enemies: int = 4
-@export var spawn_interval: float = 8.0
+# --- Wave progression tuning ----------------------------------------------
+# Wave 1 starts with WAVE_BASE_ENEMIES and grows by WAVE_ENEMY_INCREMENT each
+# wave. Concurrent alive cap grows with the wave so spawns trickle in instead
+# of dumping the full quota at once. Speed and reload modifiers compound per
+# wave but are clamped so the game stays playable indefinitely.
+const WAVE_BASE_ENEMIES: int = 3
+const WAVE_ENEMY_INCREMENT: int = 2
+const WAVE_MAX_CONCURRENT_BASE: int = 3
+const WAVE_MAX_CONCURRENT_INCREMENT: int = 2
+const WAVE_MAX_CONCURRENT_HARD_CAP: int = 10
+const WAVE_SPEED_PER_WAVE: float = 0.12
+const WAVE_SPEED_HARD_CAP: float = 1.6
+const WAVE_COOLDOWN_PER_WAVE: float = 0.16
+const WAVE_COOLDOWN_FLOOR: float = 0.6
+const WAVE_INTERMISSION_DURATION: float = 4.0
+const WAVE_TOAST_LEAD_TIME: float = 1.5
+const WAVE_SPAWN_INTERVAL_BASE: float = 2.0
+
 @export var spawn_distance: float = 550.0
 @export var despawn_distance: float = 1000.0
 
 var _enemies: Array[EnemyShip] = []
 var _mines: Array[SeaMine] = []
-var _spawn_timer: float = 2.0
 var _wake_distance: float = 0.0
 var _last_wake_pos: Vector2 = Vector2.ZERO
+
+# Wave state.
+var _current_wave: int = 0
+var _wave_phase: WavePhase = WavePhase.INTERMISSION
+var _intermission_timer: float = WAVE_INTERMISSION_DURATION
+var _toast_shown_for_wave: int = 0
+var _enemies_spawned_this_wave: int = 0
+var _enemies_to_spawn_this_wave: int = 0
+var _spawn_cadence_timer: float = 0.0
+var _stats: RunStats = null
 
 @onready var _ship: Ship = $Ship
 @onready var _minimap_display: MinimapDisplay = $Minimap/MinimapDisplay
@@ -28,6 +55,10 @@ var _last_wake_pos: Vector2 = Vector2.ZERO
 @onready var _wake_subviewport: SubViewport = $WaterTrail/SubViewport
 @onready var _player_wake_line: Line2D = $WaterTrail/SubViewport/Line2D
 @onready var _hp_display: HPDisplay = $HPDisplay
+@onready var _wave_toast: WaveToast = $WaveToast
+@onready var _lives_display: LivesDisplay = $LivesDisplay
+@onready var _game_over_screen: GameOverScreen = $GameOverScreen
+@onready var _mine_cooldown_display: MineCooldownDisplay = $MineCooldownDisplay
 
 
 func _ready() -> void:
@@ -38,6 +69,12 @@ func _ready() -> void:
 	assert(_wake_subviewport != null, "Main: WaterTrail/SubViewport not found")
 	assert(_player_wake_line != null, "Main: WaterTrail/SubViewport/Line2D not found")
 	assert(_hp_display != null, "Main: HPDisplay not found")
+	assert(_wave_toast != null, "Main: WaveToast not found")
+	assert(_lives_display != null, "Main: LivesDisplay not found")
+	assert(_game_over_screen != null, "Main: GameOverScreen not found")
+	assert(_mine_cooldown_display != null, "Main: MineCooldownDisplay not found")
+
+	_stats = RunStats.new()
 
 	# Wire wake trail SubViewport texture to the TrailSprite display.
 	$WaterTrail/TrailSprite.texture = _wake_subviewport.get_texture()
@@ -54,8 +91,12 @@ func _ready() -> void:
 	_ship.mine_dropped.connect(_on_mine_dropped)
 	_ship.died.connect(_on_ship_died)
 	_ship.respawned.connect(_on_ship_respawned)
+	_ship.game_over.connect(_on_game_over)
+	_ship.invincibility_changed.connect(_on_invincibility_changed)
 	_minimap_display.setup(_ship)
 	_hp_display.setup(_ship)
+	_lives_display.setup(_ship)
+	_mine_cooldown_display.setup(_ship)
 
 
 func _process(delta: float) -> void:
@@ -99,10 +140,7 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_spawn_timer -= delta
-	if _spawn_timer <= 0.0:
-		_spawn_timer = spawn_interval
-		_try_spawn_enemy()
+	_update_wave_state(delta)
 	_despawn_distant_enemies()
 
 
@@ -137,9 +175,38 @@ func _on_ship_respawned() -> void:
 func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	var ball: Cannonball = CannonballScene.instantiate()
 	ball.water_impacted.connect(_on_cannonball_water_impacted)
+	ball.hit_registered.connect(_on_player_ball_hit)
 	add_child(ball)
 	ball.setup(pos, dir, false)
+	_stats.register_shot_fired()
 	ExplosionSprite.create(self, pos, "muzzle_flash", dir, _ship.velocity * 0.75)
+
+
+func _on_player_ball_hit() -> void:
+	_stats.register_shot_hit()
+
+
+func _on_enemy_destroyed(_enemy: EnemyShip, by_mine: bool) -> void:
+	_stats.register_enemy_destroyed(by_mine)
+
+
+func _on_invincibility_changed(active: bool) -> void:
+	var subtitle: String = "CHEAT"
+	var title: String = "INVINCIBLE ON" if active else "INVINCIBLE OFF"
+	_wave_toast.show_message(subtitle, title)
+
+
+func _on_game_over() -> void:
+	# Close out the in-progress wave so its elapsed time still shows up in
+	# the stats list. If the player died mid-intermission, there's no wave
+	# to close — skip.
+	if _wave_phase == WavePhase.SPAWNING or _wave_phase == WavePhase.CLEARING:
+		_stats.end_wave()
+	# Short grace so the death explosion + HP drain reads before the panel
+	# slides in.
+	await get_tree().create_timer(1.0).timeout
+	if is_instance_valid(_game_over_screen):
+		_game_over_screen.show_results(_stats)
 
 
 func _on_enemy_cannon_fired(pos: Vector2, dir: Vector2) -> void:
@@ -177,14 +244,86 @@ func _on_mine_tree_exiting(mine: SeaMine) -> void:
 	_mines.erase(mine)
 
 
-func _try_spawn_enemy() -> void:
-	if _enemies.size() >= max_enemies:
-		return
+func _update_wave_state(delta: float) -> void:
+	## Wave lifecycle:
+	##   INTERMISSION → (toast lead-time elapses) → toast shown
+	##                → (timer hits zero) → SPAWNING
+	##   SPAWNING     → (cadence timer ticks, respect concurrent cap)
+	##                → (quota filled) → CLEARING
+	##   CLEARING     → (alive count == 0) → INTERMISSION (next wave)
+	## Player death does NOT reset wave state — combat resumes on respawn.
+	match _wave_phase:
+		WavePhase.INTERMISSION:
+			_intermission_timer -= delta
+			var next_wave: int = _current_wave + 1
+			var time_until_start: float = _intermission_timer
+			if _toast_shown_for_wave < next_wave and time_until_start <= WAVE_TOAST_LEAD_TIME:
+				_wave_toast.show_wave(next_wave)
+				_toast_shown_for_wave = next_wave
+			if _intermission_timer <= 0.0:
+				_begin_wave(next_wave)
+		WavePhase.SPAWNING:
+			_spawn_cadence_timer -= delta
+			if _spawn_cadence_timer <= 0.0:
+				if _try_spawn_wave_enemy():
+					_spawn_cadence_timer = _current_spawn_interval()
+				else:
+					# Concurrent cap hit — try again next physics tick.
+					_spawn_cadence_timer = 0.1
+			if _enemies_spawned_this_wave >= _enemies_to_spawn_this_wave:
+				_wave_phase = WavePhase.CLEARING
+		WavePhase.CLEARING:
+			if _alive_enemy_count() == 0:
+				_stats.end_wave()
+				_intermission_timer = WAVE_INTERMISSION_DURATION
+				_wave_phase = WavePhase.INTERMISSION
+
+
+func _begin_wave(wave: int) -> void:
+	_current_wave = wave
+	_enemies_spawned_this_wave = 0
+	_enemies_to_spawn_this_wave = WAVE_BASE_ENEMIES + (wave - 1) * WAVE_ENEMY_INCREMENT
+	_spawn_cadence_timer = 0.0
+	_wave_phase = WavePhase.SPAWNING
+	_stats.start_wave(wave)
+
+
+func _current_max_concurrent() -> int:
+	var cap: int = WAVE_MAX_CONCURRENT_BASE + (_current_wave - 1) * WAVE_MAX_CONCURRENT_INCREMENT
+	return mini(cap, WAVE_MAX_CONCURRENT_HARD_CAP)
+
+
+func _current_spawn_interval() -> float:
+	# Cadence shrinks with the broadside cooldown multiplier so later waves
+	# also fill the field a little faster.
+	return WAVE_SPAWN_INTERVAL_BASE * _current_cooldown_mult()
+
+
+func _current_speed_mult() -> float:
+	return minf(1.0 + (_current_wave - 1) * WAVE_SPEED_PER_WAVE, WAVE_SPEED_HARD_CAP)
+
+
+func _current_cooldown_mult() -> float:
+	return maxf(1.0 - (_current_wave - 1) * WAVE_COOLDOWN_PER_WAVE, WAVE_COOLDOWN_FLOOR)
+
+
+func _alive_enemy_count() -> int:
+	var count: int = 0
+	for enemy: EnemyShip in _enemies:
+		if is_instance_valid(enemy) and not enemy.is_destroyed():
+			count += 1
+	return count
+
+
+func _try_spawn_wave_enemy() -> bool:
+	if _alive_enemy_count() >= _current_max_concurrent():
+		return false
 	var angle: float = randf() * TAU
 	var spawn_pos: Vector2 = _ship.global_position + Vector2.from_angle(angle) * spawn_distance
 	var enemy: EnemyShip = EnemyShipScene.instantiate()
 	enemy.rotation = randf() * TAU
 	enemy.cannon_fired.connect(_on_enemy_cannon_fired)
+	enemy.destroyed.connect(_on_enemy_destroyed)
 	# Single cleanup path: tree_exiting is the only handler that erases from
 	# _enemies and frees the wake trail.
 	enemy.tree_exiting.connect(_on_enemy_tree_exiting.bind(enemy))
@@ -192,8 +331,11 @@ func _try_spawn_enemy() -> void:
 	enemy.global_position = spawn_pos
 	enemy.reset_physics_interpolation()
 	enemy.setup(_ship)
+	enemy.apply_wave_modifiers(_current_speed_mult(), _current_cooldown_mult())
 	_enemies.append(enemy)
 	_register_enemy_wake(enemy)
+	_enemies_spawned_this_wave += 1
+	return true
 
 
 func _on_enemy_tree_exiting(enemy: EnemyShip) -> void:
