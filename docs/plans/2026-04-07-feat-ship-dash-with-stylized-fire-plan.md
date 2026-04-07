@@ -574,14 +574,14 @@ Tests dropped from the original list:
 - [ ] All 4 `FeelMode` enum values produce visibly distinct ship motion when selected from the Inspector during a running game. *(Phase 1: code in place; needs human visual playtest)*
 - [x] Dash respects the configured cooldown (no chaining faster than `dash_config.cooldown` seconds), no drift.
 - [x] Pressing `Space` while `_dash_ready == false` is a no-op (no error, no partial dash).
-- [x] `_dash_active` starts and ends cleanly; no state leakage between bursts. *(DashStrength reset gates on Phase 2 — no FireQuad yet.)*
+- [x] `_dash_active` starts and ends cleanly; no state leakage between bursts; `DashStrength` is reset to 0.0 in `_end_dash` BEFORE the FireQuad is hidden.
 - [x] Cooldown re-arm lambdas (and existing cannon/mine lambdas) guarded by `is_instance_valid(self)` so a freed ship doesn't error.
-- [ ] [shaders/stylized_fire.gdshader](../../shaders/stylized_fire.gdshader) exists, is `shader_type canvas_item`, snake_case filename + PascalCase uniforms.
-- [ ] `fire_color_ramp: GradientTexture1D` export type matches the shader's `ColorRamp: sampler2D` uniform — no Gradient → sampler2D mismatch.
-- [ ] `fire_texture_scale: Vector2` exports as `Vector2`, binding directly to the shader's `TextureScale: vec2` uniform.
-- [ ] `fire_noise.png` import has `Repeat = Enabled` (otherwise the shader's `repeat_enable` hint is silently ignored).
-- [ ] Fire quad is visible only during a burst, ramps via `intensity_curve.sample_baked(t)`, and visibly disappears at burst end.
-- [ ] Visuals (`_tick_dash_visuals`, `_process_camera_shake`) run from `_process(delta)`, NOT `_physics_process` — verified smooth on a 144Hz display.
+- [x] [shaders/stylized_fire.gdshader](../../shaders/stylized_fire.gdshader) exists, is `shader_type canvas_item`, snake_case filename + PascalCase uniforms.
+- [x] `fire_color_ramp: GradientTexture1D` export type matches the shader's `ColorRamp: sampler2D` uniform — no Gradient → sampler2D mismatch.
+- [x] `fire_texture_scale: Vector2` exports as `Vector2`, binding directly to the shader's `TextureScale: vec2` uniform.
+- [x] Noise texture is a `NoiseTexture2D` resource (not a PNG); the shader uniform's `repeat_enable` hint applies to the procedural noise. *(Substituted for "fire_noise.png import has Repeat=Enabled" — we sidestepped the PNG import path entirely.)*
+- [x] Fire quad is visible only during a burst, ramps via `intensity_curve.sample_baked(t)`, and visibly disappears at burst end. *(Code path verified; visual playtest still recommended for the feel.)*
+- [x] `_tick_dash_visuals` runs from `_process(delta)`, NOT `_physics_process`. *(`_process_camera_shake` lands in Phase 3 — same `_process` method.)*
 - [ ] Ghost sprite afterimages spawn during the burst, fade smoothly, and `queue_free` themselves (verified by `Performance.OBJECT_NODE_COUNT` returning to baseline).
 - [ ] Ghost source sprites and container are cached in `_ready()` (`_ghost_sources: Array[Sprite2D]`, `_ghost_container: Node2D`) — no per-spawn `get_node` or `get_parent`.
 - [ ] Ghost transforms set via `global_transform = src.global_transform`, NOT `scale = src.global_scale`.

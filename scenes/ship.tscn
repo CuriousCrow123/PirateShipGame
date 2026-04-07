@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://bbdtkmcxp17m2" path="res://scenes/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://resources/default_ship_config.tres" id="4_config"]
 [ext_resource type="Resource" path="res://resources/dash_config.tres" id="5_dash_config"]
+[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="6_fire_quad"]
+[ext_resource type="Material" path="res://shaders/stylized_fire_material.tres" id="7_fire_mat"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -94,3 +96,13 @@ shape = SubResource("RectangleShape2D_hull")
 zoom = Vector2(1.2, 1.2)
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
+
+[node name="SternMarker" type="Marker2D" parent="."]
+position = Vector2(0, -28)
+
+[node name="FireQuad" type="Sprite2D" parent="SternMarker"]
+z_index = 1
+scale = Vector2(0.5, 0.7)
+texture = ExtResource("6_fire_quad")
+material = ExtResource("7_fire_mat")
+visible = false

@@ -27,6 +27,7 @@ var _dash_remaining: float = 0.0
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
+@onready var _fire_quad: Sprite2D = $SternMarker/FireQuad
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 	assert(_hull_sprite != null, "Ship: HullSprite node is missing")
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
+	assert(_fire_quad != null, "Ship: SternMarker/FireQuad node is missing")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_config != null, "Ship: dash_config Resource is missing")
 	_apply_config()
@@ -101,6 +103,23 @@ func _process_collision_pushback(pushback_scale: float) -> void:
 		if collider is EnemyShip:
 			var push: Vector2 = collision.get_normal() * 50.0 * pushback_scale
 			velocity += push
+
+
+func _process(_delta: float) -> void:
+	# Visuals run on render frames so the burst animates smoothly on
+	# high-refresh displays. Motion stays in _physics_process.
+	if _dash_active:
+		_tick_dash_visuals()
+
+
+func _tick_dash_visuals() -> void:
+	var t: float = 1.0 - clampf(_dash_remaining / dash_config.duration, 0.0, 1.0)
+	var dash_strength: float = 1.0
+	if dash_config.intensity_curve != null:
+		dash_strength = dash_config.intensity_curve.sample_baked(t)
+	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
+	if fire_mat != null:
+		fire_mat.set_shader_parameter("DashStrength", dash_strength)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -187,6 +206,25 @@ func _start_dash() -> void:
 		_:
 			velocity += transform.y * dash_config.impulse_speed
 
+	# Push current fire-config uniforms once at burst start (live-tunable
+	# values picked up from dash_config via the shared Resource cache) and
+	# reveal the quad. DashStrength then ramps via _tick_dash_visuals.
+	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
+	if fire_mat != null:
+		fire_mat.set_shader_parameter("TextureScale", dash_config.fire_texture_scale)
+		fire_mat.set_shader_parameter("TimeScale", dash_config.fire_time_scale)
+		fire_mat.set_shader_parameter("EdgeSoftness", dash_config.fire_edge_softness)
+		fire_mat.set_shader_parameter("EmissionIntensity", dash_config.fire_emission_intensity)
+		fire_mat.set_shader_parameter("DashStrength", 0.0)
+		if dash_config.fire_noise_texture != null:
+			fire_mat.set_shader_parameter("NoiseTexture", dash_config.fire_noise_texture)
+		if dash_config.fire_mask_texture != null:
+			fire_mat.set_shader_parameter("MaskTexture", dash_config.fire_mask_texture)
+		if dash_config.fire_color_ramp != null:
+			fire_mat.set_shader_parameter("ColorRamp", dash_config.fire_color_ramp)
+	_fire_quad.scale = Vector2(0.5, 0.7 * dash_config.fire_quad_length_scale)
+	_fire_quad.visible = true
+
 	get_tree().create_timer(dash_config.cooldown).timeout.connect(
 		func() -> void:
 			if is_instance_valid(self):
@@ -197,3 +235,9 @@ func _start_dash() -> void:
 func _end_dash() -> void:
 	_dash_active = false
 	_dash_remaining = 0.0
+	# Reset DashStrength on the shared material BEFORE hiding so the next
+	# burst doesn't render one frame of stale state.
+	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
+	if fire_mat != null:
+		fire_mat.set_shader_parameter("DashStrength", 0.0)
+	_fire_quad.visible = false

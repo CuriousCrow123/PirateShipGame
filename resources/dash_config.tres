@@ -1,6 +1,14 @@
-[gd_resource type="Resource" script_class="DashConfig" format=3]
+[gd_resource type="Resource" script_class="DashConfig" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/dash_config.gd" id="1_script"]
+[ext_resource type="Curve" path="res://resources/dash_intensity_curve.tres" id="2_curve"]
+[ext_resource type="NoiseTexture2D" path="res://resources/dash_fire_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="4_mask"]
+[ext_resource type="GradientTexture1D" path="res://resources/dash_fire_gradient.tres" id="5_ramp"]
 
 [resource]
 script = ExtResource("1_script")
+intensity_curve = ExtResource("2_curve")
+fire_noise_texture = ExtResource("3_noise")
+fire_mask_texture = ExtResource("4_mask")
+fire_color_ramp = ExtResource("5_ramp")
