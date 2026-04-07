@@ -66,8 +66,10 @@ func _on_body_entered(body: Node2D) -> void:
 		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 		queue_free()
 	elif is_enemy_owned and body is Ship:
-		# Player HP is intentionally out of scope — visual hit only.
+		# Player HP is intentionally out of scope — visual-only hit feedback
+		# (camera shake + white flash via Ship.take_hit).
 		_impacted = true
+		(body as Ship).take_hit()
 		water_impacted.emit(global_position)
 		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 		queue_free()

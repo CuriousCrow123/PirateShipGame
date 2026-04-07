@@ -9,6 +9,11 @@ extends CharacterBody2D
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
 
+const HIT_TRAUMA: float = 0.55
+const HIT_FLASH_DURATION: float = 0.15
+const HIT_SHAKE_DURATION: float = 0.3
+const HIT_SHAKE_MAX_INTENSITY: float = 3.0
+
 @export var config: ShipConfig
 @export var dash_config: DashConfig
 @export var thrust: float = 80.0
@@ -27,6 +32,10 @@ var _dash_remaining: float = 0.0
 var _next_ghost_in: float = 0.0
 var _shake_trauma: float = 0.0
 var _ghost_additive_material: CanvasItemMaterial
+var _hit_flash_tween: Tween = null
+var _hit_shake_timer: float = 0.0
+var _hull_original_pos: Vector2 = Vector2.ZERO
+var _sail_original_pos: Vector2 = Vector2.ZERO
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -52,6 +61,8 @@ func _ready() -> void:
 	# and batch together).
 	_ghost_additive_material = CanvasItemMaterial.new()
 	_ghost_additive_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_hull_original_pos = _hull_sprite.position
+	_sail_original_pos = _sail_sprite.position
 	_apply_config()
 
 
@@ -139,6 +150,7 @@ func _process(delta: float) -> void:
 	if _dash_active:
 		_tick_dash_visuals(delta)
 	_process_camera_shake(delta)
+	_process_hit_shake(delta)
 
 
 func _tick_dash_visuals(delta: float) -> void:
@@ -208,6 +220,34 @@ func _unhandled_input(event: InputEvent) -> void:
 		_drop_mine()
 	elif event.is_action_pressed("dash") and _dash_ready and not _dash_active:
 		_start_dash()
+
+
+## Visual-only hit feedback: camera shake + per-sprite shake + white flash.
+## Player HP is intentionally out of scope — this just reads the impact.
+func take_hit() -> void:
+	_shake_trauma = maxf(_shake_trauma, HIT_TRAUMA)
+	_hit_shake_timer = HIT_SHAKE_DURATION
+	if _hit_flash_tween and _hit_flash_tween.is_valid():
+		_hit_flash_tween.kill()
+	modulate = Color(3.0, 3.0, 3.0, 1.0)
+	_hit_flash_tween = create_tween()
+	_hit_flash_tween.tween_property(self, "modulate", Color.WHITE, HIT_FLASH_DURATION)
+
+
+func _process_hit_shake(delta: float) -> void:
+	if _hit_shake_timer <= 0.0:
+		return
+	_hit_shake_timer -= delta
+	if _hit_shake_timer <= 0.0:
+		_hull_sprite.position = _hull_original_pos
+		_sail_sprite.position = _sail_original_pos
+		return
+	var intensity: float = _hit_shake_timer / HIT_SHAKE_DURATION * HIT_SHAKE_MAX_INTENSITY
+	var offset: Vector2 = Vector2(
+		roundf(randf_range(-intensity, intensity)), roundf(randf_range(-intensity, intensity))
+	)
+	_hull_sprite.position = _hull_original_pos + offset
+	_sail_sprite.position = _sail_original_pos + offset
 
 
 ## Applies a new ship configuration, updating sprites and cannon slots.
