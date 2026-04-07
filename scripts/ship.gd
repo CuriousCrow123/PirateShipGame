@@ -182,9 +182,12 @@ func _process_collision_pushback(pushback_scale: float) -> void:
 			# physics sub-steps. Return after the first collision to ensure one
 			# collision event → at most one damage application per frame.
 			# Ship uses its regular iframe system; enemy uses take_ram_damage so
-			# cannonball DPS stays unaffected by ram iframes.
-			take_damage(-collision.get_normal())
-			enemy.take_ram_damage(collision.get_normal())
+			# cannonball DPS stays unaffected by ram iframes. Damage is mutual
+			# only when the player is NOT invincible — an invincible player
+			# should just bounce off without harming the enemy either.
+			if _iframes_left <= 0.0 and not _is_dead:
+				take_damage(-collision.get_normal())
+				enemy.take_ram_damage(collision.get_normal())
 			return
 
 
