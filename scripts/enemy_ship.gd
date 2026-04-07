@@ -133,7 +133,9 @@ func _try_fire_at_target() -> void:
 		return
 	var dir_to_target: Vector2 = to_target / dist
 	# Ship right (starboard) is +transform.x; left (port) is -transform.x.
-	var starboard: Vector2 = transform.x
+	# transform.x has length == scale.x (0.5), so normalize before the dot
+	# or the threshold (0.85) is unreachable.
+	var starboard: Vector2 = transform.x.normalized()
 	var dot: float = starboard.dot(dir_to_target)
 	if dot >= BROADSIDE_ALIGNMENT_THRESHOLD and _starboard_cooldown <= 0.0:
 		_fire_broadside(true)
