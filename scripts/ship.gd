@@ -12,10 +12,10 @@ signal health_changed(current: int, maximum: int)
 signal died
 signal respawned
 
-const HIT_TRAUMA: float = 0.55
-const HIT_FLASH_DURATION: float = 0.15
-const HIT_SHAKE_DURATION: float = 0.3
-const HIT_SHAKE_MAX_INTENSITY: float = 3.0
+const HIT_TRAUMA: float = 0.85
+const HIT_FLASH_DURATION: float = 0.35
+const HIT_SHAKE_DURATION: float = 0.6
+const HIT_SHAKE_MAX_INTENSITY: float = 5.0
 const HIT_IFRAME_DURATION: float = 1.2
 const RESPAWN_IFRAME_DURATION: float = 2.5
 const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
