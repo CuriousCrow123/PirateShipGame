@@ -219,7 +219,9 @@ func _register_enemy_wake(enemy: EnemyShip) -> void:
 	var grad: Gradient = Gradient.new()
 	grad.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 1)])
 	line.gradient = grad
-	line.max_length = 90
+	# Enemies move ~2.5x slower than the player (chase 50 vs thrust 120), so
+	# scale up the point count to give the trail a comparable on-screen length.
+	line.max_length = 220
 	line.sub_viewport = _wake_subviewport
 	line.follow_target = enemy
 	line.pivot_target = _ship
