@@ -28,16 +28,15 @@ enum FeelMode { LOCKED_HEADING, STEERABLE, VELOCITY_ALIGNED, OVERSPEED_CAP }
 ## Multiplier on the existing collision pushback during dash (0.0 = suppress, 1.0 = normal).
 @export_range(0.0, 1.0, 0.05) var collision_pushback_scale: float = 0.0
 
-# --- Fire Shader (Phase 2) ---
-@export_group("Fire Shader")
-@export var fire_texture_scale: Vector2 = Vector2(1.0, 1.0)
-@export_range(0.5, 8.0, 0.1) var fire_time_scale: float = 3.0
-@export_range(0.0, 1.0, 0.01) var fire_edge_softness: float = 0.1
-@export_range(0.0, 4.0, 0.05) var fire_emission_intensity: float = 2.0
-@export var fire_noise_texture: Texture2D
-@export var fire_mask_texture: Texture2D
-## Bind directly to the shader's ColorRamp sampler2D uniform.
-@export var fire_color_ramp: GradientTexture1D
+# --- Stylized Flame ---
+@export_group("Stylized Flame")
+## Base FlameBrightness uniform pushed onto the dash_fire_model shader. The
+## intensity_curve is sampled per render frame and multiplied into this value
+## to produce the burst envelope, so this is the PEAK brightness during the
+## middle of the dash. Other shader uniforms (colors, frequencies, mesh shape)
+## live in scenes/dash_fire_model.tscn — edit that scene directly to tune the
+## look. Use the stylized_flame_test scene + SAVE button to dial values in.
+@export_range(0.0, 4.0, 0.05) var flame_brightness: float = 1.0
 
 # --- Ghost Trail (Phase 3) ---
 @export_group("Ghost Trail")

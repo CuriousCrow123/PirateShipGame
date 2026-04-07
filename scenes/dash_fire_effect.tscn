@@ -7,10 +7,10 @@
 script = ExtResource("1_script")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
-offset_left = -16.0
-offset_top = -32.0
-offset_right = 16.0
-offset_bottom = 32.0
+offset_left = -48.0
+offset_top = -160.0
+offset_right = 48.0
+offset_bottom = 0.0
 stretch = true
 
 [node name="DashFireModel" parent="SubViewportContainer" instance=ExtResource("2_model")]
