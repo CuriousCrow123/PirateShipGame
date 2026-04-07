@@ -3,11 +3,13 @@ extends CharacterBody2D
 ## Thrust accumulates velocity; viscous drag decays it exponentially.
 ## Brake (S key) decelerates to zero via move_toward.
 ## Broadside cannons fire perpendicular to the ship (Q = port, E = starboard).
+## Space dashes the ship forward with a tunable feel mode (see DashConfig).
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
 
 @export var config: ShipConfig
+@export var dash_config: DashConfig
 @export var thrust: float = 80.0
 @export var turn_speed: float = 2.5
 @export var linear_drag: float = 0.97
@@ -18,6 +20,9 @@ signal mine_dropped(pos: Vector2)
 var _port_ready: bool = true
 var _starboard_ready: bool = true
 var _mine_ready: bool = true
+var _dash_ready: bool = true
+var _dash_active: bool = false
+var _dash_remaining: float = 0.0
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -30,12 +35,48 @@ func _ready() -> void:
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(config != null, "Ship: config Resource is missing")
+	assert(dash_config != null, "Ship: dash_config Resource is missing")
 	_apply_config()
 
 
 func _physics_process(delta: float) -> void:
 	var is_braking: bool = Input.is_action_pressed("move_back")
 
+	if _dash_active:
+		_dash_remaining -= delta
+		if _dash_remaining <= 0.0:
+			_end_dash()
+			_apply_normal_movement(delta, is_braking)
+			return
+
+		var turn_input: float = Input.get_axis("turn_left", "turn_right")
+
+		match dash_config.feel_mode:
+			DashConfig.FeelMode.LOCKED_HEADING:
+				velocity *= linear_drag
+				# thrust + steering ignored during locked-heading burst
+			DashConfig.FeelMode.STEERABLE:
+				if not is_braking and Input.is_action_pressed("move_forward"):
+					velocity += transform.y * thrust * delta
+				velocity *= linear_drag
+				rotation += turn_input * turn_speed * delta
+			DashConfig.FeelMode.VELOCITY_ALIGNED:
+				velocity *= linear_drag
+				rotation += turn_input * turn_speed * delta
+			DashConfig.FeelMode.OVERSPEED_CAP:
+				if not is_braking and Input.is_action_pressed("move_forward"):
+					velocity += transform.y * thrust * delta
+				velocity *= dash_config.overspeed_drag
+				rotation += turn_input * turn_speed * delta
+
+		move_and_slide()
+		_process_collision_pushback(dash_config.collision_pushback_scale)
+		return
+
+	_apply_normal_movement(delta, is_braking)
+
+
+func _apply_normal_movement(delta: float, is_braking: bool) -> void:
 	if not is_braking and Input.is_action_pressed("move_forward"):
 		velocity += transform.y * thrust * delta
 
@@ -48,13 +89,17 @@ func _physics_process(delta: float) -> void:
 	rotation += turn_input * turn_speed * delta
 
 	move_and_slide()
+	_process_collision_pushback(1.0)
 
-	# Bounce off enemy ships on collision
+
+func _process_collision_pushback(pushback_scale: float) -> void:
+	if pushback_scale <= 0.0:
+		return
 	for i: int in range(get_slide_collision_count()):
 		var collision: KinematicCollision2D = get_slide_collision(i)
 		var collider: Object = collision.get_collider()
 		if collider is EnemyShip:
-			var push: Vector2 = collision.get_normal() * 50.0
+			var push: Vector2 = collision.get_normal() * 50.0 * pushback_scale
 			velocity += push
 
 
@@ -65,6 +110,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_broadside("starboard")
 	elif event.is_action_pressed("drop_mine") and _mine_ready:
 		_drop_mine()
+	elif event.is_action_pressed("dash") and _dash_ready and not _dash_active:
+		_start_dash()
 
 
 ## Applies a new ship configuration, updating sprites and cannon slots.
@@ -102,16 +149,51 @@ func _fire_broadside(side: String) -> void:
 	if side == "port":
 		_port_ready = false
 		get_tree().create_timer(broadside_cooldown).timeout.connect(
-			func() -> void: _port_ready = true
+			func() -> void:
+				if is_instance_valid(self):
+					_port_ready = true
 		)
 	else:
 		_starboard_ready = false
 		get_tree().create_timer(broadside_cooldown).timeout.connect(
-			func() -> void: _starboard_ready = true
+			func() -> void:
+				if is_instance_valid(self):
+					_starboard_ready = true
 		)
 
 
 func _drop_mine() -> void:
 	mine_dropped.emit(global_position)
 	_mine_ready = false
-	get_tree().create_timer(mine_cooldown).timeout.connect(func() -> void: _mine_ready = true)
+	get_tree().create_timer(mine_cooldown).timeout.connect(
+		func() -> void:
+			if is_instance_valid(self):
+				_mine_ready = true
+	)
+
+
+func _start_dash() -> void:
+	_dash_ready = false
+	_dash_active = true
+	_dash_remaining = dash_config.duration
+
+	# Apply initial impulse based on feel mode.
+	match dash_config.feel_mode:
+		DashConfig.FeelMode.VELOCITY_ALIGNED:
+			if velocity.length() < 1.0:
+				velocity += transform.y * dash_config.impulse_speed
+			else:
+				velocity += velocity.normalized() * dash_config.impulse_speed
+		_:
+			velocity += transform.y * dash_config.impulse_speed
+
+	get_tree().create_timer(dash_config.cooldown).timeout.connect(
+		func() -> void:
+			if is_instance_valid(self):
+				_dash_ready = true
+	)
+
+
+func _end_dash() -> void:
+	_dash_active = false
+	_dash_remaining = 0.0
