@@ -1,0 +1,156 @@
+[gd_scene format=3 uid="uid://bnrgpw40rl82m"]
+
+[ext_resource type="Script" uid="uid://wmc23ja2pkf0" path="res://scripts/dash_fire_test.gd" id="1_test_script"]
+[ext_resource type="Shader" uid="uid://c4qyxxr1x6eww" path="res://shaders/stylized_fire.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://resources/dash_fire_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="4_mask"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 14
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="Gradient" id="Gradient_test_fire"]
+colors = PackedColorArray(1, 0.89, 0, 1, 1, 0, 0.447, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_test_fire"]
+gradient = SubResource("Gradient_test_fire")
+width = 128
+
+[sub_resource type="Curve" id="Curve_test_scale"]
+_data = [Vector2(0, 0), 0.0, 3.65, 0, 0, Vector2(0.556, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_test_scale"]
+width = 128
+curve = SubResource("Curve_test_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_test_fire"]
+lifetime_randomness = 0.81
+direction = Vector3(0, 1, 0)
+spread = 0.0
+initial_velocity_min = 0.5
+initial_velocity_max = 0.5
+gravity = Vector3(0, 0, 0)
+linear_accel_min = 4.0
+linear_accel_max = 4.0
+scale_max = 2.0
+scale_curve = SubResource("CurveTexture_test_scale")
+color_ramp = SubResource("GradientTexture1D_test_fire")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_test_fire"]
+render_priority = 0
+shader = ExtResource("2_shader")
+shader_parameter/NoiseTexture = ExtResource("3_noise")
+shader_parameter/MaskTexture = ExtResource("4_mask")
+shader_parameter/EmissionIntensity = 2.0
+shader_parameter/TimeScale = 3.0
+shader_parameter/TextureScale = Vector2(1, 1)
+shader_parameter/EdgeSoftness = 0.1
+
+[sub_resource type="QuadMesh" id="QuadMesh_test_fire"]
+material = SubResource("ShaderMaterial_test_fire")
+size = Vector2(0.5, 0.5)
+
+[node name="DashFireTest" type="Node2D" unique_id=1440678966]
+script = ExtResource("1_test_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1819238370]
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.08, 0.1, 0.14, 1)
+
+[node name="HiResLabel" type="Label" parent="." unique_id=1053295978]
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 104.0
+offset_bottom = 16.0
+text = "HI-RES 3D"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="PixelLabel" type="Label" parent="." unique_id=1934930745]
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 212.0
+offset_bottom = 16.0
+text = "PIXEL ART"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="HiResContainer" type="SubViewportContainer" parent="." unique_id=567728567]
+texture_filter = 3
+offset_left = 8.0
+offset_top = 20.0
+offset_right = 104.0
+offset_bottom = 340.0
+stretch = true
+
+[node name="HiResViewport" type="SubViewport" parent="HiResContainer" unique_id=1402535883]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(96, 320)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="HiResContainer/HiResViewport" unique_id=1481259303]
+transform = Transform3D(1, 0, 0, 0, 0.951, 0.309, 0, -0.309, 0.951, 0, 2.59, 2.17)
+fov = 50.0
+near = 0.1
+far = 64.0
+
+[node name="FireEmitter" type="GPUParticles3D" parent="HiResContainer/HiResViewport" unique_id=1858404566]
+emitting = false
+amount = 50
+randomness = 0.74
+fixed_fps = 60
+draw_order = 1
+process_material = SubResource("ParticleProcessMaterial_test_fire")
+draw_pass_1 = SubResource("QuadMesh_test_fire")
+
+[node name="PixelContainer" type="SubViewportContainer" parent="." unique_id=2100170965]
+offset_left = 116.0
+offset_top = 20.0
+offset_right = 212.0
+offset_bottom = 340.0
+stretch = true
+
+[node name="PixelViewport" type="SubViewport" parent="PixelContainer" unique_id=712307211]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(96, 320)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="PixelContainer/PixelViewport" unique_id=1980872416]
+transform = Transform3D(1, 0, 0, 0, 0.951, 0.309, 0, -0.309, 0.951, 0, 2.59, 2.17)
+fov = 50.0
+near = 0.1
+far = 64.0
+
+[node name="FireEmitter" type="GPUParticles3D" parent="PixelContainer/PixelViewport" unique_id=1905407672]
+emitting = false
+amount = 50
+randomness = 0.74
+fixed_fps = 60
+draw_order = 1
+process_material = SubResource("ParticleProcessMaterial_test_fire")
+draw_pass_1 = SubResource("QuadMesh_test_fire")
+
+[node name="ControlsScroll" type="ScrollContainer" parent="." unique_id=414715954]
+offset_left = 220.0
+offset_top = 4.0
+offset_right = 636.0
+offset_bottom = 356.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="ControlsBg" type="ColorRect" parent="ControlsScroll" unique_id=1966217502]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+color = Color(0.05, 0.06, 0.09, 1)
+
+[node name="Controls" type="VBoxContainer" parent="ControlsScroll" unique_id=1595493684]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 3
