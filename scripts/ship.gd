@@ -32,7 +32,7 @@ var _ghost_additive_material: CanvasItemMaterial
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
 @onready var _camera: Camera2D = $Camera2D
-@onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $SailSprite]
+@onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
 
@@ -177,7 +177,10 @@ func _spawn_ghost() -> void:
 		ghost.offset = src.offset
 		ghost.global_transform = src.global_transform
 		ghost.modulate = dash_config.ghost_start_tint
-		ghost.z_index = src.z_index - 1
+		# Render ghosts above the ship (ship.z_index = 2). Absolute z since the
+		# ghost is reparented to the world container, not the ship.
+		ghost.z_as_relative = false
+		ghost.z_index = 10
 		if dash_config.ghost_additive:
 			ghost.material = _ghost_additive_material
 		_ghost_container.add_child(ghost)
