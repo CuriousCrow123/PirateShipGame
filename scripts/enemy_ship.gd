@@ -11,6 +11,7 @@ const SHAKE_DURATION: float = 0.3
 const SHAKE_MAX_INTENSITY: float = 3.0
 const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
 const BROADSIDE_ALIGNMENT_THRESHOLD: float = 0.85  # |dot(starboard, to_target)|
+const RAM_IFRAME_DURATION: float = 0.4  # multi-hit guard for ship-ship collisions
 
 @export var chase_speed: float = 50.0
 @export var circle_speed: float = 40.0
@@ -32,6 +33,7 @@ var _starboard_cooldown: float = 0.0
 # Per-enemy wake state — owned by the enemy, not Main, so cleanup is automatic.
 var _wake_accum: float = 0.0
 var _last_wake_pos: Vector2 = Vector2.ZERO
+var _iframes_left: float = 0.0
 var _port_cannons: Array[Cannon] = []
 var _starboard_cannons: Array[Cannon] = []
 
@@ -62,6 +64,8 @@ func _physics_process(delta: float) -> void:
 	if is_queued_for_deletion():
 		return
 
+	if _iframes_left > 0.0:
+		_iframes_left -= delta
 	if _port_cooldown > 0.0:
 		_port_cooldown -= delta
 	if _starboard_cooldown > 0.0:
@@ -109,6 +113,16 @@ func take_damage(_from_direction: Vector2) -> void:
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(mini(damage_variant, 3))
 	_start_shake()
 	_flash_white()
+
+
+## Ram-damage entry point. Same as take_damage but adds a short iframe so
+## ship-ship collisions can't apply damage across multiple physics sub-steps.
+## Cannonball hits still go through take_damage and bypass this iframe.
+func take_ram_damage(from_direction: Vector2) -> void:
+	if _iframes_left > 0.0:
+		return
+	_iframes_left = RAM_IFRAME_DURATION
+	take_damage(from_direction)
 
 
 func _cache_cannon_refs() -> void:

@@ -26,6 +26,7 @@ var _last_wake_pos: Vector2 = Vector2.ZERO
 @onready var _displacement_vp: SubViewport = $DisplacementViewport/SubViewport
 @onready var _displacement_stamps: Node2D = $DisplacementViewport/SubViewport/Stamps
 @onready var _wake_subviewport: SubViewport = $WaterTrail/SubViewport
+@onready var _hp_display: HPDisplay = $HPDisplay
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 	assert(_displacement_vp != null, "Main: DisplacementViewport/SubViewport not found")
 	assert(_displacement_stamps != null, "Main: Stamps node not found")
 	assert(_wake_subviewport != null, "Main: WaterTrail/SubViewport not found")
+	assert(_hp_display != null, "Main: HPDisplay not found")
 
 	# Wire wake trail SubViewport texture to the TrailSprite display.
 	$WaterTrail/TrailSprite.texture = _wake_subviewport.get_texture()
@@ -49,6 +51,7 @@ func _ready() -> void:
 	_ship.cannon_fired.connect(_on_cannon_fired)
 	_ship.mine_dropped.connect(_on_mine_dropped)
 	_minimap_display.setup(_ship)
+	_hp_display.setup(_ship)
 
 
 func _process(delta: float) -> void:

@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/minimap.tscn" id="14_minimap"]
 [ext_resource type="PackedScene" path="res://scenes/debug_overlay.tscn" id="15_debug"]
+[ext_resource type="PackedScene" path="res://scenes/hp_display.tscn" id="16_hp"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -102,3 +103,5 @@ follow_target = NodePath("../..")
 [node name="ControlsOverlay" parent="." unique_id=1668598696 instance=ExtResource("13_overlay")]
 
 [node name="DebugOverlay" parent="." unique_id=2046880645 instance=ExtResource("15_debug")]
+
+[node name="HPDisplay" parent="." instance=ExtResource("16_hp")]

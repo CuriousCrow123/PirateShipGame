@@ -8,11 +8,17 @@ extends CharacterBody2D
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
+signal health_changed(current: int, maximum: int)
+signal died
+signal respawned
 
 const HIT_TRAUMA: float = 0.55
 const HIT_FLASH_DURATION: float = 0.15
 const HIT_SHAKE_DURATION: float = 0.3
 const HIT_SHAKE_MAX_INTENSITY: float = 3.0
+const HIT_IFRAME_DURATION: float = 1.2
+const RESPAWN_IFRAME_DURATION: float = 2.5
+const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
 
 @export var config: ShipConfig
 @export var dash_config: DashConfig
@@ -22,6 +28,8 @@ const HIT_SHAKE_MAX_INTENSITY: float = 3.0
 @export var brake_decel: float = 120.0
 @export var broadside_cooldown: float = 0.5
 @export var mine_cooldown: float = 2.5
+@export var max_health: int = 4
+@export var respawn_delay: float = 2.0
 
 var _port_cooldown: float = 0.0
 var _starboard_cooldown: float = 0.0
@@ -36,6 +44,13 @@ var _hit_flash_tween: Tween = null
 var _hit_shake_timer: float = 0.0
 var _hull_original_pos: Vector2 = Vector2.ZERO
 var _sail_original_pos: Vector2 = Vector2.ZERO
+var _health: int = 0
+var _iframes_left: float = 0.0
+var _is_dead: bool = false
+var _input_locked: bool = false
+var _spawn_position: Vector2 = Vector2.ZERO
+var _spawn_rotation: float = 0.0
+var _blink_tween: Tween = null
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -63,7 +78,17 @@ func _ready() -> void:
 	_ghost_additive_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_hull_original_pos = _hull_sprite.position
 	_sail_original_pos = _sail_sprite.position
+	_spawn_position = global_position
+	_spawn_rotation = rotation
+	_health = max_health
 	_apply_config()
+	# Defer so Main has time to wire signals in its own _ready before the
+	# initial health_changed emits.
+	call_deferred("_emit_initial_health")
+
+
+func _emit_initial_health() -> void:
+	health_changed.emit(_health, max_health)
 
 
 func _exit_tree() -> void:
@@ -74,12 +99,22 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _iframes_left > 0.0:
+		_iframes_left -= delta
+		if _iframes_left <= 0.0:
+			_end_blink()
+	if _is_dead:
+		return
 	if _port_cooldown > 0.0:
 		_port_cooldown -= delta
 	if _starboard_cooldown > 0.0:
 		_starboard_cooldown -= delta
 	if _mine_cooldown_left > 0.0:
 		_mine_cooldown_left -= delta
+
+	if _input_locked:
+		move_and_slide()
+		return
 
 	var is_braking: bool = Input.is_action_pressed("move_back")
 
@@ -142,6 +177,15 @@ func _process_collision_pushback(pushback_scale: float) -> void:
 		if collider is EnemyShip:
 			var push: Vector2 = collision.get_normal() * 50.0 * pushback_scale
 			velocity += push
+			var enemy: EnemyShip = collider as EnemyShip
+			# Mutual ram damage; iframes on both sides guard multi-hits across
+			# physics sub-steps. Return after the first collision to ensure one
+			# collision event → at most one damage application per frame.
+			# Ship uses its regular iframe system; enemy uses take_ram_damage so
+			# cannonball DPS stays unaffected by ram iframes.
+			take_damage(-collision.get_normal())
+			enemy.take_ram_damage(collision.get_normal())
+			return
 
 
 func _process(delta: float) -> void:
@@ -212,6 +256,8 @@ func _spawn_ghost() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _input_locked:
+		return
 	if event.is_action_pressed("fire_port") and _port_cooldown <= 0.0:
 		_fire_broadside("port")
 	elif event.is_action_pressed("fire_starboard") and _starboard_cooldown <= 0.0:
@@ -222,9 +268,89 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_dash()
 
 
+## Takes a single hit. Respects iframes; decrements HP; fires visual feedback;
+## triggers death at zero. This is the sole public damage entry point.
+func take_damage(_from_direction: Vector2) -> void:
+	if _is_dead or _iframes_left > 0.0:
+		return
+	_health -= 1
+	_apply_hit_feedback()
+	_update_hull_variant()
+	health_changed.emit(_health, max_health)
+	if _health <= 0:
+		_enter_death()
+		return
+	_start_iframes(HIT_IFRAME_DURATION)
+
+
+func _update_hull_variant() -> void:
+	var variant: int = clampi(max_health - _health, 0, 3)
+	_hull_sprite.region_rect = ShipConfig.get_hull_region(variant)
+
+
+func _start_iframes(duration: float) -> void:
+	_iframes_left = duration
+	_start_blink_tween()
+
+
+func _start_blink_tween() -> void:
+	if _blink_tween and _blink_tween.is_valid():
+		_blink_tween.kill()
+	_blink_tween = create_tween().set_loops()
+	_blink_tween.tween_property(self, "modulate:a", 0.35, IFRAME_BLINK_INTERVAL)
+	_blink_tween.tween_property(self, "modulate:a", 1.0, IFRAME_BLINK_INTERVAL)
+
+
+func _end_blink() -> void:
+	if _blink_tween and _blink_tween.is_valid():
+		_blink_tween.kill()
+	_blink_tween = null
+	modulate.a = 1.0
+
+
+func _enter_death() -> void:
+	_is_dead = true
+	_input_locked = true
+	if _dash_active:
+		_end_dash()
+	_end_blink()
+	velocity = Vector2.ZERO
+	visible = false
+	# Disable collisions without tearing down the node so Main's signal
+	# wiring survives the death → respawn cycle.
+	set_collision_layer_value(1, false)
+	set_collision_mask_value(2, false)  # enemies
+	set_collision_mask_value(5, false)  # enemy projectiles
+	ExplosionSprite.create(
+		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
+	)
+	died.emit()
+	get_tree().create_timer(respawn_delay).timeout.connect(
+		func() -> void:
+			if is_instance_valid(self):
+				_respawn()
+	)
+
+
+func _respawn() -> void:
+	global_position = _spawn_position
+	rotation = _spawn_rotation
+	velocity = Vector2.ZERO
+	_health = max_health
+	_update_hull_variant()
+	_is_dead = false
+	_input_locked = false
+	visible = true
+	set_collision_layer_value(1, true)
+	set_collision_mask_value(2, true)
+	set_collision_mask_value(5, true)
+	respawned.emit()
+	health_changed.emit(_health, max_health)
+	_start_iframes(RESPAWN_IFRAME_DURATION)
+
+
 ## Visual-only hit feedback: camera shake + per-sprite shake + white flash.
-## Player HP is intentionally out of scope — this just reads the impact.
-func take_hit() -> void:
+func _apply_hit_feedback() -> void:
 	_shake_trauma = maxf(_shake_trauma, HIT_TRAUMA)
 	_hit_shake_timer = HIT_SHAKE_DURATION
 	if _hit_flash_tween and _hit_flash_tween.is_valid():
