@@ -20,10 +20,10 @@ const VARIANTS: Array = [
 	["sea_mine", Vector2.UP, 360.0, 1.5, 80.0],
 ]
 
-@onready var _status_label: Label = $Title
-
 ## Aggregated metadata across all atlases, written to JSON at the end.
 var _atlas_meta: Dictionary = {}
+
+@onready var _status_label: Label = $Title
 
 
 func _ready() -> void:
@@ -47,8 +47,18 @@ func _capture_all_variants() -> void:
 			_status_label.text = "Capturing: %s..." % vname
 			print("Capturing %s..." % vname)
 
-			var effect: ExplosionEffect = ExplosionEffect.create(
-				self, Vector2(320, 180), cone_dir, cone_spread, 1.0, vert_velocity
+			var effect: ExplosionEffect = (
+				ExplosionEffect
+				. create(
+					self,
+					Vector2(320, 180),
+					{
+						"cone_dir": cone_dir,
+						"cone_spread": cone_spread,
+						"effect_scale": 1.0,
+						"vert_velocity": vert_velocity,
+					}
+				)
 			)
 
 			# Wait for effect to initialize (its _ready awaits one process_frame)
@@ -61,7 +71,7 @@ func _capture_all_variants() -> void:
 			# Capture frames at fixed interval
 			var frames: Array[Image] = []
 			var elapsed: float = 0.0
-			while elapsed < ExplosionEffect.LIFETIME:
+			while elapsed < ExplosionEffect.DEFAULT_LIFETIME:
 				await RenderingServer.frame_post_draw
 				elapsed += get_process_delta_time()
 				var target_count: int = int(elapsed / CAPTURE_INTERVAL) + 1
@@ -132,8 +142,10 @@ func _process_variation(vname: String, frames: Array[Image], native_size: int) -
 		cropped_frames.append(frames[i].get_region(union_rect))
 
 	print(
-		"  %s: %d frames, frame %dx%d, origin (%.0f, %.0f)"
-		% [vname, frames.size(), cw, ch, origin_in_crop.x, origin_in_crop.y]
+		(
+			"  %s: %d frames, frame %dx%d, origin (%.0f, %.0f)"
+			% [vname, frames.size(), cw, ch, origin_in_crop.x, origin_in_crop.y]
+		)
 	)
 
 	return {
@@ -174,27 +186,35 @@ func _build_atlas_for_type(
 		var fh: int = var_data.frame_h
 		var cropped_frames: Array = var_data.cropped_frames
 		for f_idx: int in range(cropped_frames.size()):
-			atlas.blit_rect(
-				cropped_frames[f_idx] as Image,
-				Rect2i(0, 0, fw, fh),
-				Vector2i(f_idx * fw, y_offset),
+			(
+				atlas
+				. blit_rect(
+					cropped_frames[f_idx] as Image,
+					Rect2i(0, 0, fw, fh),
+					Vector2i(f_idx * fw, y_offset),
+				)
 			)
-		variation_meta.append(
-			{
-				"row_y": y_offset,
-				"frame_w": fw,
-				"frame_h": fh,
-				"frame_count": cropped_frames.size(),
-				"origin": [var_data.origin.x, var_data.origin.y],
-			}
+		(
+			variation_meta
+			. append(
+				{
+					"row_y": y_offset,
+					"frame_w": fw,
+					"frame_h": fh,
+					"frame_count": cropped_frames.size(),
+					"origin": [var_data.origin.x, var_data.origin.y],
+				}
+			)
 		)
 		y_offset += fh
 
 	var atlas_path: String = "%s/%s_atlas.png" % [OUTPUT_DIR, base_name]
 	atlas.save_png(atlas_path)
 	print(
-		"Saved atlas: %s (%dx%d, %d variations)"
-		% [atlas_path, max_row_width, total_height, variations.size()]
+		(
+			"Saved atlas: %s (%dx%d, %d variations)"
+			% [atlas_path, max_row_width, total_height, variations.size()]
+		)
 	)
 
 	_atlas_meta[base_name] = {

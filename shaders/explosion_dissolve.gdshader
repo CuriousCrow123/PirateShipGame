@@ -17,6 +17,12 @@ uniform float DarkDissolveScale : hint_range(0.5, 2.0) = 0.8;
 uniform float FresnelPowerBright : hint_range(0.0, 8.0) = 1.0;
 uniform float FresnelPowerDark : hint_range(0.0, 8.0) = 0.5;
 
+// --- Alpha control ---
+// Scales the fire-core alpha (bright_mask) and the smoke-stage alpha (dark_mask) independently.
+// Lower DarkAlphaScale → more translucent smoke; lower BrightAlphaScale → more translucent fire.
+uniform float BrightAlphaScale : hint_range(0.0, 2.0) = 1.0;
+uniform float DarkAlphaScale : hint_range(0.0, 2.0) = 1.0;
+
 // INSTANCE_CUSTOM is only available in vertex(); pass to fragment() via varying.
 varying float dissolve_progress;
 
@@ -49,9 +55,12 @@ void fragment() {
 	float bright_mask = smoothstep(0.0, SmoothStepEdge, bright_raw);
 
 	// --- Combine: dark defines silhouette, bright adds fire within it ---
-	vec3 color = dark_mask * DarkColour + bright_mask * FireColour;
+	// Boost fire color so the opaque core stands out against the smoke.
+	vec3 color = dark_mask * DarkColour + bright_mask * FireColour * 1.8;
 
 	ALBEDO = color;
-	ALPHA = dark_mask;
-	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	// Fire core renders near-opaque via bright_mask; once the fire fades,
+	// alpha drops to the much lower smoke level driven by dark_mask alone.
+	// No ALPHA_SCISSOR_THRESHOLD — that would force opaque/discard and kill blending.
+	ALPHA = max(bright_mask * BrightAlphaScale, dark_mask * 0.08 * DarkAlphaScale);
 }

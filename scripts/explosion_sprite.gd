@@ -6,15 +6,10 @@ extends Node2D
 
 const META_PATH: String = "res://textures/explosions/atlas_meta.json"
 const ATLAS_DIR: String = "res://textures/explosions"
+const CONFIG_PATH: String = "res://resources/explosion_config.tres"
 
-## 3D-mode-only parameters (not baked into atlas_meta.json).
-## Keyed by type name; used when delegating to ExplosionEffect.
-const TYPE_3D_PARAMS: Dictionary = {
-	"muzzle_flash": {"cone_spread": 0.0, "vert_velocity": 100.0},
-	"cannonball_impact": {"cone_spread": 45.0, "vert_velocity": 15.0},
-	"enemy_destruction": {"cone_spread": 360.0, "vert_velocity": 55.0},
-	"sea_mine": {"cone_spread": 360.0, "vert_velocity": 80.0},
-}
+## Draw order: above ships (z=2) and cannonballs (z=3).
+const EXPLOSION_Z_INDEX: int = 10
 
 ## Runtime toggle: when false, create() delegates to ExplosionEffect (real-time 3D).
 static var use_sprite: bool = true
@@ -52,6 +47,7 @@ static func create(
 	var effect := ExplosionSprite.new()
 	effect._type_name = type_name
 	effect._drift_velocity = drift_velocity
+	effect.z_index = EXPLOSION_Z_INDEX
 	parent.add_child(effect)
 	effect.global_position = pos
 
@@ -120,22 +116,18 @@ static func _create_3d(
 	direction: Vector2,
 	drift_velocity: Vector2,
 ) -> Node2D:
-	var effect_scale: float = float(_meta[type_name].effect_scale)
-	var params: Dictionary = TYPE_3D_PARAMS[type_name]
+	# Load the shared ExplosionConfig Resource. Because Godot caches Resources by path,
+	# editing the .tres in the editor Inspector while the game runs updates the same
+	# instance the game holds — so new spawns pick up the edits immediately.
+	var config_res: ExplosionConfig = load(CONFIG_PATH) as ExplosionConfig
+	var config: Dictionary = config_res.get_params(type_name)
 	# Omnidirectional types were originally passed Vector2.UP as a placeholder.
-	var cone_dir: Vector2 = direction if direction.length_squared() > 0.0 else Vector2.UP
-	return (
-		ExplosionEffect
-		. create(
-			parent,
-			pos,
-			cone_dir,
-			float(params.cone_spread),
-			effect_scale,
-			float(params.vert_velocity),
-			drift_velocity,
-		)
-	)
+	config["cone_dir"] = direction if direction.length_squared() > 0.0 else Vector2.UP
+	config["drift_velocity"] = drift_velocity
+	config["effect_scale"] = float(_meta[type_name].effect_scale)
+	var effect: ExplosionEffect = ExplosionEffect.create(parent, pos, config)
+	effect.z_index = EXPLOSION_Z_INDEX
+	return effect
 
 
 static func _ensure_meta_loaded() -> void:
