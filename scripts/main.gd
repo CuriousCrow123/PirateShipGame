@@ -26,6 +26,7 @@ var _last_wake_pos: Vector2 = Vector2.ZERO
 @onready var _displacement_vp: SubViewport = $DisplacementViewport/SubViewport
 @onready var _displacement_stamps: Node2D = $DisplacementViewport/SubViewport/Stamps
 @onready var _wake_subviewport: SubViewport = $WaterTrail/SubViewport
+@onready var _player_wake_line: Line2D = $WaterTrail/SubViewport/Line2D
 @onready var _hp_display: HPDisplay = $HPDisplay
 
 
@@ -35,6 +36,7 @@ func _ready() -> void:
 	assert(_displacement_vp != null, "Main: DisplacementViewport/SubViewport not found")
 	assert(_displacement_stamps != null, "Main: Stamps node not found")
 	assert(_wake_subviewport != null, "Main: WaterTrail/SubViewport not found")
+	assert(_player_wake_line != null, "Main: WaterTrail/SubViewport/Line2D not found")
 	assert(_hp_display != null, "Main: HPDisplay not found")
 
 	# Wire wake trail SubViewport texture to the TrailSprite display.
@@ -50,6 +52,8 @@ func _ready() -> void:
 	_last_wake_pos = _ship.global_position
 	_ship.cannon_fired.connect(_on_cannon_fired)
 	_ship.mine_dropped.connect(_on_mine_dropped)
+	_ship.died.connect(_on_ship_died)
+	_ship.respawned.connect(_on_ship_respawned)
 	_minimap_display.setup(_ship)
 	_hp_display.setup(_ship)
 
@@ -112,6 +116,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_explosion_mode"):
 		ExplosionSprite.use_sprite = not ExplosionSprite.use_sprite
 		print("Explosions: ", "sprite" if ExplosionSprite.use_sprite else "3D")
+
+
+func _on_ship_died() -> void:
+	# Stop the wake trail and clear its point queue so the line doesn't
+	# hang in the air while the ship is hidden, and doesn't bridge from
+	# the death position to the respawn position on the next frame.
+	_player_wake_line.set_process(false)
+	_player_wake_line.reset_line()
+
+
+func _on_ship_respawned() -> void:
+	# Reset wake-ring distance accumulation so the teleport from death
+	# position back to spawn position doesn't spawn a giant ring.
+	_last_wake_pos = _ship.global_position
+	_wake_distance = 0.0
+	_player_wake_line.set_process(true)
 
 
 func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
