@@ -187,7 +187,10 @@ func _register_enemy_wake(enemy: EnemyShip) -> void:
 	line.width_curve = TrailWidthCurve
 	line.texture = TrailGradientTex
 	line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-	line.joint_mode = Line2D.LINE_JOINT_ROUND
+	# LINE_JOINT_BEVEL (not ROUND) — round joints + alpha-fade gradient render
+	# direction-asymmetrically. See:
+	# docs/solutions/line2d-round-joint-alpha-gradient-asymmetry.md
+	line.joint_mode = Line2D.LINE_JOINT_BEVEL
 	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	line.end_cap_mode = Line2D.LINE_CAP_ROUND
 	var grad: Gradient = Gradient.new()
