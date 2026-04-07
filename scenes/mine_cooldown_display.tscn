@@ -1,0 +1,39 @@
+[gd_scene load_steps=3 format=3 uid="uid://bminecd0hud01"]
+
+[ext_resource type="Script" path="res://scripts/mine_cooldown_display.gd" id="1_script"]
+[ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="2_frame_style"]
+
+[node name="MineCooldownDisplay" type="CanvasLayer"]
+layer = 50
+script = ExtResource("1_script")
+
+[node name="Frame" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(26, 24)
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 43.0
+offset_top = -28.0
+offset_right = 43.0
+offset_bottom = -5.0
+grow_vertical = 0
+theme_override_styles/panel = ExtResource("2_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="Frame"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="MineIcon" type="Control" parent="Frame/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(14, 12)
+layout_mode = 2
+
+[node name="BarBg" type="ColorRect" parent="Frame/Content"]
+custom_minimum_size = Vector2(14, 3)
+layout_mode = 2
+color = Color(0.1, 0.08, 0.05, 0.7)
+
+[node name="BarFill" type="ColorRect" parent="Frame/Content/BarBg"]
+unique_name_in_owner = true
+anchor_right = 0.0
+anchor_bottom = 1.0
+color = Color(0.62, 0.32, 0.28, 0.9)
