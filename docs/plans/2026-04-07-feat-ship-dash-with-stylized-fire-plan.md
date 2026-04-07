@@ -1,10 +1,11 @@
 ---
 title: Ship dash with stylized fire exhaust and ghost trail
 type: feat
-status: active
+status: completed
 date: 2026-04-07
 origin: docs/brainstorms/2026-04-07-ship-dash-brainstorm.md
 deepened: 2026-04-07
+completed: 2026-04-07
 ---
 
 # Ship Dash with Stylized Fire Exhaust and Ghost Trail
