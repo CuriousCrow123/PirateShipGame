@@ -2,17 +2,23 @@ class_name EnemyShip
 extends CharacterBody2D
 ## Enemy ship that chases the player and circles at broadside range.
 ## Takes 4 hits to destroy, with progressive hull damage visuals.
+## Fires broadside cannons at the player when aligned and in range.
 
 signal destroyed(ship: EnemyShip)
+signal cannon_fired(pos: Vector2, dir: Vector2)
 
 const SHAKE_DURATION: float = 0.3
 const SHAKE_MAX_INTENSITY: float = 3.0
+const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
 
 @export var chase_speed: float = 50.0
 @export var circle_speed: float = 40.0
 @export var turn_speed: float = 2.0
 @export var circle_radius: float = 120.0
 @export var max_health: int = 4
+@export var broadside_cooldown: float = 2.0
+@export var broadside_range: float = 130.0  # must be <= Cannonball.max_range
+@export var broadside_alignment_threshold: float = 0.85
 
 var _health: int = 0
 var _is_destroyed: bool = false
@@ -21,18 +27,31 @@ var _shake_timer: float = 0.0
 var _original_hull_pos: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
 var _target: Node2D = null
+var _port_cooldown: float = 0.0
+var _starboard_cooldown: float = 0.0
+# Per-enemy wake state — owned by the enemy, not Main, so cleanup is automatic.
+var _wake_accum: float = 0.0
+var _last_wake_pos: Vector2 = Vector2.ZERO
+var _port_cannons: Array[Cannon] = []
+var _starboard_cannons: Array[Cannon] = []
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _collision_shape: CollisionShape2D = $CollisionShape
+@onready var _cannon_slots: Node2D = $CannonSlots
 
 
 func _ready() -> void:
 	assert(_hull_sprite != null, "EnemyShip: HullSprite not found")
 	assert(_sail_sprite != null, "EnemyShip: SailSprite not found")
 	assert(_collision_shape != null, "EnemyShip: CollisionShape not found")
+	assert(_cannon_slots != null, "EnemyShip: CannonSlots not found")
+	# broadside_range MUST stay <= Cannonball.max_range (default 150) so balls
+	# can actually reach the player at max firing distance.
 	_health = max_health
 	_original_hull_pos = _hull_sprite.position
+	_last_wake_pos = global_position
+	_cache_cannon_refs()
 	_randomize_appearance()
 	add_to_group("enemy_ships")
 
@@ -45,9 +64,29 @@ func setup(target: Node2D) -> void:
 	_target = target
 
 
+func consume_wake_distance(traveled: float) -> bool:
+	## Returns true (and resets) when the enemy has moved >= WAKE_RING_INTERVAL
+	## since the last wake ring. Main calls this each frame.
+	_wake_accum += traveled
+	if _wake_accum >= WAKE_RING_INTERVAL:
+		_wake_accum = 0.0
+		return true
+	return false
+
+
+func get_wake_ring_position() -> Vector2:
+	return global_position - transform.y * 12.0
+
+
 func _physics_process(delta: float) -> void:
-	if _target and is_instance_valid(_target):
+	if _port_cooldown > 0.0:
+		_port_cooldown -= delta
+	if _starboard_cooldown > 0.0:
+		_starboard_cooldown -= delta
+
+	if not _is_destroyed and _target and is_instance_valid(_target):
 		_steer_toward_target(delta)
+		_try_fire_at_target()
 	move_and_slide()
 	_process_shake(delta)
 
@@ -65,6 +104,47 @@ func take_damage(_from_direction: Vector2) -> void:
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(mini(damage_variant, 3))
 	_start_shake()
 	_flash_white()
+
+
+func _cache_cannon_refs() -> void:
+	for slot: Node in _cannon_slots.get_children():
+		if slot.get_child_count() == 0:
+			continue
+		var cannon: Cannon = slot.get_child(0) as Cannon
+		if cannon == null:
+			continue
+		if String(slot.name).begins_with("Port"):
+			_port_cannons.append(cannon)
+		elif String(slot.name).begins_with("Starboard"):
+			_starboard_cannons.append(cannon)
+
+
+func _try_fire_at_target() -> void:
+	if _target == null or not is_instance_valid(_target):
+		return
+	var to_target: Vector2 = _target.global_position - global_position
+	var dist: float = to_target.length()
+	if dist > broadside_range or dist < 0.001:
+		return
+	var dir_to_target: Vector2 = to_target / dist
+	# Ship right (starboard) is +transform.x; left (port) is -transform.x.
+	var starboard: Vector2 = transform.x
+	var dot: float = starboard.dot(dir_to_target)
+	if dot >= broadside_alignment_threshold and _starboard_cooldown <= 0.0:
+		_fire_broadside(true)
+	elif dot <= -broadside_alignment_threshold and _port_cooldown <= 0.0:
+		_fire_broadside(false)
+
+
+func _fire_broadside(is_starboard: bool) -> void:
+	var cannons: Array[Cannon] = _starboard_cannons if is_starboard else _port_cannons
+	for cannon: Cannon in cannons:
+		var result: Dictionary = cannon.fire()
+		cannon_fired.emit(result["position"], result["direction"])
+	if is_starboard:
+		_starboard_cooldown = broadside_cooldown
+	else:
+		_port_cooldown = broadside_cooldown
 
 
 func _destroy() -> void:

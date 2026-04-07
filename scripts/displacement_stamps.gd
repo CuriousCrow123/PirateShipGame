@@ -6,7 +6,7 @@ extends Node2D
 const STAMP_TEXTURE: Texture2D = preload("res://textures/white_4x4.png")
 const BASE_MATERIAL: ShaderMaterial = preload("res://shaders/displacement_stamp_material.tres")
 
-const MAX_STAMPS: int = 32
+const MAX_STAMPS: int = 48
 
 @export var sub_viewport: SubViewport
 @export var follow_target: Node2D

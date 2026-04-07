@@ -3,57 +3,74 @@ extends Line2D
 ## width-tapered trail inside a SubViewport. The SubViewport's texture is then
 ## displayed by a sibling Sprite2D with a ripple shader.
 ##
-## _offset compensates for SubViewport coordinates: the viewport origin is
-## top-left (0,0) but we want the trail centered, so we shift by half the
-## viewport size.
+## Multi-ship: every Line2D inside the wake SubViewport renders into the same
+## texture. We map world positions to viewport-local space using `pivot_target`
+## (the player ship), which the SubViewport visually follows. Each ship's Line2D
+## is positioned by `world_pos - pivot_world + viewport_center`.
 
-@export var max_length: int = 300
+@export var max_length: int = 90
 @export var sub_viewport: SubViewport
-@export var follow_target: Node2D  ## Node whose position drives the trail
+@export var follow_target: Node2D  ## node whose movement drives this trail
+@export var pivot_target: Node2D  ## the SubViewport's centering target (player ship)
 @export var distance_at_largest_width: float = 16.0 * 6.0
 @export var smallest_tip_width: float = 0.15
 @export var largest_tip_width: float = 0.8
 
 var _queue: Array[Vector2] = []
-var _offset: Vector2 = Vector2.ZERO
+var _length_sq: float = 0.0
+var _center: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
 	assert(sub_viewport != null, "Trails: sub_viewport export must be assigned")
 	assert(follow_target != null, "Trails: follow_target export must be assigned")
+	assert(pivot_target != null, "Trails: pivot_target export must be assigned")
 	assert(
 		width_curve != null and width_curve.point_count > 0,
 		"Trails: width_curve must have at least one point"
 	)
-	_offset = Vector2(sub_viewport.size) / 2.0
-	# Duplicate the Curve resource so mutations (set_point_value) don't corrupt
-	# other instances sharing the same sub-resource. See plan: "Shared Curve
-	# resource mutation bug".
+	_center = Vector2(sub_viewport.size) / 2.0
+	# Duplicate the Curve resource so per-instance set_point_value() doesn't
+	# corrupt other Line2Ds sharing the same .tres. See:
+	# docs/solutions/shared-resource-mutation.md
 	width_curve = width_curve.duplicate()
 
 
 func _process(_delta: float) -> void:
-	if _queue.is_empty() and get_point_count() == 0:
-		# First frame or after reset — seed the queue
-		_queue.append(follow_target.global_position + _offset)
+	if not is_instance_valid(follow_target) or not is_instance_valid(pivot_target):
 		return
 
-	var pos: Vector2 = follow_target.global_position + _offset
-	_queue.append(pos)
+	var world_pos: Vector2 = follow_target.global_position
+	var pivot_pos: Vector2 = pivot_target.global_position
+	var viewport_pos: Vector2 = world_pos - pivot_pos + _center
+
+	# Incremental update: append the new point, drop the oldest when over capacity.
+	# Avoids the per-frame clear_points() + add_point()×N rebuild.
+	if _queue.size() > 0:
+		var prev: Vector2 = _queue[-1]
+		_length_sq += world_pos.distance_squared_to(prev)
+	_queue.append(world_pos)
+	add_point(viewport_pos)
+
 	while _queue.size() > max_length and _queue.size() > 2:
+		var dropped: Vector2 = _queue[0]
+		var next: Vector2 = _queue[1]
+		_length_sq -= dropped.distance_squared_to(next)
+		_length_sq = maxf(_length_sq, 0.0)
 		_queue.pop_front()
+		remove_point(0)
 
-	var length: float = 0.0
-	clear_points()
-	for i: int in range(_queue.size() - 1):
-		length += _queue[i].distance_to(_queue[i + 1])
-		add_point(follow_target.to_local(_queue[i]))
-	add_point(follow_target.to_local(_queue[-1]))
+	# Reposition every existing point to follow the moving pivot — unavoidable
+	# because the viewport is centered on the pivot in world space.
+	for i: int in range(_queue.size()):
+		set_point_position(i, _queue[i] - pivot_pos + _center)
 
-	var t: float = clampf(inverse_lerp(0.0, distance_at_largest_width, length), 0.0, 1.0)
+	var threshold_sq: float = distance_at_largest_width * distance_at_largest_width
+	var t: float = clampf(_length_sq / threshold_sq, 0.0, 1.0)
 	width_curve.set_point_value(0, lerpf(smallest_tip_width, largest_tip_width, t))
 
 
 func reset_line() -> void:
 	clear_points()
 	_queue.clear()
+	_length_sq = 0.0

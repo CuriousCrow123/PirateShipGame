@@ -1,3 +1,4 @@
+class_name Ship
 extends CharacterBody2D
 ## Player-controlled ship with floaty, momentum-based movement.
 ## Thrust accumulates velocity; viscous drag decays it exponentially.
