@@ -51,8 +51,9 @@ custom_minimum_size = Vector2(14, 10)
 layout_mode = 2
 color = Color(0.95, 0.93, 0.85, 1)
 
-[node name="GoldOverlay" type="ColorRect" parent="Frame" unique_id=1472095833]
+[node name="GoldOverlay" type="ColorRect" parent="." unique_id=1472095833]
 unique_name_in_owner = true
-layout_mode = 2
+offset_right = 10.0
+offset_bottom = 10.0
 mouse_filter = 2
-color = Color(1, 1, 1, 0)
+color = Color(1, 1, 1, 1)

@@ -55,9 +55,12 @@ func _ready() -> void:
 	_gold_material.set_shader_parameter("Intensity", 0.0)
 	_gold_overlay.material = _gold_material
 	_gold_overlay.color = Color(1.0, 1.0, 1.0, 1.0)  # shader owns final alpha
+	# Defer one frame so the Frame has sized itself against its content.
+	call_deferred("_sync_gold_overlay_rect")
 
 
 func _process(_delta: float) -> void:
+	_sync_gold_overlay_rect()
 	if not _critical_active:
 		return
 	# Sparse pixel-snapped jitter at 1 HP — most frames sit on the base
@@ -88,6 +91,18 @@ func _on_invincibility_changed(active: bool) -> void:
 	_gold_tween.tween_method(
 		_set_gold_intensity, _get_gold_intensity(), target, GOLD_GLEAM_FADE_DURATION
 	)
+
+
+func _sync_gold_overlay_rect() -> void:
+	# GoldOverlay is a sibling of Frame (not a PanelContainer child) so it
+	# can cover the full visible rect exactly. Tracks the Frame each frame
+	# so it follows the 1-HP shake. The shader SDF-masks to the rounded
+	# rect, so the rounded-corner cutouts and the boundary are respected
+	# without any outward padding bleed.
+	_gold_overlay.position = _frame.position
+	_gold_overlay.size = _frame.size
+	if _gold_material != null:
+		_gold_material.set_shader_parameter("RectSize", _frame.size)
 
 
 func _get_gold_intensity() -> float:
