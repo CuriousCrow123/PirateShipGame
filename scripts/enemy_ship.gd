@@ -4,7 +4,7 @@ extends CharacterBody2D
 ## Takes 4 hits to destroy, with progressive hull damage visuals.
 ## Fires broadside cannons at the player when aligned and in range.
 
-signal destroyed(ship: EnemyShip)
+signal destroyed(ship: EnemyShip, by_mine: bool)
 signal cannon_fired(pos: Vector2, dir: Vector2)
 
 const SHAKE_DURATION: float = 0.3
@@ -100,13 +100,13 @@ func get_wake_ring_position() -> Vector2:
 	return global_position - transform.y * 12.0
 
 
-func take_damage(_from_direction: Vector2) -> void:
+func take_damage(_from_direction: Vector2, amount: int = 1, by_mine: bool = false) -> void:
 	if _is_destroyed or is_queued_for_deletion():
 		return
-	_health -= 1
+	_health -= amount
 	if _health <= 0:
 		_is_destroyed = true
-		_destroy()
+		_destroy(by_mine)
 		return
 	# Update hull damage variant (0=healthy, 3=heavily damaged)
 	var damage_variant: int = max_health - _health
@@ -168,7 +168,7 @@ func _fire_broadside(is_starboard: bool) -> void:
 		_port_cooldown = broadside_cooldown
 
 
-func _destroy() -> void:
+func _destroy(by_mine: bool = false) -> void:
 	# Kill any active flash tween to prevent conflict with fade-out
 	if _flash_tween and _flash_tween.is_valid():
 		_flash_tween.kill()
@@ -179,7 +179,7 @@ func _destroy() -> void:
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, velocity
 	)
-	destroyed.emit(self)
+	destroyed.emit(self, by_mine)
 	# Fade out then remove
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.4)

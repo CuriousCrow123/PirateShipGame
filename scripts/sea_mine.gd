@@ -11,6 +11,7 @@ enum State { ARMING, IDLE, FUSE_ACTIVE, DETONATING }
 const TRIGGER_COUNT: int = 14
 const SPHERE_RADIUS: float = 0.5
 const TRIGGER_HEIGHT: float = 0.25
+const MINE_DAMAGE_TO_ENEMIES: int = 3
 
 @export var arm_time: float = 1.5
 @export var fuse_time: float = 1.5
@@ -202,7 +203,9 @@ func _apply_blast_damage() -> void:
 		if body == null:
 			continue
 		if body is EnemyShip and not body.is_queued_for_deletion():
-			body.take_damage(global_position.direction_to(body.global_position))
+			body.take_damage(
+				global_position.direction_to(body.global_position), MINE_DAMAGE_TO_ENEMIES, true
+			)
 		elif body is Ship:
 			(body as Ship).take_damage(global_position.direction_to(body.global_position))
 			player_damaged.emit(global_position)
