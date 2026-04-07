@@ -43,9 +43,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if body is EnemyShip:
 		_impacted = true
 		body.take_damage(_direction)
-		ExplosionEffect.create(
-			get_parent(), global_position, _direction, 45.0, 1.0, 15.0, Vector2.ZERO
-		)
+		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 		queue_free()
 
 
@@ -54,5 +52,5 @@ func _impact() -> void:
 		return
 	_impacted = true
 	water_impacted.emit(global_position)
-	ExplosionEffect.create(get_parent(), global_position, _direction, 45.0, 1.0, 15.0)
+	ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 	queue_free()

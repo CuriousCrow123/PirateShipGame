@@ -8,7 +8,7 @@ const CAPTURE_FPS: int = 20
 const CAPTURE_INTERVAL: float = 1.0 / CAPTURE_FPS
 const TRIM_PADDING: int = 2
 const ALPHA_CUTOFF: int = 10  # 0-255; strips faint glow bleed
-const VARIATIONS: int = 5
+const VARIATIONS: int = 10
 const OUTPUT_DIR: String = "res://textures/explosions"
 
 ## [name, cone_dir, cone_spread, effect_scale, vert_velocity]

@@ -88,6 +88,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	# Toggle explosion rendering between pre-baked sprites and real-time 3D.
+	if event.is_action_pressed("toggle_explosion_mode"):
+		ExplosionSprite.use_sprite = not ExplosionSprite.use_sprite
+		print("Explosions: ", "sprite" if ExplosionSprite.use_sprite else "3D")
 
 
 func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
@@ -95,7 +99,7 @@ func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	ball.water_impacted.connect(_on_cannonball_water_impacted)
 	add_child(ball)
 	ball.setup(pos, dir)
-	ExplosionEffect.create(self, pos, dir, 0, 0.25, 100, _ship.velocity * 0.75)
+	ExplosionSprite.create(self, pos, "muzzle_flash", dir, _ship.velocity * 0.75)
 
 
 func _on_cannonball_water_impacted(impact_pos: Vector2) -> void:

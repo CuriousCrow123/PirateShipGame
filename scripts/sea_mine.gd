@@ -172,7 +172,7 @@ func _detonate() -> void:
 	_spawn_explosion_ripple()
 
 	# Spawn explosion VFX on parent so it survives queue_free
-	ExplosionEffect.create(get_parent(), global_position, Vector2.UP, 360, 1.5, 80.0)
+	ExplosionSprite.create(get_parent(), global_position, "sea_mine")
 
 	# Blast damage via direct physics query
 	_apply_blast_damage()
