@@ -59,7 +59,7 @@ transparent_bg = true
 canvas_item_default_texture_filter = 0
 size = Vector2i(1024, 1024)
 
-[node name="Line2D" type="Line2D" parent="WaterTrail/SubViewport" unique_id=1139393651 node_paths=PackedStringArray("sub_viewport", "follow_target")]
+[node name="Line2D" type="Line2D" parent="WaterTrail/SubViewport" unique_id=1139393651 node_paths=PackedStringArray("sub_viewport", "follow_target", "pivot_target")]
 width = 36.0
 width_curve = ExtResource("9_curve")
 gradient = SubResource("Gradient_trail")
@@ -71,7 +71,8 @@ end_cap_mode = 2
 script = ExtResource("6_trails")
 max_length = 90
 sub_viewport = NodePath("..")
-follow_target = NodePath("../..")
+follow_target = NodePath("../../../Ship")
+pivot_target = NodePath("../../../Ship")
 
 [node name="Circle" type="Sprite2D" parent="WaterTrail/SubViewport" unique_id=2063825040]
 position = Vector2(512, 512)
