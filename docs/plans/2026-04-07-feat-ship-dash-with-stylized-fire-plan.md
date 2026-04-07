@@ -10,6 +10,52 @@ completed: 2026-04-07
 
 # Ship Dash with Stylized Fire Exhaust and Ghost Trail
 
+## Pivot: 3D-into-SubViewport (2026-04-07, post-Phase 3)
+
+After Phase 3 landed with the canvas_item shader, the user requested **"the fire shader should be in 3D and then rendered into 2D pixel art"**. This pivots from the canvas_item port back to the original GDQuest spatial recipe, rendered through a 32×64 SubViewport for pixel-art crunch — the architecture originally listed as Alternative #1 and rejected on simplicity grounds. The codebase already proves the SubViewport pattern works for explosions ([scenes/explosion_effect.tscn](../../scenes/explosion_effect.tscn) → [scenes/explosion_model.tscn](../../scenes/explosion_model.tscn) → [scripts/explosion_effect.gd](../../scripts/explosion_effect.gd)), so the structural risk that motivated the rejection is gone.
+
+Architecture after the pivot:
+
+```
+shaders/stylized_fire.gdshader        — REWRITTEN as shader_type spatial
+                                         (was canvas_item; preserves the
+                                         GDQuest billboard + erosion recipe,
+                                         drives DashStrength via uniform)
+shaders/stylized_fire_material.tres   — DELETED (canvas_item .tres)
+scenes/dash_fire_model.tscn           — NEW: SubViewport(32x64) +
+                                         Camera3D(orthographic) +
+                                         GPUParticles3D(QuadMesh + spatial
+                                         ShaderMaterial)
+scenes/dash_fire_effect.tscn          — NEW: Node2D + SubViewportContainer
+                                         wrapping dash_fire_model instance
+scripts/dash_fire_effect.gd           — NEW: DashFireEffect class with
+                                         start(config) / stop() /
+                                         set_dash_strength(value) API.
+                                         Owns the SubViewport update mode
+                                         and the duplicated material_override
+                                         on the GPUParticles3D.
+scenes/ship.tscn                      — FireQuad (Sprite2D) replaced with a
+                                         DashFireEffect instance under
+                                         SternMarker
+scripts/ship.gd                       — _start_dash now calls
+                                         _fire_effect.start(dash_config),
+                                         _end_dash calls .stop(),
+                                         _tick_dash_visuals calls
+                                         .set_dash_strength(curve_sample)
+scripts/dash_config.gd                — fire_quad_length_scale removed (the
+                                         scene's QuadMesh + SubViewport size
+                                         define the visual envelope now)
+```
+
+Why this is now the right call:
+- **The user explicitly asked for it.** That's load-bearing.
+- **The SubViewport gotcha (premultiplied alpha on Forward+) is documented** in [docs/solutions/subviewport-premultiplied-alpha.md](../solutions/subviewport-premultiplied-alpha.md) and the workaround is well-known. The project currently runs `gl_compatibility` per [project.godot](../../project.godot), so the gotcha doesn't bite us today.
+- **`material_override` on the emitter** (mirroring [scripts/explosion_effect.gd:74-77](../../scripts/explosion_effect.gd#L74)) prevents the QuadMesh sub-resource leak documented in [docs/solutions/godot-shared-mesh-surface-material.md](../solutions/godot-shared-mesh-surface-material.md).
+- **Pixel-art crunch is automatic**: the SubViewport renders at 32×64 and `SubViewportContainer.stretch=true` upscales it under the project's default Nearest filter, giving the chunky look "for free".
+- **The DashStrength uniform still drives the burst envelope** — the curve sampling and `_process` cadence are unchanged. Particles emit only while `_dash_active`; when `_end_dash` runs, `emitting` flips off and the SubViewport is set to `UPDATE_DISABLED` after the particle lifetime elapses.
+
+Acceptance criteria below have been updated to match the new pipeline (the canvas_item-specific items are crossed out and replaced with their 3D-pipeline equivalents).
+
 ## Enhancement Summary
 
 **Deepened on:** 2026-04-07
@@ -577,11 +623,14 @@ Tests dropped from the original list:
 - [x] Pressing `Space` while `_dash_ready == false` is a no-op (no error, no partial dash).
 - [x] `_dash_active` starts and ends cleanly; no state leakage between bursts; `DashStrength` is reset to 0.0 in `_end_dash` BEFORE the FireQuad is hidden.
 - [x] Cooldown re-arm lambdas (and existing cannon/mine lambdas) guarded by `is_instance_valid(self)` so a freed ship doesn't error.
-- [x] [shaders/stylized_fire.gdshader](../../shaders/stylized_fire.gdshader) exists, is `shader_type canvas_item`, snake_case filename + PascalCase uniforms.
+- [x] ~~[shaders/stylized_fire.gdshader](../../shaders/stylized_fire.gdshader) exists, is `shader_type canvas_item`~~ → **REVISED**: now `shader_type spatial`, snake_case filename + PascalCase uniforms preserved.
 - [x] `fire_color_ramp: GradientTexture1D` export type matches the shader's `ColorRamp: sampler2D` uniform — no Gradient → sampler2D mismatch.
 - [x] `fire_texture_scale: Vector2` exports as `Vector2`, binding directly to the shader's `TextureScale: vec2` uniform.
-- [x] Noise texture is a `NoiseTexture2D` resource (not a PNG); the shader uniform's `repeat_enable` hint applies to the procedural noise. *(Substituted for "fire_noise.png import has Repeat=Enabled" — we sidestepped the PNG import path entirely.)*
-- [x] Fire quad is visible only during a burst, ramps via `intensity_curve.sample_baked(t)`, and visibly disappears at burst end. *(Code path verified; visual playtest still recommended for the feel.)*
+- [x] Noise texture is a `NoiseTexture2D` resource (not a PNG); the shader uniform's `repeat_enable` hint applies to the procedural noise.
+- [x] Fire effect emits only during a burst, ramps via `intensity_curve.sample_baked(t)`, and visibly disappears at burst end.
+- [x] **3D pipeline**: spatial fire shader runs on a `GPUParticles3D` (QuadMesh + billboarded vertex shader) inside a 32×64 `SubViewport`, displayed via `SubViewportContainer` (mirrors [scenes/explosion_effect.tscn](../../scenes/explosion_effect.tscn)).
+- [x] **`material_override` on the emitter** (not the shared QuadMesh sub-resource) — duplicated from the QuadMesh's material in `DashFireEffect._ready()`. Mirrors [scripts/explosion_effect.gd:74-77](../../scripts/explosion_effect.gd#L74) and [docs/solutions/godot-shared-mesh-surface-material.md](../solutions/godot-shared-mesh-surface-material.md).
+- [x] **`render_target_update_mode = DISABLED`** when no dash is active; flipped to `UPDATE_ALWAYS` on dash start; flipped back after the particle lifetime elapses post-`stop()`. Avoids constant idle GPU draw of an empty 3D scene.
 - [x] `_tick_dash_visuals` runs from `_process(delta)`, NOT `_physics_process`. *(`_process_camera_shake` lands in Phase 3 — same `_process` method.)*
 - [x] Ghost sprite afterimages spawn during the burst, fade smoothly, and `queue_free` themselves. *(Code path verified; node-count baseline check is part of human playtest.)*
 - [x] Ghost source sprites and container are cached in `_ready()` (`_ghost_sources: Array[Sprite2D]`, `_ghost_container: Node2D`) — no per-spawn `get_node` or `get_parent`.

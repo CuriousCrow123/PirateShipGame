@@ -1,0 +1,68 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Shader" path="res://shaders/stylized_fire.gdshader" id="1_shader"]
+[ext_resource type="NoiseTexture2D" path="res://resources/dash_fire_noise.tres" id="2_noise"]
+[ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="3_mask"]
+[ext_resource type="GradientTexture1D" path="res://resources/dash_fire_gradient.tres" id="4_ramp"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dash_fire"]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/NoiseTexture = ExtResource("2_noise")
+shader_parameter/MaskTexture = ExtResource("3_mask")
+shader_parameter/ColorRamp = ExtResource("4_ramp")
+shader_parameter/EmissionIntensity = 2.0
+shader_parameter/TimeScale = 3.0
+shader_parameter/TextureScale = Vector2(1.0, 1.0)
+shader_parameter/EdgeSoftness = 0.1
+shader_parameter/DashStrength = 0.0
+
+[sub_resource type="QuadMesh" id="QuadMesh_dash_fire"]
+material = SubResource("ShaderMaterial_dash_fire")
+size = Vector2(1.4, 1.4)
+
+[sub_resource type="Curve" id="Curve_dash_scale"]
+_data = [Vector2(0.0, 0.4), 0.0, 2.0, 0, 0, Vector2(0.35, 1.0), 0.0, 0.0, 0, 0, Vector2(1.0, 0.2), -1.5, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_dash_scale"]
+curve = SubResource("Curve_dash_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_dash_fire"]
+emission_shape = 1
+emission_sphere_radius = 0.4
+direction = Vector3(0, 1, 0)
+spread = 12.0
+initial_velocity_min = 4.5
+initial_velocity_max = 7.0
+gravity = Vector3(0, 0, 0)
+damping_min = 1.0
+damping_max = 2.5
+scale_min = 0.6
+scale_max = 1.1
+scale_curve = SubResource("CurveTexture_dash_scale")
+turbulence_enabled = true
+turbulence_noise_strength = 0.6
+turbulence_noise_speed = Vector3(0.4, 1.2, 0.4)
+
+[node name="DashFireModel" type="SubViewport" unique_id=1900000001]
+own_world_3d = true
+transparent_bg = true
+size = Vector2i(32, 64)
+render_target_update_mode = 1
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1900000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.0, 12.0)
+projection = 1
+size = 8.0
+near = 0.1
+far = 64.0
+
+[node name="FireEmitter" type="GPUParticles3D" parent="." unique_id=1900000003]
+emitting = false
+amount = 36
+lifetime = 0.9
+preprocess = 0.2
+fixed_fps = 60
+process_material = SubResource("ParticleProcessMaterial_dash_fire")
+draw_pass_1 = SubResource("QuadMesh_dash_fire")

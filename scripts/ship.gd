@@ -30,7 +30,7 @@ var _ghost_additive_material: CanvasItemMaterial
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
-@onready var _fire_quad: Sprite2D = $SternMarker/FireQuad
+@onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
 @onready var _camera: Camera2D = $Camera2D
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
@@ -41,7 +41,7 @@ func _ready() -> void:
 	assert(_hull_sprite != null, "Ship: HullSprite node is missing")
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
-	assert(_fire_quad != null, "Ship: SternMarker/FireQuad node is missing")
+	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
 	assert(_camera != null, "Ship: Camera2D node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
@@ -138,9 +138,7 @@ func _tick_dash_visuals(delta: float) -> void:
 	var dash_strength: float = 1.0
 	if dash_config.intensity_curve != null:
 		dash_strength = dash_config.intensity_curve.sample_baked(t)
-	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
-	if fire_mat != null:
-		fire_mat.set_shader_parameter("DashStrength", dash_strength)
+	_fire_effect.set_dash_strength(dash_strength)
 	# Ghost trail spawn ticker.
 	if dash_config.ghost_count > 0:
 		_next_ghost_in -= delta
@@ -274,24 +272,10 @@ func _start_dash() -> void:
 		_:
 			velocity += transform.y * dash_config.impulse_speed
 
-	# Push current fire-config uniforms once at burst start (live-tunable
-	# values picked up from dash_config via the shared Resource cache) and
-	# reveal the quad. DashStrength then ramps via _tick_dash_visuals.
-	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
-	if fire_mat != null:
-		fire_mat.set_shader_parameter("TextureScale", dash_config.fire_texture_scale)
-		fire_mat.set_shader_parameter("TimeScale", dash_config.fire_time_scale)
-		fire_mat.set_shader_parameter("EdgeSoftness", dash_config.fire_edge_softness)
-		fire_mat.set_shader_parameter("EmissionIntensity", dash_config.fire_emission_intensity)
-		fire_mat.set_shader_parameter("DashStrength", 0.0)
-		if dash_config.fire_noise_texture != null:
-			fire_mat.set_shader_parameter("NoiseTexture", dash_config.fire_noise_texture)
-		if dash_config.fire_mask_texture != null:
-			fire_mat.set_shader_parameter("MaskTexture", dash_config.fire_mask_texture)
-		if dash_config.fire_color_ramp != null:
-			fire_mat.set_shader_parameter("ColorRamp", dash_config.fire_color_ramp)
-	_fire_quad.scale = Vector2(0.5, 0.7 * dash_config.fire_quad_length_scale)
-	_fire_quad.visible = true
+	# Push current fire-config uniforms onto the 3D effect and start emitting.
+	# The effect renders into a 32x64 SubViewport for pixel-art crunch and
+	# composites back into 2D via SubViewportContainer.
+	_fire_effect.start(dash_config)
 
 	# Reset ghost spawn timer so the first ghost spawns next render tick.
 	_next_ghost_in = 0.0
@@ -342,12 +326,10 @@ func _start_dash() -> void:
 func _end_dash() -> void:
 	_dash_active = false
 	_dash_remaining = 0.0
-	# Reset DashStrength on the shared material BEFORE hiding so the next
-	# burst doesn't render one frame of stale state.
-	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
-	if fire_mat != null:
-		fire_mat.set_shader_parameter("DashStrength", 0.0)
-	_fire_quad.visible = false
+	# Effect resets DashStrength to 0 internally and schedules SubViewport
+	# shutdown after particles fully die. In-flight particles still drift and
+	# fade naturally during the tail.
+	_fire_effect.stop()
 	# Defensive: if a dip lambda hasn't fired yet (or won't), restore time
 	# scale here so a stalled dip can't outlive the burst.
 	if not is_equal_approx(Engine.time_scale, 1.0):

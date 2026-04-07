@@ -38,7 +38,6 @@ enum FeelMode { LOCKED_HEADING, STEERABLE, VELOCITY_ALIGNED, OVERSPEED_CAP }
 @export var fire_mask_texture: Texture2D
 ## Bind directly to the shader's ColorRamp sampler2D uniform.
 @export var fire_color_ramp: GradientTexture1D
-@export_range(0.0, 2.0, 0.01) var fire_quad_length_scale: float = 1.0
 
 # --- Ghost Trail (Phase 3) ---
 @export_group("Ghost Trail")
