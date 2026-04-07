@@ -273,7 +273,16 @@ func _start_dash() -> void:
 			else:
 				velocity += velocity.normalized() * dash_config.impulse_speed
 		_:
-			velocity += transform.y * dash_config.impulse_speed
+			# Dash has three behaviors at once:
+			# - Forward component is kept (so dashing while already moving
+			#   forward stacks → actually goes faster).
+			# - Backward component is discarded (reverse dash = clean reset,
+			#   not an anemic trickle fighting prior momentum).
+			# - Perpendicular component is discarded (sharp turn-dashes
+			#   don't get dragged sideways by prior drift).
+			var forward: Vector2 = transform.y
+			var kept_forward_speed: float = maxf(velocity.dot(forward), 0.0)
+			velocity = forward * (kept_forward_speed + dash_config.impulse_speed)
 
 	# Push current fire-config uniforms onto the 3D effect and start emitting.
 	# The effect renders into a 32x64 SubViewport for pixel-art crunch and
