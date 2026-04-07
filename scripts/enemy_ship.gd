@@ -86,6 +86,14 @@ func setup(target: Node2D) -> void:
 	_target = target
 
 
+func apply_wave_modifiers(speed_mult: float, cooldown_mult: float) -> void:
+	## Per-wave difficulty scaling. Called by Main right after setup() so the
+	## modifiers stack onto the @export defaults rather than baseline constants.
+	chase_speed *= speed_mult
+	circle_speed *= speed_mult
+	broadside_cooldown *= cooldown_mult
+
+
 func consume_wake_distance(traveled: float) -> bool:
 	## Returns true (and resets) when the enemy has moved >= WAKE_RING_INTERVAL
 	## since the last wake ring. Main calls this each frame.
