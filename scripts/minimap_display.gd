@@ -11,9 +11,11 @@ const PLAYER_DOT_RADIUS: float = 1.5
 const PLAYER_ARROW_LENGTH: float = 6.0
 const RANGE_SQ: float = SCREEN_RADIUS * SCREEN_RADIUS
 
-const BG_COLOR := Color(0.02, 0.06, 0.12, 0.75)
-const BORDER_COLOR := Color(0.4, 0.47, 0.53, 0.8)
-const RING_COLOR := Color(0.27, 0.33, 0.4, 0.3)
+const BG_COLOR := Color(0.11, 0.1, 0.08, 0.55)  # matches HP frame, slightly transparent
+const BORDER_COLOR := Color(0.75, 0.7, 0.55, 0.7)  # matches HP frame border
+const BORDER_SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.35)
+const BORDER_WIDTH := 1.0
+const RING_COLOR := Color(0.75, 0.7, 0.55, 0.2)
 const PLAYER_COLOR := Color.WHITE
 const ENEMY_COLOR := Color(1.0, 0.4, 0.4, 1.0)
 const MINE_COLOR := Color(1.0, 0.8, 0.27, 1.0)
@@ -39,19 +41,30 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if _player == null:
 		return
-	# 1. Background (bottommost)
+	# 1. Shadow ring behind the border — mirrors the HP frame's drop shadow.
+	draw_arc(
+		_center + Vector2(1.0, 1.0),
+		SCREEN_RADIUS,
+		0.0,
+		TAU,
+		64,
+		BORDER_SHADOW_COLOR,
+		BORDER_WIDTH + 1.0,
+		true
+	)
+	# 2. Background circle
 	draw_circle(_center, SCREEN_RADIUS, BG_COLOR)
-	# 2. Range ring at 50%
-	draw_arc(_center, SCREEN_RADIUS * 0.5, 0.0, TAU, 32, RING_COLOR, 1.0, false)
-	# 3. Entity dots (mines under enemies)
+	# 3. Range ring at 50%
+	draw_arc(_center, SCREEN_RADIUS * 0.5, 0.0, TAU, 32, RING_COLOR, 1.0, true)
+	# 4. Entity dots (mines under enemies)
 	_draw_group_entities(&"sea_mines", MINE_COLOR)
 	_draw_group_entities(&"enemy_ships", ENEMY_COLOR)
-	# 4. Player arrow — rotates to show ship heading
+	# 5. Player arrow — rotates to show ship heading
 	draw_circle(_center, PLAYER_DOT_RADIUS, PLAYER_COLOR)
 	var heading: Vector2 = Vector2.DOWN.rotated(_player.rotation) * PLAYER_ARROW_LENGTH
 	draw_line(_center, _center + heading, PLAYER_COLOR, 1.0, false)
-	# 5. Border (topmost)
-	draw_arc(_center, SCREEN_RADIUS, 0.0, TAU, 64, BORDER_COLOR, 1.0, false)
+	# 6. Cream border (topmost) — matches the HP frame stroke.
+	draw_arc(_center, SCREEN_RADIUS, 0.0, TAU, 64, BORDER_COLOR, BORDER_WIDTH, true)
 
 
 func setup(player: CharacterBody2D) -> void:

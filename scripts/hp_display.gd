@@ -15,24 +15,42 @@ const DRAIN_DURATION: float = 0.2
 const POP_STAGGER: float = 0.06
 const RECOLOR_DURATION: float = 0.15
 const CRITICAL_PULSE_INTERVAL: float = 0.35
-const CRITICAL_PULSE_SCALE: Vector2 = Vector2(1.35, 1.35)
+const CRITICAL_PULSE_SCALE: Vector2 = Vector2(1.15, 1.15)
 const CRITICAL_FLASH_BRIGHT: Color = Color(1.6, 1.6, 1.6, 1.0)
+const CRITICAL_SHAKE_AMPLITUDE: float = 1.0  # pixels (pixel-snapped)
 
 var _pips: Array[ColorRect] = []
 var _ship: Ship = null
 var _critical_tween: Tween = null
+var _critical_active: bool = false
+var _frame_base_pos: Vector2 = Vector2.ZERO
 
+@onready var _frame: PanelContainer = $Frame
 @onready var _pip_container: HBoxContainer = %Pips
 
 
 func _ready() -> void:
+	assert(_frame != null, "HPDisplay: Frame panel not found")
 	assert(_pip_container != null, "HPDisplay: Pips container not found")
+	_frame_base_pos = _frame.position
 	for child: Node in _pip_container.get_children():
 		var pip: ColorRect = child as ColorRect
 		assert(pip != null, "HPDisplay: expected all pip children to be ColorRect")
 		pip.color = COLOR_FULL
 		pip.pivot_offset = pip.size / 2.0
 		_pips.append(pip)
+
+
+func _process(_delta: float) -> void:
+	if not _critical_active:
+		return
+	# Subtle continuous shake at 1 HP — pixel-snapped so it reads well in
+	# the 640x360 pixel-art viewport.
+	var jitter: Vector2 = Vector2(
+		roundf(randf_range(-CRITICAL_SHAKE_AMPLITUDE, CRITICAL_SHAKE_AMPLITUDE)),
+		roundf(randf_range(-CRITICAL_SHAKE_AMPLITUDE, CRITICAL_SHAKE_AMPLITUDE))
+	)
+	_frame.position = _frame_base_pos + jitter
 
 
 func setup(ship: Ship) -> void:
@@ -106,6 +124,7 @@ func _tween_pip_recolor(pip: ColorRect, target_color: Color) -> void:
 
 func _start_critical_pulse(pip: ColorRect) -> void:
 	_stop_critical_pulse()
+	_critical_active = true
 	pip.color = COLOR_CRITICAL
 	_critical_tween = create_tween().set_loops()
 	_critical_tween.set_parallel(true)
@@ -140,9 +159,13 @@ func _start_critical_pulse(pip: ColorRect) -> void:
 
 
 func _stop_critical_pulse() -> void:
+	_critical_active = false
 	if _critical_tween and _critical_tween.is_valid():
 		_critical_tween.kill()
 	_critical_tween = null
+	# Restore the frame position after the shake.
+	if _frame != null:
+		_frame.position = _frame_base_pos
 	# Hard-restore scale + modulate on all pips so no pip is left mid-pulse.
 	for pip: ColorRect in _pips:
 		pip.modulate = Color.WHITE
