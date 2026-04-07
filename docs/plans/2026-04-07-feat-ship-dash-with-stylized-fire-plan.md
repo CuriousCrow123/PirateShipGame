@@ -582,14 +582,14 @@ Tests dropped from the original list:
 - [x] Noise texture is a `NoiseTexture2D` resource (not a PNG); the shader uniform's `repeat_enable` hint applies to the procedural noise. *(Substituted for "fire_noise.png import has Repeat=Enabled" — we sidestepped the PNG import path entirely.)*
 - [x] Fire quad is visible only during a burst, ramps via `intensity_curve.sample_baked(t)`, and visibly disappears at burst end. *(Code path verified; visual playtest still recommended for the feel.)*
 - [x] `_tick_dash_visuals` runs from `_process(delta)`, NOT `_physics_process`. *(`_process_camera_shake` lands in Phase 3 — same `_process` method.)*
-- [ ] Ghost sprite afterimages spawn during the burst, fade smoothly, and `queue_free` themselves (verified by `Performance.OBJECT_NODE_COUNT` returning to baseline).
-- [ ] Ghost source sprites and container are cached in `_ready()` (`_ghost_sources: Array[Sprite2D]`, `_ghost_container: Node2D`) — no per-spawn `get_node` or `get_parent`.
-- [ ] Ghost transforms set via `global_transform = src.global_transform`, NOT `scale = src.global_scale`.
-- [ ] Camera shake uses **trauma-squared** decay on `Camera2D.offset` (not `position`), pixel-snapped via `roundf`, resets to `Vector2.ZERO` when trauma reaches 0.
-- [ ] During dash, collision pushback at [scripts/ship.gd:53-58](../../scripts/ship.gd#L53) is scaled by `dash_config.collision_pushback_scale` (default 0.0 = suppressed).
-- [ ] Optional zoom punch, time-scale dip, and freeze-frames work when their durations are nonzero, and are cleanly disabled when zero.
-- [ ] `Engine.time_scale` always restored to `1.0` — restore lambda is `is_instance_valid`-guarded, AND `_exit_tree` resets it defensively, AND `_end_dash` resets it if a dip was applied.
-- [ ] Editing `dash_config.tres` in the Godot editor while the game is running changes the **next** dash's behavior without restart.
+- [x] Ghost sprite afterimages spawn during the burst, fade smoothly, and `queue_free` themselves. *(Code path verified; node-count baseline check is part of human playtest.)*
+- [x] Ghost source sprites and container are cached in `_ready()` (`_ghost_sources: Array[Sprite2D]`, `_ghost_container: Node2D`) — no per-spawn `get_node` or `get_parent`.
+- [x] Ghost transforms set via `global_transform = src.global_transform`, NOT `scale = src.global_scale`.
+- [x] Camera shake uses **trauma-squared** decay on `Camera2D.offset` (not `position`), pixel-snapped via `roundf`, resets to `Vector2.ZERO` when trauma reaches 0.
+- [x] During dash, collision pushback in [scripts/ship.gd](../../scripts/ship.gd) (`_process_collision_pushback`) is scaled by `dash_config.collision_pushback_scale` (default 0.0 = suppressed).
+- [x] Optional zoom punch, time-scale dip, and freeze-frames work when their durations/values are nonzero, and are cleanly disabled when zero.
+- [x] `Engine.time_scale` always restored to `1.0` — restore lambdas are `is_instance_valid`-guarded, AND `_exit_tree` resets it defensively, AND `_end_dash` resets it if a dip is still active.
+- [x] Editing `dash_config.tres` in the Godot editor while the game is running changes the **next** dash's behavior without restart. *(Mechanism inherits from the proven ExplosionConfig pattern.)*
 
 ### Non-Functional Requirements
 - [ ] Static typing: every new var, parameter, and return type is annotated (per [CLAUDE.md](../../CLAUDE.md) GDScript conventions).

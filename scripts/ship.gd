@@ -23,11 +23,17 @@ var _mine_ready: bool = true
 var _dash_ready: bool = true
 var _dash_active: bool = false
 var _dash_remaining: float = 0.0
+var _next_ghost_in: float = 0.0
+var _shake_trauma: float = 0.0
+var _ghost_additive_material: CanvasItemMaterial
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_quad: Sprite2D = $SternMarker/FireQuad
+@onready var _camera: Camera2D = $Camera2D
+@onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $SailSprite]
+@onready var _ghost_container: Node2D = get_parent() as Node2D
 
 
 func _ready() -> void:
@@ -36,9 +42,23 @@ func _ready() -> void:
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(_fire_quad != null, "Ship: SternMarker/FireQuad node is missing")
+	assert(_camera != null, "Ship: Camera2D node is missing")
+	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_config != null, "Ship: dash_config Resource is missing")
+	# Cached additive material reused across all ghost spawns (Godot does NOT
+	# fork CanvasItemMaterial on assignment — all ghosts share the same RID
+	# and batch together).
+	_ghost_additive_material = CanvasItemMaterial.new()
+	_ghost_additive_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_apply_config()
+
+
+func _exit_tree() -> void:
+	# Defensive: if a time_dip lambda failed mid-burst (freed instance, etc.),
+	# make sure we never leave the engine in scaled time when the ship leaves.
+	if not is_equal_approx(Engine.time_scale, 1.0):
+		Engine.time_scale = 1.0
 
 
 func _physics_process(delta: float) -> void:
@@ -105,14 +125,15 @@ func _process_collision_pushback(pushback_scale: float) -> void:
 			velocity += push
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Visuals run on render frames so the burst animates smoothly on
 	# high-refresh displays. Motion stays in _physics_process.
 	if _dash_active:
-		_tick_dash_visuals()
+		_tick_dash_visuals(delta)
+	_process_camera_shake(delta)
 
 
-func _tick_dash_visuals() -> void:
+func _tick_dash_visuals(delta: float) -> void:
 	var t: float = 1.0 - clampf(_dash_remaining / dash_config.duration, 0.0, 1.0)
 	var dash_strength: float = 1.0
 	if dash_config.intensity_curve != null:
@@ -120,6 +141,53 @@ func _tick_dash_visuals() -> void:
 	var fire_mat: ShaderMaterial = _fire_quad.material as ShaderMaterial
 	if fire_mat != null:
 		fire_mat.set_shader_parameter("DashStrength", dash_strength)
+	# Ghost trail spawn ticker.
+	if dash_config.ghost_count > 0:
+		_next_ghost_in -= delta
+		if _next_ghost_in <= 0.0:
+			_spawn_ghost()
+			_next_ghost_in = dash_config.ghost_spawn_interval
+
+
+func _process_camera_shake(delta: float) -> void:
+	# Trauma-squared model (Eiserloh, GDC 2016): offset = trauma^2 * mag.
+	# Linear decay of trauma. Pixel-snapped via roundf for the 640x360
+	# integer-scale viewport. Writes Camera2D.offset (NOT position) so the
+	# existing position_smoothing_enabled doesn't swallow the shake.
+	if _shake_trauma <= 0.0:
+		if _camera.offset != Vector2.ZERO:
+			_camera.offset = Vector2.ZERO
+		return
+	_shake_trauma = maxf(0.0, _shake_trauma - dash_config.shake_trauma_decay * delta)
+	var amplitude: float = _shake_trauma * _shake_trauma * dash_config.shake_magnitude_px
+	_camera.offset = Vector2(
+		roundf(randf_range(-amplitude, amplitude)), roundf(randf_range(-amplitude, amplitude))
+	)
+
+
+func _spawn_ghost() -> void:
+	if _ghost_container == null:
+		return
+	for src: Sprite2D in _ghost_sources:
+		if src == null:
+			continue
+		var ghost: Sprite2D = Sprite2D.new()
+		ghost.texture = src.texture
+		ghost.region_enabled = src.region_enabled
+		ghost.region_rect = src.region_rect
+		ghost.centered = src.centered
+		ghost.offset = src.offset
+		ghost.global_transform = src.global_transform
+		ghost.modulate = dash_config.ghost_start_tint
+		ghost.z_index = src.z_index - 1
+		if dash_config.ghost_additive:
+			ghost.material = _ghost_additive_material
+		_ghost_container.add_child(ghost)
+		var tw: Tween = ghost.create_tween()
+		tw.tween_property(
+			ghost, "modulate", dash_config.ghost_end_tint, dash_config.ghost_fade_duration
+		)
+		tw.tween_callback(ghost.queue_free)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -225,6 +293,45 @@ func _start_dash() -> void:
 	_fire_quad.scale = Vector2(0.5, 0.7 * dash_config.fire_quad_length_scale)
 	_fire_quad.visible = true
 
+	# Reset ghost spawn timer so the first ghost spawns next render tick.
+	_next_ghost_in = 0.0
+
+	# Bump shake trauma. max() so a re-trigger can never reduce in-flight shake.
+	_shake_trauma = maxf(_shake_trauma, dash_config.shake_trauma_initial)
+
+	# Optional zoom punch.
+	if dash_config.zoom_punch_duration > 0.0:
+		var base_zoom: Vector2 = Vector2(1.2, 1.2)
+		var punch_zoom: Vector2 = Vector2(
+			dash_config.zoom_punch_target, dash_config.zoom_punch_target
+		)
+		var zoom_tween: Tween = create_tween()
+		zoom_tween.tween_property(
+			_camera, "zoom", punch_zoom, dash_config.zoom_punch_duration * 0.4
+		)
+		zoom_tween.tween_property(_camera, "zoom", base_zoom, dash_config.zoom_punch_duration * 0.6)
+
+	# Optional Celeste-style freeze frames at burst start.
+	if dash_config.freeze_frames > 0:
+		var freeze_seconds: float = float(dash_config.freeze_frames) / 60.0
+		Engine.time_scale = 0.0
+		# process_always=true, ignore_time_scale=true so the timer fires in
+		# real time even with Engine.time_scale = 0.
+		get_tree().create_timer(freeze_seconds, true, false, true).timeout.connect(
+			func() -> void:
+				if is_instance_valid(self):
+					Engine.time_scale = 1.0
+		)
+	# Optional time-scale dip (mutually exclusive in practice with freeze; if
+	# both are set, freeze wins because it sets time_scale = 0 first).
+	elif dash_config.time_dip_value < 1.0 and dash_config.time_dip_duration > 0.0:
+		Engine.time_scale = dash_config.time_dip_value
+		get_tree().create_timer(dash_config.time_dip_duration, true, false, true).timeout.connect(
+			func() -> void:
+				if is_instance_valid(self):
+					Engine.time_scale = 1.0
+		)
+
 	get_tree().create_timer(dash_config.cooldown).timeout.connect(
 		func() -> void:
 			if is_instance_valid(self):
@@ -241,3 +348,7 @@ func _end_dash() -> void:
 	if fire_mat != null:
 		fire_mat.set_shader_parameter("DashStrength", 0.0)
 	_fire_quad.visible = false
+	# Defensive: if a dip lambda hasn't fired yet (or won't), restore time
+	# scale here so a stalled dip can't outlive the burst.
+	if not is_equal_approx(Engine.time_scale, 1.0):
+		Engine.time_scale = 1.0
