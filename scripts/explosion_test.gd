@@ -11,13 +11,19 @@ const ALPHA_CUTOFF: int = 10  # 0-255; strips faint glow bleed
 const VARIATIONS: int = 10
 const OUTPUT_DIR: String = "res://textures/explosions"
 
-## [name, cone_dir, cone_spread, effect_scale, vert_velocity]
-## Matches the actual create() calls in the game.
+const CONFIG_PATH: String = "res://resources/explosion_config.tres"
+
+## [name, cone_dir, effect_scale]
+## cone_spread / vert_velocity / etc come from explosion_config.tres so the
+## baked atlases reflect the same tuning as live 3D mode. cone_dir and
+## effect_scale are bake-time concerns: cone_dir aligns directional types
+## to the +x axis so runtime can rotate the sprite, and effect_scale is
+## forced to 1.0 during capture so the atlas is at native pixel density.
 const VARIANTS: Array = [
-	["muzzle_flash", Vector2.RIGHT, 0.0, 0.25, 100.0],
-	["cannonball_impact", Vector2.RIGHT, 45.0, 1.0, 15.0],
-	["enemy_destruction", Vector2.UP, 360.0, 1.0, 55.0],
-	["sea_mine", Vector2.UP, 360.0, 1.5, 80.0],
+	["muzzle_flash", Vector2.RIGHT, 0.25],
+	["cannonball_impact", Vector2.RIGHT, 1.0],
+	["enemy_destruction", Vector2.UP, 1.0],
+	["sea_mine", Vector2.UP, 1.5],
 ]
 
 ## Aggregated metadata across all atlases, written to JSON at the end.
@@ -32,12 +38,13 @@ func _ready() -> void:
 
 
 func _capture_all_variants() -> void:
+	var config_res: ExplosionConfig = load(CONFIG_PATH) as ExplosionConfig
+	assert(config_res != null, "ExplosionConfig missing at " + CONFIG_PATH)
+
 	for variant: Array in VARIANTS:
 		var base_name: String = variant[0] as String
 		var cone_dir: Vector2 = variant[1] as Vector2
-		var cone_spread: float = variant[2] as float
-		var effect_scale: float = variant[3] as float
-		var vert_velocity: float = variant[4] as float
+		var effect_scale: float = variant[2] as float
 
 		# Capture 5 variations of this type, accumulate in a local list only
 		var type_variations: Array = []
@@ -47,18 +54,13 @@ func _capture_all_variants() -> void:
 			_status_label.text = "Capturing: %s..." % vname
 			print("Capturing %s..." % vname)
 
-			var effect: ExplosionEffect = (
-				ExplosionEffect
-				. create(
-					self,
-					Vector2(320, 180),
-					{
-						"cone_dir": cone_dir,
-						"cone_spread": cone_spread,
-						"effect_scale": 1.0,
-						"vert_velocity": vert_velocity,
-					}
-				)
+			# Pull the full per-type tuning from the live config, then override
+			# the two bake-time concerns (direction + native scale).
+			var config: Dictionary = config_res.get_params(base_name)
+			config["cone_dir"] = cone_dir
+			config["effect_scale"] = 1.0
+			var effect: ExplosionEffect = ExplosionEffect.create(
+				self, Vector2(320, 180), config
 			)
 
 			# Wait for effect to initialize (its _ready awaits one process_frame)
@@ -68,10 +70,14 @@ func _capture_all_variants() -> void:
 			var viewport: SubViewport = effect.get_node("SubViewportContainer/ExplosionModel")
 			var native_size: int = viewport.size.x
 
-			# Capture frames at fixed interval
+			# Capture frames at fixed interval; use the per-type lifetime from
+			# the config so longer-lived tunings get fully captured.
+			var capture_duration: float = float(
+				config.get("lifetime", ExplosionEffect.DEFAULT_LIFETIME)
+			)
 			var frames: Array[Image] = []
 			var elapsed: float = 0.0
-			while elapsed < ExplosionEffect.DEFAULT_LIFETIME:
+			while elapsed < capture_duration:
 				await RenderingServer.frame_post_draw
 				elapsed += get_process_delta_time()
 				var target_count: int = int(elapsed / CAPTURE_INTERVAL) + 1
@@ -85,7 +91,7 @@ func _capture_all_variants() -> void:
 			await get_tree().create_timer(0.5).timeout
 
 		# Build this type's atlas immediately so we release frame memory before the next type
-		_build_atlas_for_type(base_name, type_variations, cone_dir, cone_spread, effect_scale)
+		_build_atlas_for_type(base_name, type_variations, cone_dir, effect_scale)
 		type_variations.clear()
 
 	# Save aggregated metadata JSON after all types are done
@@ -162,7 +168,6 @@ func _build_atlas_for_type(
 	base_name: String,
 	variations: Array,
 	cone_dir: Vector2,
-	cone_spread: float,
 	effect_scale: float,
 ) -> void:
 	if variations.is_empty():
@@ -221,7 +226,6 @@ func _build_atlas_for_type(
 		"atlas": "%s_atlas.png" % base_name,
 		"atlas_size": [max_row_width, total_height],
 		"cone_dir": [cone_dir.x, cone_dir.y],
-		"cone_spread": cone_spread,
 		"effect_scale": effect_scale,
 		"fps": CAPTURE_FPS,
 		"variations": variation_meta,

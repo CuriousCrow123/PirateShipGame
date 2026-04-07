@@ -2,454 +2,460 @@
 	"cannonball_impact": {
 		"atlas": "cannonball_impact_atlas.png",
 		"atlas_size": [
-			575,
-			181
+			550,
+			165
 		],
 		"cone_dir": [
 			1.0,
 			0.0
 		],
-		"cone_spread": 45.0,
 		"effect_scale": 1.0,
 		"fps": 20,
 		"variations": [
 			{
 				"frame_count": 25,
-				"frame_h": 22,
-				"frame_w": 22,
+				"frame_h": 18,
+				"frame_w": 18,
 				"origin": [
-					7.0,
-					11.0
+					5.0,
+					10.0
 				],
 				"row_y": 0
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 25,
-				"frame_w": 23,
-				"origin": [
-					8.0,
-					9.0
-				],
-				"row_y": 22
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 22,
-				"frame_w": 23,
-				"origin": [
-					8.0,
-					7.0
-				],
-				"row_y": 47
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 21,
+				"frame_h": 20,
 				"frame_w": 22,
 				"origin": [
-					8.0,
-					8.0
+					7.0,
+					11.0
 				],
-				"row_y": 69
+				"row_y": 18
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 19,
-				"frame_w": 19,
-				"origin": [
-					8.0,
-					7.0
-				],
-				"row_y": 90
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 18,
-				"frame_w": 17,
-				"origin": [
-					8.0,
-					7.0
-				],
-				"row_y": 109
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 21,
-				"frame_w": 17,
-				"origin": [
-					8.0,
-					13.0
-				],
-				"row_y": 127
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 18,
+				"frame_h": 16,
 				"frame_w": 18,
 				"origin": [
-					9.0,
-					10.0
+					4.0,
+					7.0
 				],
-				"row_y": 148
+				"row_y": 38
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 17,
+				"frame_w": 17,
+				"origin": [
+					4.0,
+					8.0
+				],
+				"row_y": 54
+			},
+			{
+				"frame_count": 7,
+				"frame_h": 18,
+				"frame_w": 20,
+				"origin": [
+					6.0,
+					7.0
+				],
+				"row_y": 71
 			},
 			{
 				"frame_count": 25,
 				"frame_h": 15,
-				"frame_w": 20,
+				"frame_w": 17,
+				"origin": [
+					7.0,
+					5.0
+				],
+				"row_y": 89
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 16,
+				"frame_w": 13,
+				"origin": [
+					4.0,
+					7.0
+				],
+				"row_y": 104
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 16,
+				"frame_w": 12,
+				"origin": [
+					4.0,
+					9.0
+				],
+				"row_y": 120
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 16,
+				"frame_w": 15,
+				"origin": [
+					8.0,
+					10.0
+				],
+				"row_y": 136
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 13,
+				"frame_w": 17,
 				"origin": [
 					9.0,
-					8.0
+					6.0
 				],
-				"row_y": 166
+				"row_y": 152
 			}
 		]
 	},
 	"enemy_destruction": {
 		"atlas": "enemy_destruction_atlas.png",
 		"atlas_size": [
-			2175,
-			611
+			2759,
+			595
 		],
 		"cone_dir": [
 			0.0,
 			-1.0
 		],
-		"cone_spread": 360.0,
 		"effect_scale": 1.0,
 		"fps": 20,
 		"variations": [
 			{
-				"frame_count": 25,
-				"frame_h": 77,
-				"frame_w": 87,
+				"frame_count": 31,
+				"frame_h": 57,
+				"frame_w": 89,
 				"origin": [
-					46.0,
-					41.0
+					53.0,
+					21.0
 				],
 				"row_y": 0
 			},
 			{
-				"frame_count": 25,
-				"frame_h": 65,
-				"frame_w": 52,
-				"origin": [
-					27.0,
-					27.0
-				],
-				"row_y": 77
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 57,
-				"frame_w": 82,
-				"origin": [
-					33.0,
-					14.0
-				],
-				"row_y": 142
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 55,
-				"frame_w": 66,
+				"frame_count": 31,
+				"frame_h": 54,
+				"frame_w": 78,
 				"origin": [
 					29.0,
-					15.0
+					26.0
 				],
-				"row_y": 199
+				"row_y": 57
 			},
 			{
-				"frame_count": 25,
-				"frame_h": 60,
-				"frame_w": 55,
-				"origin": [
-					26.0,
-					32.0
-				],
-				"row_y": 254
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 54,
-				"frame_w": 59,
+				"frame_count": 31,
+				"frame_h": 81,
+				"frame_w": 73,
 				"origin": [
 					24.0,
-					22.0
+					28.0
 				],
-				"row_y": 314
+				"row_y": 111
 			},
 			{
-				"frame_count": 25,
-				"frame_h": 73,
-				"frame_w": 71,
+				"frame_count": 31,
+				"frame_h": 60,
+				"frame_w": 56,
 				"origin": [
-					29.0,
-					42.0
+					24.0,
+					25.0
 				],
-				"row_y": 368
+				"row_y": 192
 			},
 			{
-				"frame_count": 18,
-				"frame_h": 57,
-				"frame_w": 72,
-				"origin": [
-					30.0,
-					37.0
-				],
-				"row_y": 441
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 51,
+				"frame_count": 31,
+				"frame_h": 54,
 				"frame_w": 62,
 				"origin": [
-					26.0,
-					36.0
+					33.0,
+					25.0
 				],
-				"row_y": 498
+				"row_y": 252
 			},
 			{
-				"frame_count": 25,
-				"frame_h": 62,
-				"frame_w": 63,
+				"frame_count": 31,
+				"frame_h": 68,
+				"frame_w": 79,
 				"origin": [
-					32.0,
-					39.0
+					40.0,
+					42.0
 				],
-				"row_y": 549
+				"row_y": 306
+			},
+			{
+				"frame_count": 31,
+				"frame_h": 46,
+				"frame_w": 58,
+				"origin": [
+					21.0,
+					27.0
+				],
+				"row_y": 374
+			},
+			{
+				"frame_count": 31,
+				"frame_h": 59,
+				"frame_w": 58,
+				"origin": [
+					25.0,
+					31.0
+				],
+				"row_y": 420
+			},
+			{
+				"frame_count": 31,
+				"frame_h": 55,
+				"frame_w": 55,
+				"origin": [
+					19.0,
+					22.0
+				],
+				"row_y": 479
+			},
+			{
+				"frame_count": 31,
+				"frame_h": 61,
+				"frame_w": 87,
+				"origin": [
+					48.0,
+					17.0
+				],
+				"row_y": 534
 			}
 		]
 	},
 	"muzzle_flash": {
 		"atlas": "muzzle_flash_atlas.png",
 		"atlas_size": [
-			2800,
-			354
+			2950,
+			310
 		],
 		"cone_dir": [
 			1.0,
 			0.0
 		],
-		"cone_spread": 0.0,
 		"effect_scale": 0.25,
 		"fps": 20,
 		"variations": [
 			{
 				"frame_count": 25,
-				"frame_h": 21,
-				"frame_w": 78,
+				"frame_h": 22,
+				"frame_w": 59,
 				"origin": [
-					9.0,
-					8.0
+					15.0,
+					7.0
 				],
 				"row_y": 0
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 27,
-				"frame_w": 58,
-				"origin": [
-					13.0,
-					16.0
-				],
-				"row_y": 21
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 34,
-				"frame_w": 112,
+				"frame_h": 28,
+				"frame_w": 56,
 				"origin": [
 					10.0,
-					27.0
+					18.0
 				],
-				"row_y": 48
+				"row_y": 22
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 33,
-				"frame_w": 61,
+				"frame_h": 28,
+				"frame_w": 118,
 				"origin": [
-					10.0,
-					26.0
+					12.0,
+					23.0
 				],
-				"row_y": 82
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 48,
-				"frame_w": 106,
-				"origin": [
-					10.0,
-					12.0
-				],
-				"row_y": 115
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 38,
-				"frame_w": 84,
-				"origin": [
-					9.0,
-					15.0
-				],
-				"row_y": 163
+				"row_y": 50
 			},
 			{
 				"frame_count": 25,
 				"frame_h": 29,
-				"frame_w": 84,
+				"frame_w": 81,
 				"origin": [
-					7.0,
-					9.0
+					14.0,
+					23.0
 				],
-				"row_y": 201
+				"row_y": 78
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 38,
-				"frame_w": 90,
+				"frame_h": 42,
+				"frame_w": 104,
+				"origin": [
+					9.0,
+					14.0
+				],
+				"row_y": 107
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 24,
+				"frame_w": 51,
+				"origin": [
+					10.0,
+					13.0
+				],
+				"row_y": 149
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 25,
+				"frame_w": 87,
 				"origin": [
 					8.0,
-					24.0
+					9.0
 				],
-				"row_y": 230
+				"row_y": 173
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 31,
-				"frame_w": 97,
+				"frame_h": 35,
+				"frame_w": 72,
+				"origin": [
+					11.0,
+					22.0
+				],
+				"row_y": 198
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 35,
+				"frame_w": 68,
+				"origin": [
+					5.0,
+					22.0
+				],
+				"row_y": 233
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 42,
+				"frame_w": 70,
 				"origin": [
 					7.0,
-					11.0
+					16.0
 				],
 				"row_y": 268
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 55,
-				"frame_w": 80,
-				"origin": [
-					7.0,
-					27.0
-				],
-				"row_y": 299
 			}
 		]
 	},
 	"sea_mine": {
 		"atlas": "sea_mine_atlas.png",
 		"atlas_size": [
-			3750,
-			816
+			3100,
+			869
 		],
 		"cone_dir": [
 			0.0,
 			-1.0
 		],
-		"cone_spread": 360.0,
 		"effect_scale": 1.5,
 		"fps": 20,
 		"variations": [
 			{
 				"frame_count": 25,
-				"frame_h": 74,
-				"frame_w": 105,
+				"frame_h": 77,
+				"frame_w": 106,
 				"origin": [
-					35.0,
+					54.0,
 					39.0
 				],
 				"row_y": 0
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 80,
-				"frame_w": 101,
+				"frame_h": 85,
+				"frame_w": 124,
 				"origin": [
-					51.0,
+					67.0,
+					35.0
+				],
+				"row_y": 77
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 91,
+				"frame_w": 75,
+				"origin": [
+					34.0,
+					54.0
+				],
+				"row_y": 162
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 94,
+				"frame_w": 119,
+				"origin": [
+					61.0,
 					42.0
 				],
-				"row_y": 74
+				"row_y": 253
 			},
 			{
 				"frame_count": 25,
 				"frame_h": 74,
-				"frame_w": 89,
+				"frame_w": 91,
 				"origin": [
-					49.0,
-					41.0
+					47.0,
+					30.0
 				],
-				"row_y": 154
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 62,
-				"frame_w": 128,
-				"origin": [
-					67.0,
-					24.0
-				],
-				"row_y": 228
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 88,
-				"frame_w": 150,
-				"origin": [
-					94.0,
-					49.0
-				],
-				"row_y": 290
+				"row_y": 347
 			},
 			{
 				"frame_count": 25,
 				"frame_h": 100,
-				"frame_w": 76,
+				"frame_w": 90,
 				"origin": [
-					41.0,
-					53.0
+					27.0,
+					61.0
 				],
-				"row_y": 378
+				"row_y": 421
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 81,
-				"frame_w": 93,
+				"frame_h": 88,
+				"frame_w": 82,
 				"origin": [
-					33.0,
-					40.0
-				],
-				"row_y": 478
-			},
-			{
-				"frame_count": 25,
-				"frame_h": 89,
-				"frame_w": 102,
-				"origin": [
-					50.0,
+					47.0,
 					48.0
 				],
-				"row_y": 559
+				"row_y": 521
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 84,
-				"frame_w": 84,
+				"frame_h": 76,
+				"frame_w": 113,
 				"origin": [
-					51.0,
-					48.0
+					55.0,
+					35.0
 				],
-				"row_y": 648
+				"row_y": 609
 			},
 			{
 				"frame_count": 25,
-				"frame_h": 84,
-				"frame_w": 114,
+				"frame_h": 92,
+				"frame_w": 96,
 				"origin": [
 					59.0,
-					38.0
+					50.0
 				],
-				"row_y": 732
+				"row_y": 685
+			},
+			{
+				"frame_count": 25,
+				"frame_h": 92,
+				"frame_w": 109,
+				"origin": [
+					54.0,
+					44.0
+				],
+				"row_y": 777
 			}
 		]
 	}
