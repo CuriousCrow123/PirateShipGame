@@ -197,11 +197,8 @@ func _on_invincibility_changed(active: bool) -> void:
 
 
 func _on_game_over() -> void:
-	# Close out the in-progress wave so its elapsed time still shows up in
-	# the stats list. If the player died mid-intermission, there's no wave
-	# to close — skip.
-	if _wave_phase == WavePhase.SPAWNING or _wave_phase == WavePhase.CLEARING:
-		_stats.end_wave()
+	# The in-progress wave is intentionally NOT closed out — only fully
+	# completed waves get a row in the stats list.
 	# Short grace so the death explosion + HP drain reads before the panel
 	# slides in.
 	await get_tree().create_timer(1.0).timeout
