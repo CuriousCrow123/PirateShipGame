@@ -15,9 +15,10 @@ const DRAIN_DURATION: float = 0.2
 const POP_STAGGER: float = 0.06
 const RECOLOR_DURATION: float = 0.15
 const CRITICAL_PULSE_INTERVAL: float = 0.35
-const CRITICAL_PULSE_SCALE: Vector2 = Vector2(1.15, 1.15)
+const CRITICAL_PULSE_SCALE: Vector2 = Vector2(1.05, 1.05)
 const CRITICAL_FLASH_BRIGHT: Color = Color(1.6, 1.6, 1.6, 1.0)
 const CRITICAL_SHAKE_AMPLITUDE: float = 1.0  # pixels (pixel-snapped)
+const CRITICAL_SHAKE_PROBABILITY: float = 0.35  # chance-per-frame of a jitter step
 
 var _pips: Array[ColorRect] = []
 var _ship: Ship = null
@@ -44,8 +45,12 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not _critical_active:
 		return
-	# Subtle continuous shake at 1 HP — pixel-snapped so it reads well in
-	# the 640x360 pixel-art viewport.
+	# Sparse pixel-snapped jitter at 1 HP — most frames sit on the base
+	# position, occasionally nudging by a single pixel so it feels nervy
+	# without rattling the whole screen.
+	if randf() > CRITICAL_SHAKE_PROBABILITY:
+		_frame.position = _frame_base_pos
+		return
 	var jitter: Vector2 = Vector2(
 		roundf(randf_range(-CRITICAL_SHAKE_AMPLITUDE, CRITICAL_SHAKE_AMPLITUDE)),
 		roundf(randf_range(-CRITICAL_SHAKE_AMPLITUDE, CRITICAL_SHAKE_AMPLITUDE))
