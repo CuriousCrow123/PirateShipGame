@@ -712,8 +712,19 @@ Phase 6 must address all 10. Unit-tested.
   sea_mine reads have explicit fallback constants so the .tscn can omit
   the assignment without breaking. cannon.tscn and sea_mine.tscn assign
   the new resources via ExtResource.)*
-- [ ] **Step 13** — Create `EnemyArchetype.tres` read by `enemy_ship.gd`
+- [x] **Step 13** — Create `EnemyArchetype.tres` read by `enemy_ship.gd`
   (sprite, hp, speed, ai_kind, weapon, score).
+  *(Done 2026-04-07: EnemyArchetype at [scripts/enemy_archetype.gd](../../scripts/enemy_archetype.gd)
+  with the default instance at [resources/default_enemy_archetype.tres](../../resources/default_enemy_archetype.tres)
+  pre-wired to `cannon_weapon.tres`. **Read-site scope**: enemy_ship.gd
+  consumes `archetype.hp` and `archetype.chase_speed` in `_ready()` when
+  the slot is non-null. Other fields (`sprite_region`, `score`, `ai_kind`,
+  `circle_speed`, `turn_speed`, `circle_radius`, `broadside_*`, `weapon`)
+  are forward declarations \u2014 the read sites land in Phase 4 (Cannon /
+  HealthComponent / HurtboxComponent extraction) and Phase 8
+  (EnemyAIMovement). The legacy @exports stay on enemy_ship.gd as
+  fallbacks so any spawner not yet using the archetype keeps working.
+  enemy_ship.tscn assigns the default archetype via ExtResource.)*
 - [ ] **Step 14** — Create `WaveConfig.tres` + `WaveSet.tres` +
   **`wave_01.tres` … `wave_NN.tres`** hand-authored from the current
   procedural formula at [main.gd:8-31](../../scripts/main.gd#L8-L31).

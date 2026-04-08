@@ -13,6 +13,7 @@ const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
 const BROADSIDE_ALIGNMENT_THRESHOLD: float = 0.85  # |dot(starboard, to_target)|
 const RAM_IFRAME_DURATION: float = 0.4  # multi-hit guard for ship-ship collisions
 
+@export var archetype: EnemyArchetype
 @export var chase_speed: float = 50.0
 @export var circle_speed: float = 40.0
 @export var turn_speed: float = 2.0
@@ -50,6 +51,13 @@ func _ready() -> void:
 	assert(_cannon_slots != null, "EnemyShip: CannonSlots not found")
 	# broadside_range MUST stay <= Cannonball.max_range (default 150) so balls
 	# can actually reach the player at max firing distance.
+	# Phase 2 Step 13: archetype Resource is the source of truth for hp +
+	# chase_speed when assigned. Fall back to the legacy @exports otherwise so
+	# any spawner that hasn't been migrated yet still works (Phase 8 wires the
+	# rest of the fields when EnemyAIMovement is extracted).
+	if archetype != null:
+		max_health = archetype.hp
+		chase_speed = archetype.chase_speed
 	_health = max_health
 	_original_hull_pos = _hull_sprite.position
 	_last_wake_pos = global_position
