@@ -14,9 +14,9 @@ extends Node
 ## SeaMine.schedule_chain_detonation (Phase 6 Step 34g made that path safe
 ## at the target side, but the caller still needs the snapshot).
 
-const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
+const CannonballScene: PackedScene = preload("res://features/weapons/cannonball.tscn")
 const EnemyShipScene: PackedScene = preload("res://features/enemies/enemy_ship.tscn")
-const SeaMineScene: PackedScene = preload("res://scenes/sea_mine.tscn")
+const SeaMineScene: PackedScene = preload("res://features/weapons/sea_mine.tscn")
 
 @export var spawn_distance: float = 550.0
 @export var despawn_distance: float = 1000.0

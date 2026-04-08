@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://features/ship/components/cannon.gd" id="1_cannon"]
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
-[ext_resource type="Resource" path="res://resources/cannon_weapon.tres" id="3_weapon"]
+[ext_resource type="Resource" path="res://features/weapons/configs/cannon_weapon.tres" id="3_weapon"]
 
 [node name="Cannon" type="Node2D" unique_id=553273077]
 script = ExtResource("1_cannon")

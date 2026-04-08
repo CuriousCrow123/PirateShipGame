@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnemyArchetype" format=3]
 
 [ext_resource type="Script" path="res://features/enemies/enemy_archetype.gd" id="1_script"]
-[ext_resource type="Resource" path="res://resources/cannon_weapon.tres" id="2_weapon"]
+[ext_resource type="Resource" path="res://features/weapons/configs/cannon_weapon.tres" id="2_weapon"]
 
 [resource]
 script = ExtResource("1_script")
