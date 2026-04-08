@@ -1,0 +1,7 @@
+[gd_resource type="FontVariation" load_steps=2 format=3]
+
+[ext_resource type="FontFile" uid="uid://caajgisses0ae" path="res://assets/fonts/kims_bit_hand.ttf" id="1_base"]
+
+[resource]
+base_font = ExtResource("1_base")
+spacing_glyph = 1

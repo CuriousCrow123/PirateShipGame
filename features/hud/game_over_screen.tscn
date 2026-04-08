@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://bv0gameover01"]
 
 [ext_resource type="Script" path="res://features/hud/game_over_screen.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://caajgisses0ae" path="res://assets/fonts/kims_bit_hand.ttf" id="2_font"]
+[ext_resource type="FontVariation" path="res://assets/fonts/kims_bit_hand_spaced.tres" id="2_font"]
 [ext_resource type="StyleBox" path="res://features/hud/ui_frame_style.tres" id="3_frame_style"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]

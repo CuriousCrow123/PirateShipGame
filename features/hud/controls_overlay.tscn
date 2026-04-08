@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://features/hud/controls_overlay.gd" id="1_script"]
 [ext_resource type="ShaderMaterial" path="res://features/hud/shaders/chalkboard_material.tres" id="2_material"]
-[ext_resource type="FontFile" path="res://assets/fonts/kims_bit_hand.ttf" id="3_font"]
+[ext_resource type="FontVariation" path="res://assets/fonts/kims_bit_hand_spaced.tres" id="3_font"]
 [ext_resource type="StyleBox" path="res://features/hud/ui_frame_style.tres" id="4_frame_style"]
 
 [node name="ControlsOverlay" type="CanvasLayer"]
