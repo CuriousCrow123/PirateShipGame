@@ -33,12 +33,23 @@ var _stats: ShipStats = null
 var _fsm: ShipFSM = null
 var _hp: int = 0
 var _lives: int = 0
+var _respawn_cooldown: Cooldown = Cooldown.new()
+var _respawn_pending: bool = false
 
 
 func _ready() -> void:
 	# Default-off per component doctrine. Iframe ticking moved to ShipFSM.
+	# _process is enabled transiently during the respawn cooldown so we can
+	# poll the wall-clock Cooldown and emit respawn_ready exactly once.
 	set_physics_process(false)
 	set_process(false)
+
+
+func _process(_delta: float) -> void:
+	if _respawn_pending and _respawn_cooldown.is_ready():
+		_respawn_pending = false
+		set_process(false)
+		respawn_ready.emit()
 
 
 ## Called by the entity root in its own _ready (after child _readys have run)
@@ -113,11 +124,9 @@ func _enter_death() -> void:
 		return
 	if not respawnable:
 		return
-	# Schedule respawn cooldown. Phase 6 Step 34a will replace this lambda with
-	# a Cooldown helper instance; the contract (emit respawn_ready when the
-	# delay elapses) stays identical.
-	get_tree().create_timer(_stats.respawn_delay).timeout.connect(
-		func() -> void:
-			if is_instance_valid(self):
-				respawn_ready.emit()
-	)
+	# Phase 6 Step 34a: wall-clock Cooldown + _process poll replaces the old
+	# SceneTreeTimer lambda. Contract is identical — respawn_ready emits once
+	# after respawn_delay elapses.
+	_respawn_cooldown.start(_stats.respawn_delay)
+	_respawn_pending = true
+	set_process(true)

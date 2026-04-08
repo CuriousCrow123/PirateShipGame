@@ -50,6 +50,7 @@ func _ready() -> void:
 	# Build the gold gleam material in code so the uniform is instance-owned
 	# (no shared ShaderMaterial mutation). Intensity = 0 keeps it invisible
 	# until the Invincible cheat toggles on.
+	# Phase 6 Step 34k audit: per-instance mutation, constructed fresh here.
 	_gold_material = ShaderMaterial.new()
 	_gold_material.shader = GOLD_GLEAM_SHADER
 	_gold_material.set_shader_parameter("Intensity", 0.0)

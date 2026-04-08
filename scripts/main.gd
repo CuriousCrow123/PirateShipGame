@@ -37,6 +37,14 @@ var _enemies_to_spawn_this_wave: int = 0
 var _spawn_cadence_timer: float = 0.0
 var _stats: RunStats = null
 
+# Phase 6 Step 34h: game-over grace replaces the old
+# `await get_tree().create_timer(1.0).timeout` with a polled Cooldown so the
+# scheduler isn't holding a SceneTreeTimer reference past a scene unload.
+var _run_end_cooldown: Cooldown = Cooldown.new()
+var _run_end_pending: bool = false
+var _run_end_stats: RunStats = null
+var _run_end_victory: bool = false
+
 @onready var _ship: Ship = $Ship
 @onready var _minimap_display: MinimapDisplay = $Minimap/MinimapDisplay
 @onready var _displacement_vp: SubViewport = $DisplacementViewport/SubViewport
@@ -79,6 +87,9 @@ func _ready() -> void:
 	# Wire displacement SubViewport texture to the shared water material.
 	# Intentionally shared: all water chunks use the same DisplacementMap.
 	# NOT duplicated — uniform updates propagate to every chunk simultaneously.
+	# Phase 6 Step 34k audit: globally-shared write intended. Same rationale
+	# applies to the per-frame DisplacementOrigin / WakeTrailStrength writes
+	# in _process below — one write updates every water chunk.
 	var water_mat: ShaderMaterial = $ChunkContainer.water_material as ShaderMaterial
 	water_mat.set_shader_parameter("DisplacementMap", _displacement_vp.get_texture())
 	water_mat.set_shader_parameter("WakeTrailMap", _wake_subviewport.get_texture())
@@ -102,6 +113,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_tick_run_end_grace()
+
 	# WaterTrail node still tracks the ship so the TrailSprite overlay stays
 	# centered on the player. Trail rendering math itself is now pivot-based
 	# inside trails.gd and no longer depends on this position.
@@ -215,14 +228,25 @@ func _on_game_over() -> void:
 
 func _on_run_ended(stats: RunStats, victory: bool) -> void:
 	# Short grace so the death explosion + HP drain (or final-wave clear
-	# flourish) reads before the panel slides in.
-	await get_tree().create_timer(1.0).timeout
-	if victory:
+	# flourish) reads before the panel slides in. Phase 6 Step 34h: grace
+	# timer replaced with a Cooldown polled in _process.
+	_run_end_stats = stats
+	_run_end_victory = victory
+	_run_end_pending = true
+	_run_end_cooldown.start(1.0)
+
+
+func _tick_run_end_grace() -> void:
+	if not _run_end_pending or not _run_end_cooldown.is_ready():
+		return
+	_run_end_pending = false
+	if _run_end_victory:
 		if is_instance_valid(_victory_screen):
-			_victory_screen.show_results(stats, true)
+			_victory_screen.show_results(_run_end_stats, true)
 	else:
 		if is_instance_valid(_game_over_screen):
-			_game_over_screen.show_results(stats, false)
+			_game_over_screen.show_results(_run_end_stats, false)
+	_run_end_stats = null
 
 
 func _on_enemy_cannon_fired(pos: Vector2, dir: Vector2) -> void:

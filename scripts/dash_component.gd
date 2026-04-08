@@ -7,10 +7,19 @@ extends Node
 ## effect on/off.
 ##
 ## Phase 4 Step 25: extracted from ship.gd. GhostTrailComponent (A2) is
-## fused into this component per Appendix A. The freeze-frame and time-dip
-## timers stay as raw create_timer lambdas because Cooldown is wall-clock
-## while these need to be unscaled timers running while Engine.time_scale
-## is being manipulated — Phase 6 Step 34b/c documents this.
+## fused into this component per Appendix A.
+##
+## Phase 6 Step 34b/c documented exception: the freeze-frame and time-dip
+## timers stay as raw `get_tree().create_timer(seconds, true, false, true)`
+## lambdas (process_always=true, ignore_time_scale=true). The generic
+## `Cooldown` helper is wall-clock based too, BUT its natural consumption
+## pattern is polling in _process — and _physics_process / _process ticks
+## halt while `Engine.time_scale = 0`, so a polled Cooldown would never fire
+## during a freeze. SceneTreeTimer.timeout is an autoload-scope signal
+## dispatched by the SceneTree's always-loop; the connected lambda fires
+## regardless of this component's process_mode or pause state, so there is
+## no need to set PROCESS_MODE_ALWAYS here. The dash cooldown (34d) is a
+## normal gameplay cooldown and does use the Cooldown helper below.
 ##
 ## During dash, the ship body's MovementComponent is disabled via Ship root
 ## (Ship listens to dash_started/dash_ended) so this component is the sole
@@ -28,7 +37,7 @@ var _ghost_sources: Array[Sprite2D] = []
 var _ghost_container: Node2D = null
 var _ghost_additive_material: CanvasItemMaterial = null
 
-var _ready_to_dash: bool = true
+var _cooldown: Cooldown = Cooldown.new()
 var _is_active: bool = false
 var _remaining: float = 0.0
 var _next_ghost_in: float = 0.0
@@ -81,9 +90,8 @@ func is_active() -> bool:
 
 ## Returns true if the dash actually started.
 func try_start() -> bool:
-	if not _ready_to_dash or _is_active:
+	if not _cooldown.is_ready() or _is_active:
 		return false
-	_ready_to_dash = false
 	_is_active = true
 	_remaining = dash_stats.duration
 	# Apply initial impulse based on feel mode.
@@ -135,11 +143,10 @@ func try_start() -> bool:
 				if is_instance_valid(self):
 					Engine.time_scale = 1.0
 		)
-	get_tree().create_timer(dash_stats.cooldown).timeout.connect(
-		func() -> void:
-			if is_instance_valid(self):
-				_ready_to_dash = true
-	)
+	# Phase 6 Step 34d: gameplay cooldown uses the wall-clock Cooldown helper.
+	# `try_start()` polls `_cooldown.is_ready()` on the next input attempt —
+	# no per-frame poll needed.
+	_cooldown.start(dash_stats.cooldown)
 	set_physics_process(true)
 	set_process(true)
 	dash_started.emit()

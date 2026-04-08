@@ -12,6 +12,9 @@ const ExplosionScene: PackedScene = preload("res://scenes/explosion_effect.tscn"
 var _config: Dictionary = {}
 var _lifetime: float = DEFAULT_LIFETIME
 var _drift_velocity: Vector2 = Vector2.ZERO
+# Phase 6 Step 34i: auto-free is now a Cooldown polled in _process instead
+# of `await get_tree().create_timer().timeout` → queue_free.
+var _lifetime_cooldown: Cooldown = Cooldown.new()
 
 @onready var _model: SubViewport = $SubViewportContainer/ExplosionModel
 @onready var _vertical_emitter: GPUParticles3D = _model.get_node("VerticalEmitter")
@@ -32,12 +35,14 @@ func _ready() -> void:
 	_vertical_emitter.restart()
 	_horizontal_emitter.restart()
 
-	# Auto-free after particles finish
-	await get_tree().create_timer(_lifetime + 0.3).timeout
-	queue_free()
+	# Auto-free after particles finish — polled in _process.
+	_lifetime_cooldown.start(_lifetime + 0.3)
 
 
 func _process(delta: float) -> void:
+	if _lifetime_cooldown.is_ready() and _lifetime_cooldown.duration() > 0.0:
+		queue_free()
+		return
 	if _drift_velocity.length_squared() > 0.0:
 		global_position += _drift_velocity * delta
 
@@ -71,6 +76,7 @@ func _apply_config() -> void:
 
 	# --- Shader material (duplicated, applied as material_override on the emitter nodes
 	# so we never mutate the shared SphereMesh sub-resource) ---
+	# Phase 6 Step 34k audit: per-instance mutation, duplicated here.
 	var base_mat: ShaderMaterial = _vertical_emitter.draw_pass_1.surface_get_material(0)
 	var mat: ShaderMaterial = base_mat.duplicate() as ShaderMaterial
 	_vertical_emitter.material_override = mat

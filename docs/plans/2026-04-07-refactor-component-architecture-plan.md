@@ -1404,26 +1404,26 @@ launch, play one wave, die, respawn, verify.**
 
 **All 10 sites** (Research Delta #4). One commit per site:
 
-- [ ] **Step 34a** — [ship.gd:365](../../scripts/ship.gd#L365) respawn → Cooldown in HealthComponent.
-- [ ] **Step 34b** — [ship.gd:516](../../scripts/ship.gd#L516) freeze frame →
+- [x] **Step 34a** — [ship.gd:365](../../scripts/ship.gd#L365) respawn → Cooldown in HealthComponent.
+- [x] **Step 34b** — [ship.gd:516](../../scripts/ship.gd#L516) freeze frame →
   **NOT `Cooldown`** (Cooldown is wall-clock; freeze frame needs a scaled
   timer AND the whole point is `Engine.time_scale = 0`). Keep the existing
   `get_tree().create_timer(seconds, process_always=true, process_in_physics=false, ignore_time_scale=true)`
   or use a SceneTree timer with `ignore_time_scale=true`. Component
   `process_mode = PROCESS_MODE_ALWAYS` so the callback fires while paused/scaled.
-- [ ] **Step 34c** — [ship.gd:525](../../scripts/ship.gd#L525) time-dip →
+- [x] **Step 34c** — [ship.gd:525](../../scripts/ship.gd#L525) time-dip →
   same as 34b. Unscaled timer (wall clock) because `time_scale` is the thing
   being manipulated. The generic Cooldown helper is WRONG here — document
   in the DashComponent ADR (016) that time-scale-affecting timers use their
   own unscaled path.
-- [ ] **Step 34d** — [ship.gd:531](../../scripts/ship.gd#L531) dash cooldown → Cooldown in DashComponent (safe — pure gameplay cooldown).
-- [ ] **Step 34e** — `sea_mine.gd` site 1 → Cooldown.
-- [ ] **Step 34f** — `sea_mine.gd` site 2 → Cooldown.
-- [ ] **Step 34g** — `sea_mine.gd` site 3 → Cooldown.
-- [ ] **Step 34h** — [main.gd:204](../../scripts/main.gd#L204) game-over grace → Cooldown in StatsTracker or VictoryScreen controller.
-- [ ] **Step 34i** — `explosion_effect.gd` fade → Cooldown.
-- [ ] **Step 34j** — `explosion_test.gd` bake pacing → Cooldown (moves into addon at Phase 11).
-- [ ] **Step 34k (NEW)** — **`set_shader_parameter` audit.** Grep for
+- [x] **Step 34d** — [ship.gd:531](../../scripts/ship.gd#L531) dash cooldown → Cooldown in DashComponent (safe — pure gameplay cooldown).
+- [x] **Step 34e** — `sea_mine.gd` site 1 → Cooldown.
+- [x] **Step 34f** — `sea_mine.gd` site 2 → Cooldown.
+- [x] **Step 34g** — `sea_mine.gd` site 3 → Cooldown.
+- [x] **Step 34h** — [main.gd:204](../../scripts/main.gd#L204) game-over grace → Cooldown in StatsTracker or VictoryScreen controller.
+- [x] **Step 34i** — `explosion_effect.gd` fade → Cooldown.
+- [x] **Step 34j** — `explosion_test.gd` bake pacing → Cooldown (moves into addon at Phase 11).
+- [x] **Step 34k (NEW)** — **`set_shader_parameter` audit.** Grep for
   `set_shader_parameter` across all production scripts. Confirmed hits:
   [hp_display.gd](../../scripts/hp_display.gd),
   [main.gd](../../scripts/main.gd),

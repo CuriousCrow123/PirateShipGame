@@ -93,6 +93,9 @@ func spawn_bob(world_pos: Vector2, phase: float) -> void:
 func _create_stamp(world_pos: Vector2, scale_px: float) -> Sprite2D:
 	var stamp := Sprite2D.new()
 	stamp.texture = STAMP_TEXTURE
+	# Phase 6 Step 34k audit: per-instance mutation. BASE_MATERIAL is a shared
+	# .tres; duplicate so each stamp's per-frame shader_parameter writes stay
+	# on its own copy (see docs/decisions/shared-resource-mutation.md).
 	stamp.material = BASE_MATERIAL.duplicate()
 	stamp.position = world_pos
 	stamp.scale = Vector2(scale_px, scale_px)

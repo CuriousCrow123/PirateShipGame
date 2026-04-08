@@ -86,7 +86,13 @@ func _capture_all_variants() -> void:
 			if not var_data.is_empty():
 				type_variations.append(var_data)
 
-			await get_tree().create_timer(0.5).timeout
+			# Phase 6 Step 34j: pacing delay via Cooldown polled with a
+			# tiny per-frame await. Dev-only tool — this path moves into
+			# addons/pirate_dev_tools at Phase 11.
+			var pacing_cd: Cooldown = Cooldown.new()
+			pacing_cd.start(0.5)
+			while not pacing_cd.is_ready():
+				await get_tree().process_frame
 
 		# Build this type's atlas immediately so we release frame memory before the next type
 		_build_atlas_for_type(base_name, type_variations, cone_dir, effect_scale)

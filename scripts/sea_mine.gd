@@ -31,6 +31,14 @@ var _bob_phase: float = 0.0
 var _base_y: float = 0.0
 var _blast_shape: CircleShape2D = null
 var _mine_body: Node3D = null
+# Phase 6 Step 34e/f/g: arm / fuse / chain-stagger timers replaced with the
+# wall-clock Cooldown helper, polled from _physics_process (so the mine
+# continues to arm and fuse while off-screen — _process is gated by the
+# screen notifier).
+var _arm_cooldown: Cooldown = Cooldown.new()
+var _fuse_cooldown: Cooldown = Cooldown.new()
+var _chain_cooldown: Cooldown = Cooldown.new()
+var _chain_pending: bool = false
 
 @onready var _viewport_container: SubViewportContainer = $MineSubViewportContainer
 @onready var _sub_viewport: SubViewport = $MineSubViewportContainer/SeaMineModel
@@ -48,7 +56,10 @@ func _ready() -> void:
 
 	add_to_group("sea_mines")
 
-	# Duplicate shader materials for per-instance uniforms
+	# Duplicate shader materials for per-instance uniforms.
+	# Phase 6 Step 34k audit: per-instance mutation. GlowIntensity / BobOffset /
+	# BobPhase writes below and in _spawn_explosion_ripple must not leak to
+	# other mines, so each mine duplicates here.
 	_viewport_container.material = _viewport_container.material.duplicate()
 	_ripple_sprite.material = _ripple_sprite.material.duplicate()
 
@@ -71,16 +82,10 @@ func _ready() -> void:
 	# Randomize bob phase so mines don't sync
 	_bob_phase = randf() * TAU
 
-	# Start arming timer
-	await get_tree().create_timer(arm_time).timeout
-	if _is_detonated or not is_inside_tree():
-		return
-	_state = State.IDLE
-	# Check for bodies already overlapping during ARMING
-	for body: Node2D in get_overlapping_bodies():
-		_on_body_entered(body)
-		if _state != State.IDLE:
-			break
+	# Start arming cooldown — polled in _physics_process so arming progresses
+	# even while the mine is off-screen (screen notifier gates _process only).
+	_arm_cooldown.start(arm_time)
+	set_physics_process(true)
 
 
 func setup() -> void:
@@ -93,6 +98,36 @@ func is_detonated() -> bool:
 
 func get_bob_phase() -> float:
 	return sin(_bob_phase)
+
+
+func _physics_process(_delta: float) -> void:
+	# Drives arm / fuse / chain-stagger cooldown polling. Runs regardless of
+	# screen visibility (unlike _process which is gated by the screen notifier).
+	if _is_detonated:
+		set_physics_process(false)
+		return
+	if _chain_pending and _chain_cooldown.is_ready():
+		_chain_pending = false
+		_detonate()
+		return
+	match _state:
+		State.ARMING:
+			if _arm_cooldown.is_ready():
+				_state = State.IDLE
+				# Check for bodies already overlapping during ARMING.
+				for body: Node2D in get_overlapping_bodies():
+					_on_body_entered(body)
+					if _state != State.IDLE:
+						return
+				# Still idle and no fuse pending → nothing to poll.
+				if not _chain_pending:
+					set_physics_process(false)
+		State.FUSE_ACTIVE:
+			if _fuse_cooldown.is_ready():
+				_detonate()
+		_:
+			if not _chain_pending:
+				set_physics_process(false)
 
 
 func _process(delta: float) -> void:
@@ -142,6 +177,17 @@ func trigger_detonation() -> void:
 	_detonate()
 
 
+func schedule_chain_detonation(delay: float) -> void:
+	## Phase 6 Step 34g: staggered chain detonation. A neighboring mine calls
+	## this to queue a delayed detonation on this mine. Polled by
+	## _physics_process; idempotent if already pending or detonated.
+	if _is_detonated or is_queued_for_deletion() or _chain_pending:
+		return
+	_chain_pending = true
+	_chain_cooldown.start(delay)
+	set_physics_process(true)
+
+
 func _start_fuse() -> void:
 	_state = State.FUSE_ACTIVE
 	# Escalating red glow pulse
@@ -165,10 +211,10 @@ func _start_fuse() -> void:
 			m.set_shader_parameter("GlowIntensity", 1.0)
 	)
 
-	await get_tree().create_timer(fuse_time).timeout
-	if _is_detonated or not is_inside_tree():
-		return
-	_detonate()
+	# Phase 6 Step 34f: fuse timer via Cooldown helper, polled in
+	# _physics_process so the fuse fires even while off-screen.
+	_fuse_cooldown.start(fuse_time)
+	set_physics_process(true)
 
 
 func _detonate() -> void:
@@ -229,13 +275,10 @@ func _trigger_chain_reactions() -> void:
 		if mine == null or mine == self or mine._is_detonated:
 			continue
 		if global_position.distance_squared_to(mine.global_position) <= blast_r_sq:
-			# Stagger chain detonation
-			var chain_mine: SeaMine = mine
-			get_tree().create_timer(0.15).timeout.connect(
-				func() -> void:
-					if is_instance_valid(chain_mine) and not chain_mine.is_queued_for_deletion():
-						chain_mine.trigger_detonation()
-			)
+			# Stagger chain detonation via Cooldown polled on the target mine
+			# itself (Phase 6 Step 34g). Each mine owns its own _chain_cooldown;
+			# _physics_process handles the trigger.
+			mine.schedule_chain_detonation(0.15)
 
 
 func _spawn_explosion_ripple() -> void:

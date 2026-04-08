@@ -52,6 +52,7 @@ func _ready() -> void:
 	assert(_camera != null, "DashFireEffect: Camera3D is missing")
 	# Duplicate the shared shader material so per-burst FlameBrightness writes
 	# don't leak into the test scene's live-tuning material.
+	# Phase 6 Step 34k audit: per-instance mutation, duplicated here.
 	var base_mat: ShaderMaterial = load(_MATERIAL_PATH) as ShaderMaterial
 	assert(base_mat != null, "DashFireEffect: failed to load shared ShaderMaterial")
 	_material = base_mat.duplicate() as ShaderMaterial
