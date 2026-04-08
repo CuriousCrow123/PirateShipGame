@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/hit_feedback_component.gd" id="11_hit_feedback"]
 [ext_resource type="Script" path="res://scripts/dash_component.gd" id="12_dash"]
 [ext_resource type="Script" path="res://scripts/broadside_component.gd" id="13_broadside"]
+[ext_resource type="Script" path="res://scripts/mine_drop_component.gd" id="14_mine_drop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -55,6 +56,9 @@ script = ExtResource("12_dash")
 
 [node name="Broadside" type="Node" parent="."]
 script = ExtResource("13_broadside")
+
+[node name="MineDrop" type="Node" parent="."]
+script = ExtResource("14_mine_drop")
 
 [node name="HullSprite" type="Sprite2D" parent="." unique_id=1672109739]
 scale = Vector2(0.5, 0.5)

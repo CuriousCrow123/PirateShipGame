@@ -24,7 +24,6 @@ signal invincibility_changed(active: bool)
 @export var dash_stats: DashStats
 @export var stats: ShipStats
 
-var _mine_cooldown_left: float = 0.0
 var _is_dead: bool = false
 var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
@@ -41,6 +40,7 @@ var _spawn_rotation: float = 0.0
 @onready var _hit_feedback: HitFeedbackComponent = $HitFeedback
 @onready var _dash: DashComponent = $Dash
 @onready var _broadside: BroadsideComponent = $Broadside
+@onready var _mine_drop: MineDropComponent = $MineDrop
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -58,6 +58,7 @@ func _ready() -> void:
 	assert(_hit_feedback != null, "Ship: HitFeedback node is missing")
 	assert(_dash != null, "Ship: Dash node is missing")
 	assert(_broadside != null, "Ship: Broadside node is missing")
+	assert(_mine_drop != null, "Ship: MineDrop node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -83,6 +84,8 @@ func _ready() -> void:
 	_dash.dash_ended.connect(_on_dash_ended)
 	_broadside.setup(_cannon_slots, stats)
 	_broadside.cannon_fired.connect(_on_broadside_cannon_fired)
+	_mine_drop.setup(self, stats)
+	_mine_drop.mine_dropped.connect(_on_mine_drop_dropped)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -110,13 +113,6 @@ func _on_dash_ended() -> void:
 	_movement.set_enabled(true)
 
 
-func _physics_process(delta: float) -> void:
-	if _is_dead:
-		return
-	if _mine_cooldown_left > 0.0:
-		_mine_cooldown_left -= delta
-
-
 func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
 	# Mutual ram damage; iframes guard multi-hits. Damage is mutual only when
 	# the player is NOT invincible — an invincible player just bounces off.
@@ -134,17 +130,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		_broadside.fire_port()
 	elif _player_input.is_fire_starboard_just_pressed(event):
 		_broadside.fire_starboard()
-	elif _player_input.is_drop_mine_just_pressed(event) and _mine_cooldown_left <= 0.0:
-		_drop_mine()
+	elif _player_input.is_drop_mine_just_pressed(event):
+		_mine_drop.try_drop()
 	elif _player_input.is_dash_just_pressed(event):
 		_dash.try_start()
 
 
 ## 0.0 = just dropped (fully on cooldown), 1.0 = ready to drop again.
+## Forwarded to MineDropComponent so existing HUD callers (set up via
+## _mine_cooldown_display.setup(_ship)) keep working.
 func get_mine_cooldown_progress() -> float:
-	if stats.mine_cooldown <= 0.0:
-		return 1.0
-	return clampf(1.0 - (_mine_cooldown_left / stats.mine_cooldown), 0.0, 1.0)
+	return _mine_drop.get_cooldown_progress()
 
 
 ## Legacy public damage entry. SeaMine still routes through here via a
@@ -232,10 +228,5 @@ func _on_broadside_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	cannon_fired.emit(pos, dir)
 
 
-func _drop_mine() -> void:
-	# Drop behind the stern so the mine lands clear of the ship's hull and
-	# reads as "kicked off the back". transform.y is the ship's forward axis
-	# (see the wake ring offset in main.gd which uses the same convention).
-	var drop_pos: Vector2 = global_position - transform.y * 24.0
-	mine_dropped.emit(drop_pos)
-	_mine_cooldown_left = stats.mine_cooldown
+func _on_mine_drop_dropped(pos: Vector2) -> void:
+	mine_dropped.emit(pos)

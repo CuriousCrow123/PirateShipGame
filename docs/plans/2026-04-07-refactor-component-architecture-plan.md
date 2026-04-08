@@ -1161,7 +1161,7 @@ launch, play one wave, die, respawn, verify.**
 - [x] **Step 27** — `BroadsideComponent` — thin orchestrator triggering
   port/starboard cannon groups. Replaces
   [ship.gd:435-453 `_fire_broadside`](../../scripts/ship.gd#L435-L453).
-- [ ] **Step 28** — `MineDropComponent` (emits `mine_cooldown_changed` for
+- [x] **Step 28** — `MineDropComponent` (emits `mine_cooldown_changed` for
   HUD; public `get_cooldown_progress()`).
 - [ ] **Step 29 (FORMERLY GhostTrailComponent — REMOVED)** — Folded into
   DashComponent in Step 25 per Appendix A2. Skip.
