@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b7t2vukrb41o6"]
 
-[ext_resource type="Script" uid="uid://hdtvbc2xtsnv" path="res://scripts/explosion_atlas_player.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://hdtvbc2xtsnv" path="res://features/vfx/explosion_atlas_player.gd" id="1_script"]
 
 [node name="ExplosionAtlasPlayer" type="Node2D" unique_id=365282784]
 script = ExtResource("1_script")

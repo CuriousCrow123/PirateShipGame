@@ -6,7 +6,7 @@ extends Node2D
 
 const META_PATH: String = "res://textures/explosions/atlas_meta.json"
 const ATLAS_DIR: String = "res://textures/explosions"
-const CONFIG_PATH: String = "res://resources/explosion_stats.tres"
+const CONFIG_PATH: String = "res://features/vfx/explosion_stats.tres"
 
 ## Draw order: above ships (z=2) and cannonballs (z=3).
 const EXPLOSION_Z_INDEX: int = 10

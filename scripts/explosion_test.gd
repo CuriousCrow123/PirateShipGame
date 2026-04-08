@@ -11,7 +11,7 @@ const ALPHA_CUTOFF: int = 10  # 0-255; strips faint glow bleed
 const VARIATIONS: int = 10
 const OUTPUT_DIR: String = "res://textures/explosions"
 
-const CONFIG_PATH: String = "res://resources/explosion_stats.tres"
+const CONFIG_PATH: String = "res://features/vfx/explosion_stats.tres"
 
 ## [name, cone_dir, effect_scale]
 ## cone_spread / vert_velocity / etc come from explosion_stats.tres so the

@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://crkk3p72st73n" path="res://features/ship/components/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://features/ship/config/default_ship_config.tres" id="4_config"]
 [ext_resource type="Resource" path="res://features/ship/components/dash_stats.tres" id="5_dash_config"]
-[ext_resource type="PackedScene" path="res://scenes/dash_fire_effect.tscn" id="6_fire_effect"]
+[ext_resource type="PackedScene" path="res://features/vfx/dash_fire_effect.tscn" id="6_fire_effect"]
 [ext_resource type="Script" path="res://features/ship/components/player_input.gd" id="7_player_input"]
 [ext_resource type="Script" path="res://features/ship/components/health_component.gd" id="8_health"]
 [ext_resource type="Script" path="res://features/ship/components/movement_component.gd" id="9_movement"]

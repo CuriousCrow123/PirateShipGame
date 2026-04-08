@@ -7,7 +7,7 @@ extends Node2D
 ## leave the scene default in place. See _apply_config() for the full list.
 
 const DEFAULT_LIFETIME: float = 1.2
-const ExplosionScene: PackedScene = preload("res://scenes/explosion_effect.tscn")
+const ExplosionScene: PackedScene = preload("res://features/vfx/explosion_effect.tscn")
 
 var _config: Dictionary = {}
 var _lifetime: float = DEFAULT_LIFETIME

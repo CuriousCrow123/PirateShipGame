@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cx4ft856m1ov4"]
 
-[ext_resource type="Script" uid="uid://ke1s8xkfw2q5" path="res://scripts/explosion_effect.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://scenes/explosion_model.tscn" id="2_model"]
+[ext_resource type="Script" uid="uid://ke1s8xkfw2q5" path="res://features/vfx/explosion_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://features/vfx/explosion_model.tscn" id="2_model"]
 
 [node name="ExplosionEffect" type="Node2D" unique_id=1157788774]
 script = ExtResource("1_script")
