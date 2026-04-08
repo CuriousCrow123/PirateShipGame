@@ -11,7 +11,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # Use a workflow-specific group name so our jobs don't collide
+  # with GitHub's own "pages" concurrency slot, which was cancelling
+  # the tail end of our deploy even after the Pages publish landed.
+  group: deploy-pages-workflow
   cancel-in-progress: true
 
 jobs:
