@@ -1,17 +1,25 @@
-# Godot 4+ specific ignores
+# Godot 4
 .godot/
-/android/
+/android/build/
 /ios/
 /export/
+/builds/
+/build/
 *.translation
+export_credentials.cfg
 
-# GUT test output
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Project-specific
 test/results/
 
-# macOS
-.DS_Store
-
-# Claude Code
+# Claude Code / dev agents
 .claude/
 .mcp.json
-.worktrees
+.worktrees/
