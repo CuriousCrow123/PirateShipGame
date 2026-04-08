@@ -1,6 +1,6 @@
-class_name ExplosionConfig
+class_name ExplosionStats
 extends Resource
-## Runtime-editable explosion parameters, saved as res://resources/explosion_config.tres.
+## Runtime-editable explosion parameters, saved as res://resources/explosion_stats.tres.
 ## Open the .tres in the Godot editor while the game runs — changes propagate to the
 ## running game (shared Resource cache) AND persist to disk on save.
 ## Changes apply to NEW spawns — in-flight explosions keep the values they started with.

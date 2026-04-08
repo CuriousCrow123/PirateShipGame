@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ExplosionConfig" format=3 uid="uid://ciefhv0irryah"]
+[gd_resource type="Resource" script_class="ExplosionStats" format=3 uid="uid://ciefhv0irryah"]
 
-[ext_resource type="Script" uid="uid://dejiopces1lrx" path="res://scripts/explosion_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dejiopces1lrx" path="res://scripts/explosion_stats.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")

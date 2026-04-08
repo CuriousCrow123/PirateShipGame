@@ -6,7 +6,7 @@ extends Node2D
 
 const META_PATH: String = "res://textures/explosions/atlas_meta.json"
 const ATLAS_DIR: String = "res://textures/explosions"
-const CONFIG_PATH: String = "res://resources/explosion_config.tres"
+const CONFIG_PATH: String = "res://resources/explosion_stats.tres"
 
 ## Draw order: above ships (z=2) and cannonballs (z=3).
 const EXPLOSION_Z_INDEX: int = 10
@@ -116,10 +116,10 @@ static func _create_3d(
 	direction: Vector2,
 	drift_velocity: Vector2,
 ) -> Node2D:
-	# Load the shared ExplosionConfig Resource. Because Godot caches Resources by path,
+	# Load the shared ExplosionStats Resource. Because Godot caches Resources by path,
 	# editing the .tres in the editor Inspector while the game runs updates the same
 	# instance the game holds — so new spawns pick up the edits immediately.
-	var config_res: ExplosionConfig = load(CONFIG_PATH) as ExplosionConfig
+	var config_res: ExplosionStats = load(CONFIG_PATH) as ExplosionStats
 	var config: Dictionary = config_res.get_params(type_name)
 	# Omnidirectional types were originally passed Vector2.UP as a placeholder.
 	config["cone_dir"] = direction if direction.length_squared() > 0.0 else Vector2.UP

@@ -11,10 +11,10 @@ const ALPHA_CUTOFF: int = 10  # 0-255; strips faint glow bleed
 const VARIATIONS: int = 10
 const OUTPUT_DIR: String = "res://textures/explosions"
 
-const CONFIG_PATH: String = "res://resources/explosion_config.tres"
+const CONFIG_PATH: String = "res://resources/explosion_stats.tres"
 
 ## [name, cone_dir, effect_scale]
-## cone_spread / vert_velocity / etc come from explosion_config.tres so the
+## cone_spread / vert_velocity / etc come from explosion_stats.tres so the
 ## baked atlases reflect the same tuning as live 3D mode. cone_dir and
 ## effect_scale are bake-time concerns: cone_dir aligns directional types
 ## to the +x axis so runtime can rotate the sprite, and effect_scale is
@@ -38,8 +38,8 @@ func _ready() -> void:
 
 
 func _capture_all_variants() -> void:
-	var config_res: ExplosionConfig = load(CONFIG_PATH) as ExplosionConfig
-	assert(config_res != null, "ExplosionConfig missing at " + CONFIG_PATH)
+	var config_res: ExplosionStats = load(CONFIG_PATH) as ExplosionStats
+	assert(config_res != null, "ExplosionStats missing at " + CONFIG_PATH)
 
 	for variant: Array in VARIANTS:
 		var base_name: String = variant[0] as String

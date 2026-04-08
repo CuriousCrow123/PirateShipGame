@@ -744,8 +744,13 @@ Phase 6 must address all 10. Unit-tested.
   dash_fire_effect.gd both updated. Cosmetic ExtResource id label
   `id="5_dash_config"` left as-is in ship.tscn (it is just a string id,
   not a reference). MCP run-test cycle clean.)*
-- [ ] **Step 16** — Rename `ExplosionConfig` → `ExplosionStats` (same
-  procedure).
+- [x] **Step 16** — Rename `ExplosionConfig` → `ExplosionStats` (same
+  procedure). *(Done 2026-04-07: `git mv` of scripts/explosion_config.gd
+  + .uid sidecar + resources/explosion_config.tres to the `_stats` names;
+  class_name and field references updated in scripts/explosion_stats.gd,
+  scripts/explosion_test.gd (the active atlas baker), scripts/
+  explosion_sprite.gd, and resources/explosion_stats.tres. MCP run-test
+  cycle clean. GUT 7/7 still passing.)*
 
 #### Phase 3 — Input + camera promotion
 
