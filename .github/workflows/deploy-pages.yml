@@ -29,6 +29,21 @@ jobs:
           version: 4.6.1
           use-dotnet: false
 
+      - name: Install Godot export templates
+        run: |
+          # chickensoft-games/setup-godot@v2 installs only the editor,
+          # not the export templates. Download and place them at the
+          # path Godot's CLI looks for: ~/.local/share/godot/export_templates/<version>/
+          TEMPLATE_URL="https://github.com/godotengine/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_export_templates.tpz"
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.6.1.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          curl -fsSL -o /tmp/templates.tpz "$TEMPLATE_URL"
+          # .tpz is a zip; extract and move contents of the "templates/" root
+          # into the version directory.
+          unzip -q /tmp/templates.tpz -d /tmp/templates_extracted
+          mv /tmp/templates_extracted/templates/* "$TEMPLATE_DIR/"
+          ls "$TEMPLATE_DIR" | head
+
       - name: Cache .godot import folder
         uses: actions/cache@v4
         with:
