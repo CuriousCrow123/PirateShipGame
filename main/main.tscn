@@ -2,7 +2,7 @@
 
 [ext_resource type="Material" uid="uid://c7pgx6whoa71c" path="res://shaders/water_surface_material.tres" id="1_water_mat"]
 [ext_resource type="Texture2D" uid="uid://cc5dhih7uiadk" path="res://textures/WaterTilesOffsetWithBlur.png" id="2_tiles_tex"]
-[ext_resource type="Script" uid="uid://dpyk84570f83m" path="res://scripts/main.gd" id="3_main"]
+[ext_resource type="Script" uid="uid://dpyk84570f83m" path="res://main/main.gd" id="3_main"]
 [ext_resource type="Material" uid="uid://cv70dajtpq3hy" path="res://shaders/ripple_material.tres" id="5_ripple_mat"]
 [ext_resource type="Script" uid="uid://chrbausaxfaw5" path="res://features/water/trails.gd" id="6_trails"]
 [ext_resource type="Texture2D" uid="uid://cj35g5w3umv1r" path="res://textures/WaterTrailGradient.png" id="7_trail_grad"]
