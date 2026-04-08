@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c6ilqsildwhhw"
-path.s3tc="res://.godot/imported/CircleBlur64x64.png-4b5fb5d15bc31780e032c328a21e8e34.s3tc.ctex"
+path.s3tc="res://.godot/imported/CircleBlur64x64.png-d453ae0fbb183fce461626770e514d6f.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://textures/CircleBlur64x64.png"
-dest_files=["res://.godot/imported/CircleBlur64x64.png-4b5fb5d15bc31780e032c328a21e8e34.s3tc.ctex"]
+source_file="res://features/water/textures/CircleBlur64x64.png"
+dest_files=["res://.godot/imported/CircleBlur64x64.png-d453ae0fbb183fce461626770e514d6f.s3tc.ctex"]
 
 [params]
 

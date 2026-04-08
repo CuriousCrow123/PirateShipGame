@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://v1rd2yapl54e"
-path="res://.godot/imported/muzzle_flash_atlas.png-deb15165dfe8a9af30ac343d3a314240.ctex"
+path="res://.godot/imported/muzzle_flash_atlas.png-f3204178e988bfddce24e0e4415530aa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/explosions/muzzle_flash_atlas.png"
-dest_files=["res://.godot/imported/muzzle_flash_atlas.png-deb15165dfe8a9af30ac343d3a314240.ctex"]
+source_file="res://features/vfx/textures/explosions/muzzle_flash_atlas.png"
+dest_files=["res://.godot/imported/muzzle_flash_atlas.png-f3204178e988bfddce24e0e4415530aa.ctex"]
 
 [params]
 

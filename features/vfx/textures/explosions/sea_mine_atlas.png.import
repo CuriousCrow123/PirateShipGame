@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cg1iqb6e2s6ws"
-path="res://.godot/imported/sea_mine_atlas.png-2c10ec90afae7c66fc0b4f3d36c0a7cd.ctex"
+path="res://.godot/imported/sea_mine_atlas.png-d1c4ef341cead3eab9ab8efbb2230f59.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/explosions/sea_mine_atlas.png"
-dest_files=["res://.godot/imported/sea_mine_atlas.png-2c10ec90afae7c66fc0b4f3d36c0a7cd.ctex"]
+source_file="res://features/vfx/textures/explosions/sea_mine_atlas.png"
+dest_files=["res://.godot/imported/sea_mine_atlas.png-d1c4ef341cead3eab9ab8efbb2230f59.ctex"]
 
 [params]
 

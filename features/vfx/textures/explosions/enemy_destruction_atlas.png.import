@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5k2iyd56e27e"
-path="res://.godot/imported/enemy_destruction_atlas.png-b8db39da7bbaebc304bf0757529e41cc.ctex"
+path="res://.godot/imported/enemy_destruction_atlas.png-07cce4deac8353c175ea0a9d39f82e26.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/explosions/enemy_destruction_atlas.png"
-dest_files=["res://.godot/imported/enemy_destruction_atlas.png-b8db39da7bbaebc304bf0757529e41cc.ctex"]
+source_file="res://features/vfx/textures/explosions/enemy_destruction_atlas.png"
+dest_files=["res://.godot/imported/enemy_destruction_atlas.png-07cce4deac8353c175ea0a9d39f82e26.ctex"]
 
 [params]
 

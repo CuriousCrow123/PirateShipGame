@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cj35g5w3umv1r"
-path="res://.godot/imported/WaterTrailGradient.png-ea4c924f710228038d8f6e3fdafd0994.ctex"
+path="res://.godot/imported/WaterTrailGradient.png-92063d91819881d557eea40cdd4e7210.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/WaterTrailGradient.png"
-dest_files=["res://.godot/imported/WaterTrailGradient.png-ea4c924f710228038d8f6e3fdafd0994.ctex"]
+source_file="res://features/water/textures/WaterTrailGradient.png"
+dest_files=["res://.godot/imported/WaterTrailGradient.png-92063d91819881d557eea40cdd4e7210.ctex"]
 
 [params]
 

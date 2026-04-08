@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cfyh5o1v8ew6a"
-path="res://.godot/imported/ships_spritesheet.png-f5dae664e8746937c45960f73cf80d0e.ctex"
+path="res://.godot/imported/ships_spritesheet.png-26d19e6f8433cb5ceb6fa7206dac4c6f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/ships_spritesheet.png"
-dest_files=["res://.godot/imported/ships_spritesheet.png-f5dae664e8746937c45960f73cf80d0e.ctex"]
+source_file="res://assets/textures/ships_spritesheet.png"
+dest_files=["res://.godot/imported/ships_spritesheet.png-26d19e6f8433cb5ceb6fa7206dac4c6f.ctex"]
 
 [params]
 

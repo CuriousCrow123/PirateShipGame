@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d01atv4hn7x24"
-path="res://.godot/imported/hole_noise.png-c70482508866a28fb58de19d0d4e95ee.ctex"
+path="res://.godot/imported/hole_noise.png-001064c0ca10d8cc982b004acf397ac9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/dash/hole_noise.png"
-dest_files=["res://.godot/imported/hole_noise.png-c70482508866a28fb58de19d0d4e95ee.ctex"]
+source_file="res://features/vfx/textures/dash/hole_noise.png"
+dest_files=["res://.godot/imported/hole_noise.png-001064c0ca10d8cc982b004acf397ac9.ctex"]
 
 [params]
 
