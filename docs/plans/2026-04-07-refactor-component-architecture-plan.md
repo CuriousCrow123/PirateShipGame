@@ -157,6 +157,64 @@ must respect or address:
     interpolation` \u2014 dissolves in Phase 3 Step 19+20 (camera promoted
     out of Ship).
 
+### Phase 2 execution retro (added 2026-04-07 after Steps 11\u201316 landed)
+
+Carry-over items discovered while executing Phase 2 that future steps
+must respect or address:
+
+- **Pre-existing duplicate `class_name RunStats`** (now resolved): Phase 1
+  introduced `systems/run_stats.gd` (Resource) without removing the
+  existing `scripts/run_stats.gd` (RefCounted, with the
+  `start_wave/end_wave/register_*` method bundle). Two `class_name
+  RunStats` declarations coexisted; Godot silently picked one each
+  session. Merged in commit
+  `fix(stats): merge duplicate RunStats class into Resource at systems/`
+  before Step 11. Field renames `enemies_destroyed` \u2192 `kills`,
+  `wave_times_sec` \u2192 `wave_times` (PackedFloat32Array per the plan).
+  `scripts/game_over_screen.gd` migrated for the renames.
+- **Class index cache hand-edits required**: Godot 4.6.1's editor only
+  refreshes `.godot/global_script_class_cache.cfg` when scripts are
+  opened in the editor; the MCP `run_project` cycle alone does not
+  trigger a rescan. Phase 2 added `ShipStats`, `WeaponConfig`,
+  `EnemyArchetype`, `WaveConfig`, `WaveSet`, and renamed `DashConfig`
+  / `ExplosionConfig` \u2014 every one of those needed a manual edit to
+  the cache file before the project would parse. **Future class
+  additions during this refactor need the same treatment** until the
+  user opens the editor.
+- **WeaponConfig and EnemyArchetype read scopes are intentionally
+  narrow**: Phase 2's "no behavior change" rule means I migrated only
+  the reads where the existing code already had a clear consumer.
+  - `sea_mine.gd` reads `weapon.damage` and `weapon.explosion_kind`
+    (with explicit fallback constants).
+  - `cannon.gd` holds the `weapon` slot but does not read it yet \u2014
+    cannonball spawn parameters still live on `cannonball.gd`. **Phase
+    4 Step 26 (Cannon component extraction) MUST migrate cannonball.gd's
+    @exports into cannon.gd's `weapon` slot** so the WeaponConfig
+    actually drives projectile speed/lifetime/explosion kind.
+  - `enemy_ship.gd` reads `archetype.hp` and `archetype.chase_speed`
+    only. **Phase 4 / Phase 8 must wire the rest** (`circle_speed`,
+    `turn_speed`, `circle_radius`, `broadside_*`, `weapon`,
+    `sprite_region`, `score`, `ai_kind`).
+- **Boss wave placeholders**: `wave_11.tres` and `wave_12.tres` are
+  parity-clamped to wave 10 values (the formula caps at wave 6 for
+  speed and wave 4 for cooldown). **Phase 3.5 ships the Victory
+  screen** that triggers when the last WaveSet entry clears, so the
+  designer can then hand-tune 11/12 to be visibly distinct boss
+  encounters.
+- **WaveSet falls back to clamp-on-overflow** in `get_wave()` until
+  Phase 3.5 ships the Victory transition. After clearing wave 12, play
+  currently re-uses wave 12's tuning indefinitely. Phase 3.5 Step 20a
+  must replace this fallback with a `run_ended(stats, victory=true)`
+  emit before changing the clamping behavior.
+- **Pre-existing warnings cleared**: the 4 stale-UID and Camera2D
+  warnings that haunted Phase 0/1 smoke tests have stopped appearing.
+  The editor re-imported `scenes/ship.tscn` and the dash flame .tres
+  files during the rename steps (15/16), which cleaned up the orphan
+  UIDs as a side effect.
+- **GameState constants un-stubbed in Step 11** as required by the
+  Phase 0/1 retro. The corresponding entry in the Phase 0/1 retro
+  above is now stale historical context, not a TODO.
+
 ## Overview
 
 A big-bang refactor of PirateShipGame from a rapidly vibecoded codebase
@@ -696,6 +754,23 @@ Phase 6 must address all 10. Unit-tested.
   `ShipConfig` stays as-is for hull/sail variant data. Decide: do they merge
   later? → **No.** `ShipConfig` = visual variant (sprites). `ShipStats` =
   motion/combat. Two Resources, two concerns.
+  *(Done 2026-04-07: [scripts/ship_stats.gd](../../scripts/ship_stats.gd)
+  + [resources/default_ship_stats.tres](../../resources/default_ship_stats.tres)
+  hold the EFFECTIVE values that main.tscn previously achieved via
+  per-instance overrides (`thrust = 120`, `linear_drag = 0.99`); the
+  other 7 use the prior ship.gd defaults. All 27 internal references
+  in ship.gd rewritten to `stats.X` via Python word-boundary regex
+  (with negative lookahead so `mine_cooldown` does not catch
+  `_mine_cooldown_left`). main.tscn drops the per-instance overrides
+  and now sets `stats = ExtResource(default_ship_stats.tres)`.
+  **Phase 0/1 retro carry-over resolved**: GameState now loads the
+  same default_ship_stats.tres path inside its `_ready()` and reads
+  `max_health` / `max_lives` from it instead of the temporary
+  hard-coded constants. The Resource is shared in-memory across both
+  loaders, so a designer edit propagates to both Ship and GameState.
+  Sole external caller `scripts/lives_display.gd` migrated from
+  `ship.max_lives` to `ship.stats.max_lives` (HP and mine cooldown
+  HUDs already used signals/methods).)*
 - [x] **Step 12** — Create `WeaponConfig.tres` read by `cannon.gd` /
   `sea_mine.gd` (damage, speed, lifetime, explosion_kind, fire_sound).
   *(Done 2026-04-07: WeaponConfig at [scripts/weapon_config.gd](../../scripts/weapon_config.gd)
@@ -733,6 +808,26 @@ Phase 6 must address all 10. Unit-tested.
   wave cadence and difficulty curve match the pre-refactor procedural values
   within ±10% on spawn interval and enemy count** (compute expected values
   from the formula at the same line).
+  *(Done 2026-04-07: [scripts/wave_config.gd](../../scripts/wave_config.gd)
+  (per-wave: `enemies_to_spawn`, `max_concurrent`, `spawn_interval`,
+  `speed_mult`, `cooldown_mult`, `intermission_duration`),
+  [scripts/wave_set.gd](../../scripts/wave_set.gd) (Array[WaveConfig]
+  with `get_wave()` that clamps past the end and `is_final_wave()`
+  for the future Phase 3.5 victory check), 12 wave .tres files at
+  [resources/waves/](../../resources/waves/), and the aggregated
+  [resources/waves/default_campaign.tres](../../resources/waves/default_campaign.tres).
+  Wave values were generated **programmatically** from the procedural
+  formula so cadence is identical (not just \u00b110%): wave 1 = 3 enemies
+  / 3 concurrent / 1.0\u00d7 speed / 1.0\u00d7 cd / 2.0s spawn interval; the
+  speed cap (1.6\u00d7) hits at wave 6 and the cooldown floor (0.6\u00d7) at
+  wave 4 \u2014 same as before. main.gd drops all 13 wave constants except
+  `WAVE_TOAST_LEAD_TIME` (UI lead, not difficulty). `_intermission_timer`
+  is now seeded from the active WaveConfig in `_ready()` and reset
+  between waves so per-wave breathers are designer-tunable. main.tscn
+  binds `wave_set = ExtResource(default_campaign.tres)`. **Boss waves
+  11/12** are still parity placeholders \u2014 currently identical to wave 10
+  per the formula clamp; designer can hand-tune them in the .tres files
+  whenever they want without touching code.)*
 - [x] **Step 15** — Rename `DashConfig` → `DashStats` (plain text replace +
   run game + fix breaks). Update `resources/dash_config.tres` →
   `resources/dash_stats.tres` and `scripts/dash_config.gd` →
