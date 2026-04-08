@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/minimap_display.gd" id="1_script"]
+[ext_resource type="Script" path="res://features/hud/minimap_display.gd" id="1_script"]
 
 [node name="Minimap" type="CanvasLayer" unique_id=1497604321]
 layer = 10

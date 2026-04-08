@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bjiwoui3t2ow5"]
 
-[ext_resource type="Script" uid="uid://gdf0m6s11sie" path="res://scripts/hp_display.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://gdf0m6s11sie" path="res://features/hud/hp_display.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://caajgisses0ae" path="res://resources/fonts/kims_bit_hand.ttf" id="2_font"]
 [ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="3_frame_style"]
 

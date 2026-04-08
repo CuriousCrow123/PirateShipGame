@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/controls_overlay.gd" id="1_script"]
+[ext_resource type="Script" path="res://features/hud/controls_overlay.gd" id="1_script"]
 [ext_resource type="ShaderMaterial" path="res://shaders/chalkboard_material.tres" id="2_material"]
 [ext_resource type="FontFile" path="res://resources/fonts/kims_bit_hand.ttf" id="3_font"]
 [ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="4_frame_style"]
