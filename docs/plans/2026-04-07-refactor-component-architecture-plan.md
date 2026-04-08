@@ -215,6 +215,108 @@ must respect or address:
   Phase 0/1 retro. The corresponding entry in the Phase 0/1 retro
   above is now stale historical context, not a TODO.
 
+### Phase 6 execution retro (added 2026-04-07 after Steps 34a–34k landed)
+
+Carry-over items and corrections discovered while executing Phase 6 that
+Phase 7+ must respect or address:
+
+- **Polled-Cooldown pattern for one-shot delays**: six of the ten sites
+  (respawn, sea-mine arm, sea-mine fuse, sea-mine chain stagger, run-end
+  grace, explosion auto-free) were originally `await
+  get_tree().create_timer(...).timeout` fire-and-forget calls, not
+  `.connect()` lambdas. The `Cooldown` helper is a polled timestamp
+  check with no `timeout` signal, so each of these sites had to be
+  restructured as a polled state check in `_process` /
+  `_physics_process` (store a `_cooldown` + a `_pending` flag, start in
+  the trigger, poll in the process loop, clear on fire). **Phase 7+
+  authors:** when you replace another timer lambda, expect to either
+  enable a process channel transiently or lean on the existing one;
+  `Cooldown` has no built-in "call me back in N seconds" affordance by
+  design (it's zero-per-frame-cost when idle).
+
+- **SeaMine off-screen arming (34e/f/g)**: the old `await create_timer`
+  path progressed independently of scene state, so a mine dropped
+  off-screen would still arm and be ready the moment the player entered
+  its proximity. The `Cooldown` port had to split mine tickers across
+  two process channels on purpose: `_process` stays gated by the
+  `VisibleOnScreenNotifier2D` (bob + shader writes — expensive and
+  invisible when off-screen), but a new `_physics_process` runs
+  unconditionally to poll the arm / fuse / chain-stagger cooldowns.
+  **Phase 8 EnemyShip note:** the same split may be needed if enemies
+  gain timed state transitions (spawn telegraph, windup, recoil) that
+  must progress off-screen.
+
+- **Chain-detonation ownership flip (34g)**: the staggered chain
+  reaction used to create N SceneTreeTimers on the *detonating* mine,
+  each closing over a neighbor. The new pattern calls
+  `target.schedule_chain_detonation(0.15)` — a public one-line API on
+  SeaMine — and the target owns its own `_chain_cooldown` +
+  `_chain_pending` state. Cleaner (no closures over external mine
+  references, idempotent on the receiver, no reentrancy worries when
+  the iterating mine is mid-detonation) but worth knowing the surface
+  grew by one public method. **Phase 7 SpawnService note:** when Step
+  36 extracts the mine list + `cannonball_water_impact` wiring, this
+  method is already reentrancy-safe, so the snapshot-before-iterate
+  guard documented for `_mines.duplicate()` applies to the caller, not
+  to `schedule_chain_detonation`.
+
+- **Plan correction — `PROCESS_MODE_ALWAYS` on DashComponent (34b/c)
+  is NOT needed and would be wrong**: the plan text for Steps 34b and
+  34c says "Component `process_mode = PROCESS_MODE_ALWAYS` so the
+  callback fires while paused/scaled." That rationale is incorrect.
+  `SceneTreeTimer.timeout` is a signal dispatched by the SceneTree's
+  always-loop; the connected lambda fires regardless of the owning
+  node's `process_mode` or pause state, as long as the timer itself was
+  created with `process_always=true` (which both 34b and 34c already
+  do). Setting `PROCESS_MODE_ALWAYS` on DashComponent would instead
+  make its `_physics_process` / `_process` tick during paused state —
+  which would actually break the intended "freeze everything while
+  Engine.time_scale = 0" behavior, since dash physics ticks would
+  continue accruing while the freeze is supposed to be in effect. I
+  left `process_mode` at default (inherit) and documented the full
+  reasoning inline in `dash_component.gd`. **Phase 9 Step 46 ADR
+  note:** the DashComponent ADR (016) should capture this — "raw
+  `create_timer(..., ignore_time_scale=true)` is the intentional
+  escape hatch for time-scale-affecting timers, and no `process_mode`
+  override is required."
+
+- **Step 34j is a dev-only compromise**: `explosion_test.gd` replaces
+  `await create_timer(0.5).timeout` with `Cooldown.new(); start(0.5);
+  while not ready: await get_tree().process_frame`. Functionally
+  identical but slightly wasteful (per-frame `await`), and only
+  acceptable because the surrounding bake pipeline is a sequential
+  async method where a polled state machine would be disruptive. The
+  whole file moves into `addons/pirate_dev_tools/` at Phase 11, at
+  which point the wait-loop can either stay (dev-only, nobody cares)
+  or be replaced with whatever async primitive the addon picks.
+
+- **Step 34a DID need a new process channel on HealthComponent**: the
+  Phase 5 retro closed out "HealthComponent's `_physics_process` is
+  back to default OFF" as a win; Step 34a reopens `_process` for
+  HealthComponent, but only transiently (enabled when respawn cooldown
+  starts, disabled the instant `respawn_ready` emits). The doctrine
+  hasn't regressed — default is still OFF, and the component only
+  ticks during the ~2.5s respawn window. Documented inline.
+
+- **Pre-existing `Cooldown.start(duration)` shadow warning still
+  present**: the `duration` parameter on `Cooldown.start` shadows the
+  `duration()` method introduced later in the same class. Pre-existing
+  from Phase 1 (Step 9). Trivial rename to `secs` would fix it but
+  would churn every call site; not worth the blast radius during Phase
+  6. **Future cleanup task:** rename to `secs` or `seconds` at the
+  same time as the next time `systems/cooldown.gd` is touched for any
+  other reason (e.g., during Phase 9 Step 44's folder reshuffle or
+  Step 45's unit-test expansion).
+
+- **Test coverage still owed to Phase 9 Step 45**: no new GUT tests
+  were added for the 34a–34j conversions. Verification was limited to
+  gdformat + gdlint clean and a single Godot smoke launch with no new
+  errors/warnings beyond the pre-existing UID + shadow set. The
+  off-screen-arming behavior change (34e/f/g) is the highest-risk
+  untested path; Step 45's `tests/unit/test_sea_mine.gd` should cover
+  "mine arms while off-screen" and "mine fuse completes while
+  off-screen" explicitly.
+
 ### Phase 5 execution retro (added 2026-04-07 after Step 33 landed)
 
 Carry-over items and deviations discovered while executing Phase 5 that
