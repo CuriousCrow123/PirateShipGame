@@ -119,19 +119,22 @@ func get_wake_ring_position() -> Vector2:
 ## Public damage entry point. Cannonballs hit the HurtboxComponent.Area2D
 ## and resolve to this method via the entity root; sea_mine still uses a
 ## physics shape query against bodies and routes through here as well.
-## The `_amount` parameter is currently ignored — HealthComponent always
-## applies 1 HP per hit. Per-source damage scaling is a Phase 11+ task.
-func take_damage(_from_direction: Vector2, _amount: int = 1, by_mine: bool = false) -> void:
+##
+## Phase 11 Step 48c: amount is now wired through HealthComponent. Sea
+## mines pass weapon.damage (=3 in sea_mine_weapon.tres) so a single
+## proximity blast kills a default-HP-4 enemy in fewer hits than the
+## pre-wiring 1-HP-per-call behavior.
+func take_damage(_from_direction: Vector2, amount: int = 1, by_mine: bool = false) -> void:
 	if _is_destroyed:
 		return
 	_by_mine_flag = by_mine
-	_hurtbox.process_hit(self)
+	_hurtbox.process_hit(self, amount)
 
 
-func _on_hurtbox_hit_taken(_source: Node) -> void:
+func _on_hurtbox_hit_taken(_source: Node, amount: int) -> void:
 	if _is_destroyed:
 		return
-	if _health.apply_damage(1):
+	if _health.apply_damage(amount):
 		_hit_feedback.play_hit()
 		_apply_hull_damage_variant()
 

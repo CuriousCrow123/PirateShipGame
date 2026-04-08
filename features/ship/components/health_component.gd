@@ -84,10 +84,15 @@ func _emit_initial_status() -> void:
 
 
 ## Single damage entry point. Returns true if the hit landed.
-func apply_damage(_amount: int = 1) -> bool:
+##
+## Phase 11 Step 48c: amount is now respected (was previously ignored —
+## HealthComponent always applied 1 HP). Sea mines pass 3 vs enemies and
+## 1 vs the player; cannonballs pass 1 by default. The damage gate
+## (FSM.is_vulnerable) still applies before the HP delta.
+func apply_damage(amount: int = 1) -> bool:
 	if not _fsm.is_vulnerable():
 		return false
-	_hp -= 1
+	_hp = max(0, _hp - amount)
 	health_changed.emit(_hp, _max_health)
 	if _hp <= 0:
 		_enter_death()

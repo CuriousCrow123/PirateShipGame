@@ -16,7 +16,10 @@ extends Camera2D
 ##     zoom tween that used to live in ship.gd._start_dash.
 
 ## Peak px offset at trauma=1.0. Pixel-snapped via roundf for the integer-
-## scale 640x360 viewport. Matches the default in DashStats.shake_magnitude_px.
+## scale 640x360 viewport. Source of truth: previously mirrored DashStats.
+## shake_magnitude_px, but Phase 4 promoted both this constant and the
+## decay rate onto GameCamera and Phase 11 Step 48c removed the now-stale
+## DashStats fields entirely.
 const SHAKE_MAGNITUDE_PX: float = 3.0
 ## Linear trauma decay per second.
 const SHAKE_TRAUMA_DECAY: float = 2.0

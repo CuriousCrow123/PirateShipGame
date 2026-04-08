@@ -1,7 +1,6 @@
 [gd_resource type="Resource" script_class="EnemyArchetype" format=3]
 
 [ext_resource type="Script" path="res://features/enemies/enemy_archetype.gd" id="1_script"]
-[ext_resource type="Resource" path="res://features/weapons/configs/cannon_weapon.tres" id="2_weapon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -12,7 +11,3 @@ turn_speed = 2.0
 circle_radius = 120.0
 broadside_cooldown = 2.0
 broadside_range = 130.0
-sprite_region = Rect2(0, 0, 0, 0)
-score = 100
-ai_kind = &"chase_and_circle"
-weapon = ExtResource("2_weapon")

@@ -264,7 +264,10 @@ func _apply_blast_damage() -> void:
 				global_position.direction_to(body.global_position), damage_to_enemy, true
 			)
 		elif body is Ship:
-			(body as Ship).take_damage(global_position.direction_to(body.global_position))
+			# Phase 11 Step 48c: sea-mine player damage is intentionally 1 HP
+			# (mines are a screen-clear tool against enemies; the player tax
+			# stays low). HealthComponent.apply_damage now respects amount.
+			(body as Ship).take_damage(global_position.direction_to(body.global_position), 1)
 			player_damaged.emit(global_position)
 
 

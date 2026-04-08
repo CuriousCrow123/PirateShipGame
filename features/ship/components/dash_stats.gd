@@ -49,12 +49,13 @@ enum FeelMode { LOCKED_HEADING, STEERABLE, VELOCITY_ALIGNED, OVERSPEED_CAP }
 
 # --- Camera Feedback (Phase 3) ---
 @export_group("Camera Feedback")
-## Peak px offset at trauma=1.0. Pixel-snapped via roundf.
-@export_range(0.0, 8.0, 0.5) var shake_magnitude_px: float = 3.0
 ## Initial trauma added on dash start (0..1). Offset = trauma^2 * magnitude.
+## The magnitude/decay constants moved to GameCamera in Phase 4 (peak px
+## and decay rate are camera properties, not dash properties); only the
+## per-dash trauma seed is tunable here. Phase 11 Step 48c removed the
+## stale shake_magnitude_px and shake_trauma_decay fields that GameCamera
+## stopped reading.
 @export_range(0.0, 1.0, 0.01) var shake_trauma_initial: float = 0.6
-## Linear decay rate of trauma per second.
-@export_range(0.5, 4.0, 0.05) var shake_trauma_decay: float = 2.0
 ## Camera2D zoom target during punch (base zoom is 1.2). Set duration > 0 to enable.
 @export_range(0.5, 1.5, 0.01) var zoom_punch_target: float = 1.1
 @export_range(0.0, 0.5, 0.01) var zoom_punch_duration: float = 0.0

@@ -22,8 +22,11 @@ var _ready_at_msec: int = 0
 var _duration_msec: int = 0
 
 
-func start(duration: float) -> void:
-	_duration_msec = int(duration * 1000.0)
+func start(secs: float) -> void:
+	# Phase 11 Step 48c: param renamed from `duration` (which shadowed
+	# the duration() getter, present since Phase 1) to `secs`. Call
+	# sites use positional args so no consumer needed updating.
+	_duration_msec = int(secs * 1000.0)
 	_ready_at_msec = Time.get_ticks_msec() + _duration_msec
 
 

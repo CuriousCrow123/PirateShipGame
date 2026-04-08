@@ -5,6 +5,11 @@ extends CanvasLayer
 ## the slide by tweening the CanvasLayer's own `offset` property (which
 ## translates all children uniformly) instead of fighting the container's
 ## layout pass on the Frame's position.
+##
+## Phase 11 Step 48c: subscribes directly to the Events bus for both wave
+## announcements and the invincibility cheat banner. Pre-Phase-11 main.gd
+## had two `_on_*` forwarders for these (Phase 7 retro line 470–479);
+## migrating to direct bus subscriptions deletes both.
 
 const SLIDE_IN_DURATION: float = 0.35
 const HOLD_DURATION: float = 1.1
@@ -23,6 +28,21 @@ func _ready() -> void:
 	assert(_subtitle_label != null, "WaveToast: Subtitle label not found")
 	assert(_wave_label != null, "WaveToast: WaveLabel not found")
 	_frame.modulate.a = 0.0
+	Events.wave_announced.connect(_on_wave_announced)
+	Events.cheat_toggled.connect(_on_cheat_toggled)
+
+
+func _on_wave_announced(wave: int) -> void:
+	show_wave(wave)
+
+
+func _on_cheat_toggled(cheat_id: StringName, active: bool) -> void:
+	# Only the invincibility cheat surfaces a HUD toast; other cheats use
+	# the debug overlay instead.
+	if cheat_id != &"invincibility":
+		return
+	var title: String = "INVINCIBLE ON" if active else "INVINCIBLE OFF"
+	show_message("CHEAT", title)
 
 
 func show_wave(wave: int) -> void:

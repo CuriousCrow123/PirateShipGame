@@ -8,15 +8,14 @@ extends Node2D
 ##   * Wire cross-service signal connections in a single place (setup
 ##     calls + ship/service signal hookup).
 ##   * Handle scene-level input toggles (fullscreen, explosion mode).
-##   * Forward Ship.invincibility_changed to the WaveToast cheat banner.
-##   * Forward Events.wave_announced to the WaveToast UI (since WaveToast
-##     itself is not bus-aware yet).
 ##   * Snap the camera to the respawn point on Ship.respawned.
+##
+## Phase 11 Step 48c: WaveToast forwarders deleted — WaveToast now
+## subscribes directly to Events.wave_announced and Events.cheat_toggled.
 
 @onready var _ship: Ship = $Ship
 @onready var _minimap_display: MinimapDisplay = $Minimap/MinimapDisplay
 @onready var _hp_display: HPDisplay = $HPDisplay
-@onready var _wave_toast: WaveToast = $WaveToast
 @onready var _lives_display: LivesDisplay = $LivesDisplay
 @onready var _mine_cooldown_display: MineCooldownDisplay = $MineCooldownDisplay
 @onready var _camera: GameCamera = $GameCamera
@@ -30,7 +29,6 @@ func _ready() -> void:
 	assert(_ship != null, "Main: Ship node is missing")
 	assert(_minimap_display != null, "Main: MinimapDisplay node not found")
 	assert(_hp_display != null, "Main: HPDisplay not found")
-	assert(_wave_toast != null, "Main: WaveToast not found")
 	assert(_lives_display != null, "Main: LivesDisplay not found")
 	assert(_mine_cooldown_display != null, "Main: MineCooldownDisplay not found")
 	assert(_camera != null, "Main: GameCamera not found")
@@ -50,9 +48,7 @@ func _ready() -> void:
 	_ship.respawned.connect(_water_effects.on_player_respawned)
 	_ship.respawned.connect(_on_ship_respawned)
 	_ship.game_over.connect(_wave_director.notify_player_game_over)
-	_ship.invincibility_changed.connect(_on_invincibility_changed)
 	_wave_director.spawn_requested.connect(_spawn_service.spawn_wave_enemy)
-	Events.wave_announced.connect(_on_wave_announced)
 
 	_minimap_display.setup(_ship)
 	_hp_display.setup(_ship)
@@ -80,13 +76,3 @@ func _on_ship_respawned() -> void:
 	# rubber-band the view back from the death location. WaterEffectsManager
 	# handles the wake-trail reset via its own connection.
 	_camera.snap_to_target()
-
-
-func _on_wave_announced(wave: int) -> void:
-	_wave_toast.show_wave(wave)
-
-
-func _on_invincibility_changed(active: bool) -> void:
-	var subtitle: String = "CHEAT"
-	var title: String = "INVINCIBLE ON" if active else "INVINCIBLE OFF"
-	_wave_toast.show_message(subtitle, title)

@@ -176,16 +176,19 @@ func get_mine_cooldown_progress() -> float:
 ## physics shape query; cannonball-on-hurtbox detection now flows through
 ## HurtboxComponent.area_entered → hit_taken. Both paths converge on
 ## HealthComponent.apply_damage via _apply_damage().
-func take_damage(_from_direction: Vector2) -> void:
-	_hurtbox.process_hit(self)
+##
+## Phase 11 Step 48c: amount is threaded through so sea_mine can pass
+## damage=1 vs the player (cannonballs default to 1).
+func take_damage(_from_direction: Vector2, amount: int = 1) -> void:
+	_hurtbox.process_hit(self, amount)
 
 
-func _on_hurtbox_hit_taken(_source: Node) -> void:
-	_apply_damage()
+func _on_hurtbox_hit_taken(_source: Node, amount: int) -> void:
+	_apply_damage(amount)
 
 
-func _apply_damage() -> void:
-	if _health_component.apply_damage(1):
+func _apply_damage(amount: int = 1) -> void:
+	if _health_component.apply_damage(amount):
 		_hit_feedback.play_hit()
 
 
@@ -272,7 +275,7 @@ func _on_audio_died() -> void:
 	_audio.play(&"ship_destroyed")
 
 
-func _on_audio_hit_taken(_source: Node) -> void:
+func _on_audio_hit_taken(_source: Node, _amount: int) -> void:
 	_audio.play(&"ship_hit")
 
 

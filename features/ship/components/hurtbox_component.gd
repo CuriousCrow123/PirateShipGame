@@ -23,7 +23,7 @@ extends Node2D
 ## Area2D when the entity is DEAD. Ship root no longer toggles the area
 ## from its own death/respawn handlers.
 
-signal hit_taken(source: Node)
+signal hit_taken(source: Node, amount: int)
 
 @export_node_path("Area2D") var area_path: NodePath = ^"Area2D"
 
@@ -65,13 +65,16 @@ func set_active(active: bool) -> void:
 ## Direct entry point for damage sources that don't use area collision yet
 ## (sea_mine uses a physics shape query against bodies; cannonball still
 ## uses body_entered for enemy targets). Forwards to hit_taken for parity
-## with the area-detected path.
-func process_hit(source: Node) -> void:
-	hit_taken.emit(source)
+## with the area-detected path. Phase 11 Step 48c: amount is threaded
+## through so per-source damage scaling lands on HealthComponent.apply_damage.
+func process_hit(source: Node, amount: int = 1) -> void:
+	hit_taken.emit(source, amount)
 
 
 func _on_area_entered(area: Area2D) -> void:
-	hit_taken.emit(_resolve_entity(area))
+	# Area-detected hits (cannonballs) always carry the default amount.
+	# Per-cannonball damage scaling is a future feature.
+	hit_taken.emit(_resolve_entity(area), 1)
 
 
 ## Walk area.owner to resolve the entity root. Public so future Hurtbox
