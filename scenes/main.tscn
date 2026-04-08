@@ -23,6 +23,10 @@
 [ext_resource type="PackedScene" path="res://scenes/victory_screen.tscn" id="24_victory"]
 [ext_resource type="PackedScene" path="res://scenes/mine_cooldown_display.tscn" id="20_mine_cd"]
 [ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="23_camera"]
+[ext_resource type="Script" path="res://scripts/wave_director.gd" id="25_wave_dir"]
+[ext_resource type="Script" path="res://scripts/spawn_service.gd" id="26_spawn"]
+[ext_resource type="Script" path="res://scripts/stats_tracker.gd" id="27_stats"]
+[ext_resource type="Script" path="res://scripts/water_effects_manager.gd" id="28_water_fx"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -44,7 +48,6 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 
 [node name="Main" type="Node2D" unique_id=1211575893]
 script = ExtResource("3_main")
-wave_set = ExtResource("22_campaign")
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(176, 112)
@@ -128,3 +131,26 @@ follow_target = NodePath("../..")
 [node name="MineCooldownDisplay" parent="." instance=ExtResource("20_mine_cd")]
 
 [node name="GameCamera" parent="." instance=ExtResource("23_camera")]
+
+[node name="WaveDirector" type="Node" parent="."]
+script = ExtResource("25_wave_dir")
+wave_set = ExtResource("22_campaign")
+
+[node name="SpawnService" type="Node" parent="."]
+script = ExtResource("26_spawn")
+
+[node name="StatsTracker" type="Node" parent="." node_paths=PackedStringArray("game_over_screen", "victory_screen")]
+script = ExtResource("27_stats")
+game_over_screen = NodePath("../GameOverScreen")
+victory_screen = NodePath("../VictoryScreen")
+
+[node name="WaterEffectsManager" type="Node" parent="." node_paths=PackedStringArray("displacement_viewport", "displacement_sub_viewport", "displacement_stamps", "water_trail", "trail_sprite", "wake_subviewport", "player_wake_line", "chunk_container")]
+script = ExtResource("28_water_fx")
+displacement_viewport = NodePath("../DisplacementViewport")
+displacement_sub_viewport = NodePath("../DisplacementViewport/SubViewport")
+displacement_stamps = NodePath("../DisplacementViewport/SubViewport/Stamps")
+water_trail = NodePath("../WaterTrail")
+trail_sprite = NodePath("../WaterTrail/TrailSprite")
+wake_subviewport = NodePath("../WaterTrail/SubViewport")
+player_wake_line = NodePath("../WaterTrail/SubViewport/Line2D")
+chunk_container = NodePath("../ChunkContainer")

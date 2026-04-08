@@ -1546,10 +1546,10 @@ launch, play one wave, die, respawn, verify.**
 
 #### Phase 7 — main.gd decomposition
 
-- [ ] **Step 35** — Extract `WaveDirector` (the inline `WavePhase` FSM at
+- [x] **Step 35** — Extract `WaveDirector` (the inline `WavePhase` FSM at
   [main.gd:244-313](../../scripts/main.gd#L244) + wave tuning logic). Reads
   active `WaveSet`. Emits `wave_announced/started/cleared/run_ended` on bus.
-- [ ] **Step 36** — Extract `SpawnService` (instantiates enemies/mines,
+- [x] **Step 36** — Extract `SpawnService` (instantiates enemies/mines,
   registers wakes). Subscribes to `WaveDirector.spawn_requested` AND to
   `Events.cannonball_water_impact` (for the mine-detonation cross-coupling
   at [main.gd:218-222](../../scripts/main.gd#L218-L222)).
@@ -1560,10 +1560,10 @@ launch, play one wave, die, respawn, verify.**
   `Events.explosion_requested.emit.call_deferred(pos, kind, dir, vel)` —
   synchronous emit during bus-handler iteration risks reentrancy into a
   half-mutated mine list. Documented in the SpawnService ADR.
-- [ ] **Step 37** — Extract `StatsTracker` (subscribes to bus, updates
+- [x] **Step 37** — Extract `StatsTracker` (subscribes to bus, updates
   `GameState.RunStats` via `stat_recorded`). Also owns the game-over grace
   timer.
-- [ ] **Step 38** — Extract `WaterEffectsManager` (the displacement viewport
+- [x] **Step 38** — Extract `WaterEffectsManager` (the displacement viewport
   tracking + wake-trail registration at
   [main.gd:102-139, 343-371](../../scripts/main.gd#L102-L139)). Also owns
   cross-coupling at [main.gd:218-222](../../scripts/main.gd#L218-L222)
