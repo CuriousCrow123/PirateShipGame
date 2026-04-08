@@ -1154,7 +1154,7 @@ launch, play one wave, die, respawn, verify.**
   moves code at [ship.gd:241](../../scripts/ship.gd#L241)
   `_spawn_ghost` + ghost sources tracking; ghosts spawn into an injected
   `ghost_layer: Node2D` under `main.tscn` to avoid reparenting).
-- [ ] **Step 26** — `Cannon` component — per-cannon cooldown + fire logic
+- [x] **Step 26** — `Cannon` component — per-cannon cooldown + fire logic
   (today [scripts/cannon.gd](../../scripts/cannon.gd) is just a 19-line
   marker; this is a real expansion, not a refactor). Each CannonSlot child
   holds its own `Cooldown` and reads its own `WeaponConfig`.
