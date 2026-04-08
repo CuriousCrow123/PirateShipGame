@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b2s0meb8sevxu" path="res://scenes/sea_mine_model.tscn" id="2_model"]
 [ext_resource type="Shader" path="res://shaders/sea_mine_water.gdshader" id="3_water_shader"]
 [ext_resource type="Shader" path="res://shaders/sea_mine_ripple.gdshader" id="4_ripple_shader"]
+[ext_resource type="Resource" path="res://resources/sea_mine_weapon.tres" id="5_weapon"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 shader = ExtResource("3_water_shader")
@@ -36,6 +37,7 @@ z_index = 1
 collision_layer = 8
 collision_mask = 3
 script = ExtResource("1_script")
+weapon = ExtResource("5_weapon")
 
 [node name="MineSubViewportContainer" type="SubViewportContainer" parent="."]
 material = SubResource("ShaderMaterial_water")

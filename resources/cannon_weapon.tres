@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="WeaponConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapon_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+damage = 1
+speed = 200.0
+lifetime = 0.75
+explosion_kind = &"cannonball_impact"
+fire_sound = &"cannon_fire"

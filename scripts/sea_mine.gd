@@ -11,8 +11,13 @@ enum State { ARMING, IDLE, FUSE_ACTIVE, DETONATING }
 const TRIGGER_COUNT: int = 14
 const SPHERE_RADIUS: float = 0.5
 const TRIGGER_HEIGHT: float = 0.25
-const MINE_DAMAGE_TO_ENEMIES: int = 3
 
+# Fallbacks used when `weapon` is not assigned in the .tscn (parity with the
+# pre-Phase-2 hard-coded constants).
+const _DEFAULT_DAMAGE_TO_ENEMIES: int = 3
+const _DEFAULT_EXPLOSION_KIND: StringName = &"sea_mine"
+
+@export var weapon: WeaponConfig
 @export var arm_time: float = 1.5
 @export var fuse_time: float = 1.5
 @export var blast_radius: float = 40.0
@@ -177,7 +182,10 @@ func _detonate() -> void:
 	_spawn_explosion_ripple()
 
 	# Spawn explosion VFX on parent so it survives queue_free
-	ExplosionSprite.create(get_parent(), global_position, "sea_mine")
+	var explosion_kind: StringName = (
+		weapon.explosion_kind if weapon != null else _DEFAULT_EXPLOSION_KIND
+	)
+	ExplosionSprite.create(get_parent(), global_position, String(explosion_kind))
 
 	# Blast damage via direct physics query
 	_apply_blast_damage()
@@ -203,8 +211,11 @@ func _apply_blast_damage() -> void:
 		if body == null:
 			continue
 		if body is EnemyShip and not body.is_queued_for_deletion():
+			var damage_to_enemy: int = (
+				weapon.damage if weapon != null else _DEFAULT_DAMAGE_TO_ENEMIES
+			)
 			body.take_damage(
-				global_position.direction_to(body.global_position), MINE_DAMAGE_TO_ENEMIES, true
+				global_position.direction_to(body.global_position), damage_to_enemy, true
 			)
 		elif body is Ship:
 			(body as Ship).take_damage(global_position.direction_to(body.global_position))

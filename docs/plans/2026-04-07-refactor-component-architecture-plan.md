@@ -696,8 +696,22 @@ Phase 6 must address all 10. Unit-tested.
   `ShipConfig` stays as-is for hull/sail variant data. Decide: do they merge
   later? → **No.** `ShipConfig` = visual variant (sprites). `ShipStats` =
   motion/combat. Two Resources, two concerns.
-- [ ] **Step 12** — Create `WeaponConfig.tres` read by `cannon.gd` /
+- [x] **Step 12** — Create `WeaponConfig.tres` read by `cannon.gd` /
   `sea_mine.gd` (damage, speed, lifetime, explosion_kind, fire_sound).
+  *(Done 2026-04-07: WeaponConfig at [scripts/weapon_config.gd](../../scripts/weapon_config.gd)
+  with two .tres instances at [resources/cannon_weapon.tres](../../resources/cannon_weapon.tres)
+  (damage=1, speed=200, lifetime=0.75, explosion_kind=cannonball_impact)
+  and [resources/sea_mine_weapon.tres](../../resources/sea_mine_weapon.tres)
+  (damage=3, speed=0, lifetime=0, explosion_kind=sea_mine).
+  **Read-site scope**: sea_mine.gd consumes `weapon.damage` (replacing
+  `MINE_DAMAGE_TO_ENEMIES`) and `weapon.explosion_kind` (replacing the
+  hard-coded "sea_mine" string). cannon.gd holds the `weapon` slot but
+  doesn't read it yet \u2014 cannonball spawn parameters still live on
+  cannonball.gd; that migration is scheduled for Phase 4 Step 26 alongside
+  the Cannon component extraction. Both slots default to null and the
+  sea_mine reads have explicit fallback constants so the .tscn can omit
+  the assignment without breaking. cannon.tscn and sea_mine.tscn assign
+  the new resources via ExtResource.)*
 - [ ] **Step 13** — Create `EnemyArchetype.tres` read by `enemy_ship.gd`
   (sprite, hp, speed, ai_kind, weapon, score).
 - [ ] **Step 14** — Create `WaveConfig.tres` + `WaveSet.tres` +
