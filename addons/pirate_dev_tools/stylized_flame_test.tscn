@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b50h6fwjkrfk3"]
 
-[ext_resource type="Script" uid="uid://uoeaof8h4gaf" path="res://dev/archived_test_scenes/stylized_flame_test.gd" id="1_test_script"]
+[ext_resource type="Script" uid="uid://uoeaof8h4gaf" path="res://addons/pirate_dev_tools/stylized_flame_test.gd" id="1_test_script"]
 [ext_resource type="SphereMesh" uid="uid://tpkyct4k88kj" path="res://features/vfx/dash_flame_sphere.tres" id="2_sphere"]
 [ext_resource type="CylinderMesh" uid="uid://0yfvpu6qetwb" path="res://features/vfx/dash_flame_cone.tres" id="3_cone"]
 

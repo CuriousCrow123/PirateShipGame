@@ -3,7 +3,7 @@ extends Resource
 ## Cubic-Bezier profile for the procedural dash-flame lathe (DashFlameLathe).
 ##
 ## Lives at res://features/vfx/dash_flame_profile.tres so the test scene
-## (dev/archived_test_scenes/stylized_flame_test.gd) and the in-game effect
+## (addons/pirate_dev_tools/stylized_flame_test.gd) and the in-game effect
 ## (features/vfx/dash_fire_effect.gd) tune the same instance via the shared resource
 ## cache. Live tweaks in the test scene save to disk via ResourceSaver and the
 ## next game run picks them up.

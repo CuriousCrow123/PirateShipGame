@@ -13,7 +13,7 @@
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://features/water/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://features/hud/controls_overlay.tscn" id="13_overlay"]
 [ext_resource type="PackedScene" path="res://features/hud/minimap.tscn" id="14_minimap"]
-[ext_resource type="PackedScene" path="res://dev/debug_overlay/debug_overlay.tscn" id="15_debug"]
+[ext_resource type="PackedScene" path="res://features/hud/debug_overlay.tscn" id="15_debug"]
 [ext_resource type="PackedScene" uid="uid://bjiwoui3t2ow5" path="res://features/hud/hp_display.tscn" id="16_hp"]
 [ext_resource type="PackedScene" uid="uid://doull5gqh1vxv" path="res://features/hud/wave_toast.tscn" id="17_wave_toast"]
 [ext_resource type="PackedScene" uid="uid://c7pf83wmg3552" path="res://features/hud/lives_display.tscn" id="18_lives"]
