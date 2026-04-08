@@ -4,7 +4,8 @@ extends Node2D
 ## Lives as a child of the displacement SubViewport; main.gd calls its API.
 
 const STAMP_TEXTURE: Texture2D = preload("res://textures/white_4x4.png")
-const BASE_MATERIAL: ShaderMaterial = preload("res://shaders/displacement_stamp_material.tres")
+const _MAT_PATH: String = "res://features/water/shaders/displacement_stamp_material.tres"
+const BASE_MATERIAL: ShaderMaterial = preload(_MAT_PATH)
 
 const MAX_STAMPS: int = 48
 

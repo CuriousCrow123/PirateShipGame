@@ -24,8 +24,8 @@ extends Node
 ##     is the dispatch path for Research Delta #10.
 
 const TrailsScript: Script = preload("res://features/water/trails.gd")
-const TrailWidthCurve: Curve = preload("res://resources/trail_width_curve.tres")
-const TrailGradientTex: Texture2D = preload("res://textures/WaterTrailGradient.png")
+const TrailWidthCurve: Curve = preload("res://features/water/trail_width_curve.tres")
+const TrailGradientTex: Texture2D = preload("res://features/water/textures/WaterTrailGradient.png")
 
 @export var tuning: WaterTuning
 @export var displacement_viewport: Node2D

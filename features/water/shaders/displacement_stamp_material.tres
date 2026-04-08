@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://sk4gve3biss4"]
 
-[ext_resource type="Shader" uid="uid://b31hbb2s6ii88" path="res://shaders/displacement_stamp.gdshader" id="1_shader"]
+[ext_resource type="Shader" uid="uid://b31hbb2s6ii88" path="res://features/water/shaders/displacement_stamp.gdshader" id="1_shader"]
 
 [resource]
 shader = ExtResource("1_shader")

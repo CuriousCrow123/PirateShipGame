@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://features/weapons/sea_mine.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://b2s0meb8sevxu" path="res://features/weapons/sea_mine_model.tscn" id="2_model"]
-[ext_resource type="Shader" path="res://shaders/sea_mine_water.gdshader" id="3_water_shader"]
-[ext_resource type="Shader" path="res://shaders/sea_mine_ripple.gdshader" id="4_ripple_shader"]
+[ext_resource type="Shader" path="res://features/water/shaders/sea_mine_water.gdshader" id="3_water_shader"]
+[ext_resource type="Shader" path="res://features/water/shaders/sea_mine_ripple.gdshader" id="4_ripple_shader"]
 [ext_resource type="Resource" path="res://features/weapons/configs/sea_mine_weapon.tres" id="5_weapon"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]

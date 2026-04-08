@@ -1,8 +1,8 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://c7pgx6whoa71c"]
 
-[ext_resource type="Shader" uid="uid://d16yn4wjcax0i" path="res://shaders/water_surface.gdshader" id="1_shader"]
-[ext_resource type="Texture2D" uid="uid://btofu6jumvl6o" path="res://textures/CausticTexture.png" id="2_caustic"]
-[ext_resource type="Texture2D" uid="uid://cdlnfyqgvsm4o" path="res://textures/CausticTextureHighlights.png" id="3_highlight"]
+[ext_resource type="Shader" uid="uid://d16yn4wjcax0i" path="res://features/water/shaders/water_surface.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" uid="uid://btofu6jumvl6o" path="res://features/water/textures/CausticTexture.png" id="2_caustic"]
+[ext_resource type="Texture2D" uid="uid://cdlnfyqgvsm4o" path="res://features/water/textures/CausticTextureHighlights.png" id="3_highlight"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_foam"]
 frequency = 0.0191
