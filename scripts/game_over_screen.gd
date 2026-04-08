@@ -67,7 +67,7 @@ func _on_slide_in_complete() -> void:
 
 func _populate(stats: RunStats) -> void:
 	_subtitle.text = "scuttled at wave %d" % maxi(stats.final_wave, 1)
-	_enemies_label.text = str(stats.enemies_destroyed)
+	_enemies_label.text = str(stats.kills)
 	_mine_kills_label.text = str(stats.enemies_destroyed_by_mine)
 	_shots_label.text = str(stats.player_shots_fired)
 	if stats.player_shots_fired <= 0:
@@ -77,9 +77,9 @@ func _populate(stats: RunStats) -> void:
 	for child: Node in _wave_times_list.get_children():
 		child.queue_free()
 	var row_font: Font = _subtitle.get_theme_font("font")
-	for i: int in range(stats.wave_times_sec.size()):
+	for i: int in range(stats.wave_times.size()):
 		var row: Label = Label.new()
-		row.text = "Wave %d      %s" % [i + 1, _format_time(stats.wave_times_sec[i])]
+		row.text = "Wave %d      %s" % [i + 1, _format_time(stats.wave_times[i])]
 		row.add_theme_color_override("font_color", Color(0.9, 0.88, 0.78, 0.95))
 		row.add_theme_font_override("font", row_font)
 		row.add_theme_font_size_override("font_size", 12)
