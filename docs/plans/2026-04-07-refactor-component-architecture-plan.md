@@ -853,7 +853,7 @@ Phase 6 must address all 10. Unit-tested.
   Replace all `Input.is_action_pressed()` / `Input.get_axis()` calls in
   [ship.gd:127, 136, 143, 151, 164, 172](../../scripts/ship.gd#L127) with
   reads from `_player_input.thrust_axis` etc.
-- [ ] **Step 18** — Add `InputMap` remap support + gamepad detection layer +
+- [x] **Step 18** — Add `InputMap` remap support + gamepad detection layer +
   `user://keybinds.cfg` save/load. Default gamepad bindings for all 9 actions.
 - [ ] **Step 19+20 (SINGLE commit)** — Promote `Camera2D` to
   `features/camera/game_camera.tscn` under `main.tscn`, AND move camera shake

@@ -94,6 +94,7 @@ dash={
 Events="*res://autoload/events.gd"
 GameState="*res://autoload/game_state.gd"
 AudioManager="*res://autoload/audio_manager.gd"
+KeybindsManager="*res://autoload/keybinds_manager.gd"
 
 [debug]
 
