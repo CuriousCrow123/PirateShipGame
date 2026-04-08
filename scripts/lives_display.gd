@@ -3,7 +3,7 @@ extends CanvasLayer
 ## Top-left ships-remaining display. Each life is a framed hull icon in a row
 ## that mirrors the HPDisplay visual language: active lives stay vivid, lost
 ## lives drain to LOST_COLOR and shrink. The count is built dynamically from
-## the Ship's max_lives export so the scene file stays generic.
+## the Ship's stats.max_lives so the scene file stays generic.
 
 const SpritesheetTex: Texture2D = preload("res://textures/ships_spritesheet.png")
 
@@ -26,7 +26,7 @@ func _ready() -> void:
 func setup(ship: Ship) -> void:
 	_ship = ship
 	_ship.lives_changed.connect(_on_lives_changed)
-	_build_icons(ship.max_lives)
+	_build_icons(ship.stats.max_lives)
 
 
 func _build_icons(count: int) -> void:

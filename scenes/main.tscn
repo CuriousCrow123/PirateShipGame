@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://textures/CircleBlur64x64.png" id="8_circle"]
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
 [ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
+[ext_resource type="Resource" path="res://resources/default_ship_stats.tres" id="21_ship_stats"]
 [ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://scripts/water_chunks.gd" id="11_chunks"]
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
@@ -46,8 +47,7 @@ position = Vector2(176, 112)
 
 [node name="Ship" parent="." unique_id=1211440340 instance=ExtResource("10_ship")]
 position = Vector2(176, 112)
-thrust = 120.0
-linear_drag = 0.99
+stats = ExtResource("21_ship_stats")
 
 [node name="ChunkContainer" type="Node2D" parent="." unique_id=1375038654 node_paths=PackedStringArray("ship")]
 script = ExtResource("11_chunks")

@@ -688,7 +688,7 @@ Phase 6 must address all 10. Unit-tested.
 
 #### Phase 2 — Resources first (data, no behavior change)
 
-- [ ] **Step 11** — Create `ShipStats.tres` (+ `ship_stats.gd`
+- [x] **Step 11** — Create `ShipStats.tres` (+ `ship_stats.gd`
   `class_name ShipStats`). **Collects values from the 9 scattered @exports at
   [ship.gd:26-36](../../scripts/ship.gd#L26-L36)** — not from the existing
   visual-only `ShipConfig` (Research Delta #2). ship.gd reads

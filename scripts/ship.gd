@@ -25,15 +25,7 @@ const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
 
 @export var config: ShipConfig
 @export var dash_config: DashConfig
-@export var thrust: float = 80.0
-@export var turn_speed: float = 2.5
-@export var linear_drag: float = 0.97
-@export var brake_decel: float = 120.0
-@export var broadside_cooldown: float = 0.5
-@export var mine_cooldown: float = 2.5
-@export var max_health: int = 4
-@export var max_lives: int = 2
-@export var respawn_delay: float = 2.0
+@export var stats: ShipStats
 
 var _port_cooldown: float = 0.0
 var _starboard_cooldown: float = 0.0
@@ -77,6 +69,7 @@ func _ready() -> void:
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_config != null, "Ship: dash_config Resource is missing")
+	assert(stats != null, "Ship: stats (ShipStats) Resource is missing")
 	# Cached additive material reused across all ghost spawns (Godot does NOT
 	# fork CanvasItemMaterial on assignment — all ghosts share the same RID
 	# and batch together).
@@ -86,8 +79,8 @@ func _ready() -> void:
 	_sail_original_pos = _sail_sprite.position
 	_spawn_position = global_position
 	_spawn_rotation = rotation
-	_health = max_health
-	_lives = max_lives
+	_health = stats.max_health
+	_lives = stats.max_lives
 	_apply_config()
 	# Defer so Main has time to wire signals in its own _ready before the
 	# initial health_changed / lives_changed emit.
@@ -95,8 +88,8 @@ func _ready() -> void:
 
 
 func _emit_initial_status() -> void:
-	health_changed.emit(_health, max_health)
-	lives_changed.emit(_lives, max_lives)
+	health_changed.emit(_health, stats.max_health)
+	lives_changed.emit(_lives, stats.max_lives)
 
 
 func _exit_tree() -> void:
@@ -137,21 +130,21 @@ func _physics_process(delta: float) -> void:
 
 		match dash_config.feel_mode:
 			DashConfig.FeelMode.LOCKED_HEADING:
-				velocity *= linear_drag
-				# thrust + steering ignored during locked-heading burst
+				velocity *= stats.linear_drag
+				# stats.thrust + steering ignored during locked-heading burst
 			DashConfig.FeelMode.STEERABLE:
 				if not is_braking and Input.is_action_pressed("move_forward"):
-					velocity += transform.y * thrust * delta
-				velocity *= linear_drag
-				rotation += turn_input * turn_speed * delta
+					velocity += transform.y * stats.thrust * delta
+				velocity *= stats.linear_drag
+				rotation += turn_input * stats.turn_speed * delta
 			DashConfig.FeelMode.VELOCITY_ALIGNED:
-				velocity *= linear_drag
-				rotation += turn_input * turn_speed * delta
+				velocity *= stats.linear_drag
+				rotation += turn_input * stats.turn_speed * delta
 			DashConfig.FeelMode.OVERSPEED_CAP:
 				if not is_braking and Input.is_action_pressed("move_forward"):
-					velocity += transform.y * thrust * delta
+					velocity += transform.y * stats.thrust * delta
 				velocity *= dash_config.overspeed_drag
-				rotation += turn_input * turn_speed * delta
+				rotation += turn_input * stats.turn_speed * delta
 
 		move_and_slide()
 		_process_collision_pushback(dash_config.collision_pushback_scale)
@@ -162,15 +155,15 @@ func _physics_process(delta: float) -> void:
 
 func _apply_normal_movement(delta: float, is_braking: bool) -> void:
 	if not is_braking and Input.is_action_pressed("move_forward"):
-		velocity += transform.y * thrust * delta
+		velocity += transform.y * stats.thrust * delta
 
 	if is_braking:
-		velocity = velocity.move_toward(Vector2.ZERO, brake_decel * delta)
+		velocity = velocity.move_toward(Vector2.ZERO, stats.brake_decel * delta)
 	else:
-		velocity *= linear_drag
+		velocity *= stats.linear_drag
 
 	var turn_input: float = Input.get_axis("turn_left", "turn_right")
-	rotation += turn_input * turn_speed * delta
+	rotation += turn_input * stats.turn_speed * delta
 
 	move_and_slide()
 	_process_collision_pushback(1.0)
@@ -288,9 +281,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 0.0 = just dropped (fully on cooldown), 1.0 = ready to drop again.
 func get_mine_cooldown_progress() -> float:
-	if mine_cooldown <= 0.0:
+	if stats.mine_cooldown <= 0.0:
 		return 1.0
-	return clampf(1.0 - (_mine_cooldown_left / mine_cooldown), 0.0, 1.0)
+	return clampf(1.0 - (_mine_cooldown_left / stats.mine_cooldown), 0.0, 1.0)
 
 
 func _toggle_invincibility() -> void:
@@ -306,7 +299,7 @@ func take_damage(_from_direction: Vector2) -> void:
 	_health -= 1
 	_apply_hit_feedback()
 	_update_hull_variant()
-	health_changed.emit(_health, max_health)
+	health_changed.emit(_health, stats.max_health)
 	if _health <= 0:
 		_enter_death()
 		return
@@ -314,7 +307,7 @@ func take_damage(_from_direction: Vector2) -> void:
 
 
 func _update_hull_variant() -> void:
-	var variant: int = clampi(max_health - _health, 0, 3)
+	var variant: int = clampi(stats.max_health - _health, 0, 3)
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(variant)
 
 
@@ -355,14 +348,14 @@ func _enter_death() -> void:
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
 	_lives -= 1
-	lives_changed.emit(_lives, max_lives)
+	lives_changed.emit(_lives, stats.max_lives)
 	died.emit()
 	if _lives <= 0:
 		# Terminal death — no respawn. Main listens for game_over and shows
 		# the stats screen.
 		game_over.emit()
 		return
-	get_tree().create_timer(respawn_delay).timeout.connect(
+	get_tree().create_timer(stats.respawn_delay).timeout.connect(
 		func() -> void:
 			if is_instance_valid(self):
 				_respawn()
@@ -373,7 +366,7 @@ func _respawn() -> void:
 	global_position = _spawn_position
 	rotation = _spawn_rotation
 	velocity = Vector2.ZERO
-	_health = max_health
+	_health = stats.max_health
 	_update_hull_variant()
 	_is_dead = false
 	_input_locked = false
@@ -382,7 +375,7 @@ func _respawn() -> void:
 	set_collision_mask_value(2, true)
 	set_collision_mask_value(5, true)
 	respawned.emit()
-	health_changed.emit(_health, max_health)
+	health_changed.emit(_health, stats.max_health)
 	_start_iframes(RESPAWN_IFRAME_DURATION)
 
 
@@ -446,9 +439,9 @@ func _fire_broadside(side: String) -> void:
 		cannon_fired.emit(result["position"], result["direction"])
 
 	if side == "port":
-		_port_cooldown = broadside_cooldown
+		_port_cooldown = stats.broadside_cooldown
 	else:
-		_starboard_cooldown = broadside_cooldown
+		_starboard_cooldown = stats.broadside_cooldown
 
 
 func _drop_mine() -> void:
@@ -457,7 +450,7 @@ func _drop_mine() -> void:
 	# (see the wake ring offset in main.gd which uses the same convention).
 	var drop_pos: Vector2 = global_position - transform.y * 24.0
 	mine_dropped.emit(drop_pos)
-	_mine_cooldown_left = mine_cooldown
+	_mine_cooldown_left = stats.mine_cooldown
 
 
 func _start_dash() -> void:
