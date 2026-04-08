@@ -215,6 +215,103 @@ must respect or address:
   Phase 0/1 retro. The corresponding entry in the Phase 0/1 retro
   above is now stale historical context, not a TODO.
 
+### Phase 5 execution retro (added 2026-04-07 after Step 33 landed)
+
+Carry-over items and deviations discovered while executing Phase 5 that
+Phase 6+ must respect or address:
+
+- **`ship_fsm.gd` landed under `scripts/`, not `features/ship/`**: the
+  plan calls for `features/ship/ship_fsm.gd` but the folder restructure
+  is Phase 9 Step 44. ShipFSM lives at `scripts/ship_fsm.gd` for now and
+  will move with the rest of the ship feature in Step 44's `git mv`
+  pass. **Phase 9 task:** include `ship_fsm.gd` (+ its `.uid` once the
+  editor regenerates it) in the ship feature's move batch.
+
+- **Subscribers got `connect_fsm()` instead of changes to `setup()`**:
+  MovementComponent, HurtboxComponent, and PlayerInputComponent each
+  gained a new `connect_fsm(fsm: ShipFSM)` method rather than threading
+  the FSM ref through their existing `setup()` signatures. Chosen to
+  limit blast radius (no rewriting of existing setup callsites). Ship
+  root calls `connect_fsm()` immediately after instantiating the FSM
+  signal wiring, before any component `setup()` runs. **Practice for
+  Phase 8:** EnemyShip migration should follow the same `connect_fsm()`
+  pattern when it gets its own FSM (or shares the player's pattern).
+
+- **HealthComponent's `iframes_started` / `iframes_ended` /
+  `invincibility_changed` signals were DELETED, not deprecated**: the
+  iframe state lives on ShipFSM now and the signals live there too.
+  HitFeedbackComponent's blink envelope is rewired to
+  `_fsm.iframes_started` / `_fsm.iframes_ended` via Ship root, and
+  Ship's legacy `invincibility_changed` re-emit forwarder pulls from
+  `_fsm.invincibility_changed`. **Phase 8 EnemyShip note:** if enemies
+  ever need an iframe blink, they'll need either their own FSM (sharing
+  the player's pattern) or a separate signal source — the
+  HealthComponent surface no longer carries iframe events.
+
+- **Shift+5 invincibility cheat handler moved from HealthComponent to
+  ShipFSM**: the cheat mutates FSM-owned state (`_invincible`), so its
+  `_unhandled_input` handler followed the state into the FSM. Toggle
+  still emits `Events.cheat_toggled(&"invincibility", active)` for the
+  debug overlay. HealthComponent now has no `_unhandled_input` and no
+  `_physics_process` — it's a pure HP/lives store with a damage
+  gate that delegates to `_fsm.is_vulnerable()`.
+
+- **HealthComponent's `_physics_process` is back to default OFF**: the
+  doctrine breakage flagged in the Phase 4 retro
+  ("HealthComponent has `set_physics_process(true)` which breaks the
+  default OFF doctrine for components") is closed. ShipFSM owns the
+  iframe countdown via its own `_physics_process` and is the only
+  per-frame ticker added by Phase 5.
+
+- **DashComponent stayed FSM-unaware by design**: DashComponent still
+  emits `dash_started` / `dash_ended` and Ship root translates those
+  into `_fsm.enter_dashing()` / `_fsm.exit_dashing()`. The plan listed
+  HurtboxComponent, PlayerInput, and MovementComponent as the FSM
+  subscribers — DashComponent was deliberately excluded so the dash
+  burst stays portable to any future entity that wants to use it
+  without dragging in a ShipFSM dependency. **Phase 6 Step 34d
+  consequence:** swapping the dash cooldown lambda for a Cooldown helper
+  is unaffected by the FSM extraction.
+
+- **`_spawn_position` / `_spawn_rotation` still live on Ship root**: the
+  Phase 4 retro flagged this as a "low priority refinement" — add a
+  SpawnPoint Marker2D to main.tscn and have HealthComponent emit a
+  `respawn_ready` payload containing the spawn position. Phase 5
+  intentionally did not address this; the death/respawn cleanup
+  refactor was already large enough. **Future task (still low
+  priority):** carry over to whatever step extracts a LifecycleComponent
+  from Ship's death-cleanup block.
+
+- **Ship still owns the death/respawn scene cleanup**: collision-layer
+  toggling, visibility flipping, and the explosion VFX spawn live in
+  Ship's `_enter_dead_scene_state()` / `_exit_dead_scene_state()`
+  helpers, driven from `_on_fsm_state_changed`. The Phase 4 retro
+  predicted this block "will move into a future LifecycleComponent or
+  the FSM in Phase 5"; it stayed on Ship root because moving it would
+  have expanded Step 33's blast radius and the death cleanup is
+  inherently entity-specific (player explosion VFX, layer 1/2/5 masks).
+  **Future task:** if EnemyShip migration in Phase 8 ends up needing a
+  parallel block, that's the trigger to extract a LifecycleComponent.
+
+- **`ship.gd` final size: 280 LOC** (up from 258 LOC in Phase 4). The
+  growth comes from FSM wiring (`_on_fsm_state_changed`,
+  `_on_fsm_invincibility_changed`, and the two scene-state helpers)
+  partially offset by the deletion of `_input_locked` checks and the
+  `_is_dead` early returns. The bulk is still component wiring + legacy
+  signal re-emit forwarders.
+
+- **Class cache hand-edit pattern held**: the Phase 4 retro's "first
+  edit after writing the new `class_name`" practice was followed for
+  `ShipFSM`. No "Could not find type ShipFSM" parser error on first
+  launch.
+
+- **No GUT tests added**: the plan's testing stories live in Phase 9
+  Step 45. Phase 5 was verified via gdformat / gdlint clean, ship.tscn
+  validation, and a single Godot smoke launch with no new errors. The
+  full state-transition matrix (DASH during IFRAME, IFRAME during DASH,
+  cheat-on-death, double-respawn) is untested at the unit level until
+  Step 45 lands `tests/unit/ship_fsm.gd`.
+
 ### Phase 4 execution retro (added 2026-04-07 after Steps 21–28 + 32 landed)
 
 Carry-over items and deviations discovered while executing Phase 4 that
