@@ -42,12 +42,21 @@ docs/solutions/ — solved problem documentation
 
 ## Linting
 
+`addons/` is excluded from both linters (vendored code). gdlint reads
+`gdlintrc` at the project root; gdformat has no exclude option, so use
+`find` to enumerate the project's `.gd` files:
+
 ```bash
-gdformat --check .   # formatting
-gdlint .             # style
+# formatting (skip addons/)
+find . -name "*.gd" -not -path "./addons/*" -not -path "./.git/*" -print0 \
+  | xargs -0 gdformat --check
+
+# style (gdlintrc handles excludes)
+gdlint .
 ```
 
-Run both before committing. Fix gdformat issues with `gdformat .`.
+Run both before committing. Fix gdformat issues by re-running the same
+`find | xargs` pipeline without `--check`.
 
 ## Testing
 

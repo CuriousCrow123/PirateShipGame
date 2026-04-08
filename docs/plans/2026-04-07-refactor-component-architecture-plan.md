@@ -546,17 +546,21 @@ Phase 6 must address all 10. Unit-tested.
 
 **Tasks & deliverables:**
 
-- [ ] **Step 1** — Fix the two trivial gdformat violations on main
+- [x] **Step 1** — Fix the two trivial gdformat violations on main
   (`scripts/explosion_atlas_player.gd`, `scripts/explosion_test.gd`) via
   `gdformat .`, commit on `main` **before** branching. (Research Delta #7.)
-- [ ] **Step 2** — Branch `refactor/component-architecture`. Freeze `main`.
-- [ ] **Step 3** — *(REMOVED 2026-04-07)* Video baseline dropped per user
+- [x] **Step 2** — Branch `refactor/component-architecture`. Freeze `main`.
+- [x] **Step 3** — *(REMOVED 2026-04-07)* Video baseline dropped per user
   decision. Regression validation uses the MCP run-test cycle (`run_project`
   → `get_debug_output` → `stop_project`) plus targeted manual smoke after
   each step.
-- [ ] **Step 4** — Install GUT addon at `addons/gut/` with empty
+- [x] **Step 4** — Install GUT addon at `addons/gut/` with empty
   `tests/unit/` skeleton. Verify `godot --headless -s addons/gut/gut_cmdln.gd`
-  runs.
+  runs. *(Done 2026-04-07: GUT v9.4.0 vendored at `addons/gut/`. Patched
+  `gut_loader.gd:35` null guard for missing `exclude_addons` setting. Added
+  `gdlintrc` excluding `addons/`; CLAUDE.md lint commands updated to use
+  `find | xargs gdformat --check` for addon-skipping formatting. Headless
+  GUT runs clean against empty `tests/unit/`.)*
 
 #### Phase 1 — Quick wins (autoloads, helpers, archive prep)
 

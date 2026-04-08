@@ -89,6 +89,14 @@ dash={
 2d_physics/layer_4="hazards"
 2d_physics/layer_5="enemy_projectiles"
 
+[debug]
+
+gdscript/warnings/exclude_addons=true
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
