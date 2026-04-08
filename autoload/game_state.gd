@@ -13,7 +13,7 @@ extends Node
 ## Phases 4\u20137). HUD callers should already migrate to the methods listed
 ## below \u2014 NEVER read or write these fields directly from outside.
 
-const _SHIP_STATS_PATH: StringName = &"res://resources/default_ship_stats.tres"
+const _SHIP_STATS_PATH: StringName = &"res://features/ship/stats/default_ship_stats.tres"
 
 var _ship_stats: ShipStats = null
 var _stats: RunStats = null

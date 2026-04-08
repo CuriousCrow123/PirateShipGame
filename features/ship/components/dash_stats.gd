@@ -1,6 +1,6 @@
 class_name DashStats
 extends Resource
-## Runtime-editable dash parameters, saved as res://resources/dash_stats.tres.
+## Runtime-editable dash parameters, saved as res://features/ship/components/dash_stats.tres.
 ## Open the .tres in the Godot editor while the game runs — changes propagate to the
 ## running game (shared Resource cache) AND persist to disk on save.
 ## Changes apply to the NEXT dash; an in-flight burst keeps the values it started with.

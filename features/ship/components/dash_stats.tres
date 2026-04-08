@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="DashStats" format=3 uid="uid://2vtlm2dmi5gv"]
 
-[ext_resource type="Script" uid="uid://318715e8u4ui" path="res://scripts/dash_stats.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://318715e8u4ui" path="res://features/ship/components/dash_stats.gd" id="1_script"]
 [ext_resource type="Curve" uid="uid://dv1cfi4vadluj" path="res://resources/dash_intensity_curve.tres" id="2_curve"]
 
 [resource]

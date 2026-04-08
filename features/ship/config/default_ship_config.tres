@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ShipConfig" format=3 uid="uid://0ahkfqpbwlaa"]
 
-[ext_resource type="Script" uid="uid://2n73rc883x8n" path="res://scripts/ship_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://2n73rc883x8n" path="res://features/ship/ship_config.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")

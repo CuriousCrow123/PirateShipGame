@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://crkk3p72st73n"]
 
-[ext_resource type="Script" path="res://scripts/cannon.gd" id="1_cannon"]
+[ext_resource type="Script" path="res://features/ship/components/cannon.gd" id="1_cannon"]
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
 [ext_resource type="Resource" path="res://resources/cannon_weapon.tres" id="3_weapon"]
 
