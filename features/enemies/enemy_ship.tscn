@@ -30,6 +30,7 @@ script = ExtResource("5_fsm")
 [node name="Health" type="Node" parent="."]
 script = ExtResource("6_health")
 respawnable = false
+hit_iframes_enabled = false
 
 [node name="Hurtbox" type="Node2D" parent="."]
 script = ExtResource("7_hurtbox")

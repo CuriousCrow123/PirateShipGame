@@ -33,6 +33,10 @@ const RESPAWN_IFRAME_DURATION: float = 2.5
 
 ## Player ships respawn until lives run out; enemies will set this false in Phase 8.
 @export var respawnable: bool = true
+## Player ships get a hit-iframe grace window after non-lethal damage so
+## multi-contact physics sub-steps don't chain-melt HP. Enemies turn this
+## off so ram collisions and rapid cannonball follow-ups land cleanly.
+@export var hit_iframes_enabled: bool = true
 
 var _fsm: ShipFSM = null
 var _max_health: int = 0
@@ -97,7 +101,8 @@ func apply_damage(amount: int = 1) -> bool:
 	if _hp <= 0:
 		_enter_death()
 		return true
-	_fsm.start_iframes(HIT_IFRAME_DURATION)
+	if hit_iframes_enabled:
+		_fsm.start_iframes(HIT_IFRAME_DURATION)
 	return true
 
 

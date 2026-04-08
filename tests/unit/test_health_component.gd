@@ -111,6 +111,28 @@ func test_non_lethal_damage_starts_iframes_via_fsm() -> void:
 	assert_true(fsm.has_iframes(), "non-lethal hit should start iframes via fsm.start_iframes")
 
 
+func test_hit_iframes_disabled_skips_iframe_grant() -> void:
+	# Enemy configuration: hit_iframes_enabled=false so rapid cannonball
+	# follow-ups and ram collisions land cleanly without a grace window.
+	var fsm: Node = ShipFSMClass.new()
+	var health: Node = HealthComponentClass.new()
+	health.hit_iframes_enabled = false
+	add_child_autofree(fsm)
+	add_child_autofree(health)
+	health.setup(4, 1, 0.0, fsm)
+	await get_tree().process_frame
+	assert_true(fsm.is_vulnerable(), "sanity: fresh HP>1 entity is vulnerable")
+	health.apply_damage()
+	assert_eq(health.get_hp(), 3, "hit landed, HP decremented")
+	assert_false(
+		fsm.has_iframes(),
+		"hit_iframes_enabled=false must skip fsm.start_iframes on non-lethal damage"
+	)
+	# And a second hit in the same frame still lands because no grace window.
+	health.apply_damage()
+	assert_eq(health.get_hp(), 2, "second hit lands without iframe gating")
+
+
 func test_respawn_ready_fires_after_cooldown() -> void:
 	# Short respawn delay so the test is quick. The transient _process
 	# channel polls the wall-clock Cooldown and emits respawn_ready.

@@ -145,11 +145,13 @@ func _on_dash_ended() -> void:
 
 
 func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
-	# Mutual ram damage; iframes guard multi-hits. Damage is mutual only when
-	# the player is NOT invincible — an invincible player just bounces off.
-	if not _fsm.is_vulnerable():
-		return
-	take_damage(-normal)
+	# Ship-ship ram damage. Player damage is gated by FSM vulnerability
+	# (iframes / invincibility cheat block it), but the enemy damage
+	# side is unconditional — an invincible player still sinks enemies
+	# by ramming them. Previously the whole handler early-returned and
+	# cheat mode made the player a no-op mobile object.
+	if _fsm.is_vulnerable():
+		take_damage(-normal)
 	(enemy as EnemyShip).take_damage(normal)
 
 
