@@ -586,7 +586,7 @@ Phase 6 must address all 10. Unit-tested.
   (`start_new_run()`, `record_damage(amount)`, `record_kill()`,
   `record_death()`, `record_wave_cleared(index, duration)` …) plus
   read-only getters. External callers NEVER write fields directly.
-- [ ] **Step 8** — Add `AudioManager` autoload at `autoload/audio_manager.gd` —
+- [x] **Step 8** — Add `AudioManager` autoload at `autoload/audio_manager.gd` —
   no-op until clips exist; subscribes to `Events.sound_requested` in its
   `_ready()`. **Registered THIRD** in autoload order.
 - [ ] **Step 9** — Add `Cooldown` helper at `systems/cooldown.gd` + unit test

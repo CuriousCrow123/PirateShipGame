@@ -93,6 +93,7 @@ dash={
 
 Events="*res://autoload/events.gd"
 GameState="*res://autoload/game_state.gd"
+AudioManager="*res://autoload/audio_manager.gd"
 
 [debug]
 
