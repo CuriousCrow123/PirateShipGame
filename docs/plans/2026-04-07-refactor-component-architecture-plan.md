@@ -119,6 +119,65 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Post-Phase 10 hot-fix: Hurtbox transform inheritance (added 2026-04-08)
+
+Discovered after Phase 10 landed: **cannonballs were never hitting ships**
+(player or enemy). The bug had been latent since Phase 4 Step 23 (player
+hurtbox) and was extended to enemies in Phase 8 Step 39. Sea mines still
+worked because they bypass the hurtbox via a direct `take_damage()` call
+from a physics shape query, which is why nobody noticed.
+
+**Root cause:** `HurtboxComponent` extended `Node` to match the
+"components are plain Nodes" doctrine, but its child `Area2D` is a
+`CanvasItem`. Godot's 2D transform chain only walks through `CanvasItem`
+ancestors — a plain-`Node` parent breaks the chain, so the `Area2D`'s
+`global_position` was stuck at world origin `(0,0)` instead of tracking
+the entity. Cannonballs could only land if a ship happened to be exactly
+at world origin.
+
+Diagnosed by spawning a synthetic enemy cannonball at the player's spawn
+point and instrumenting the hurtbox: `[diag] ship hurtbox area ...
+global_pos=(0.0, 0.0)` while the ship was at `(176, 112)`. After the fix,
+`global_pos=(176.0, 112.0)` and `area_entered` started firing on contact.
+
+**Fix:** `HurtboxComponent extends Node2D` (with a comment explaining why
+this component diverges from the Node-only doctrine), plus changing the
+`Hurtbox` node `type="Node"` → `type="Node2D"` in `ship.tscn` and
+`enemy_ship.tscn`. Hurtbox stays at local `(0,0)` so the Area2D's shape
+is still authored in entity-local coordinates.
+
+**Amended into the appropriate commits via interactive rebase**:
+- `bf4d04c` (was `0ba0d3d`) — Phase 4 Step 23 — script + ship.tscn fix.
+- `4a09089` (was `eb08c0b`) — Phase 8 Step 39 — enemy_ship.tscn fix.
+
+The Phase 4 and Phase 8 retros below have been left as-is for historical
+context but contain misdiagnoses about the hurtbox `area_entered`
+connection being "dead code by design" — it was actually live but
+silently broken.
+
+**Doctrine carry-over for Phase 11 / future components:** the
+"components are plain Nodes" rule has an exception. Any component whose
+behavior depends on the entity's 2D transform (collision detection,
+positional VFX, hit feedback shake origin, etc.) MUST extend `Node2D`
+or live as a direct `CanvasItem` child of the entity root. Plain-`Node`
+parents break the CanvasItem transform chain silently — there's no
+parser warning, no runtime error, just an Area2D / Sprite2D / etc. that
+appears to work but is stranded at world origin. ADR 010 (Phase 11)
+should encode this rule. Audit candidates beyond HurtboxComponent: any
+future hitbox / aoe / detection-radius component pattern.
+
+**Three stale UID references repaired in the same session** (also
+amended): `features/ship/ship.tscn` line 5 referenced cannon.tscn with
+the pre-`feat(vfx)` UID, and the two dash flame meshes
+(`dash_flame_sphere.tres`, `dash_flame_cone.tres`) referenced
+`dash_flame_material.tres` with a stale literal. These were original
+authoring bugs in `47cd989` and `8222de3` respectively, but the cleanest
+amend point was the most recent commit to touch each line — the Phase
+10 file moves (`6cf8ae7`, `4851280`) — to avoid 100+ commits of replay
+risk. 31 missing `.gd.uid` sidecars and 14 mis-pathed `.import` files
+from the Phase 10 moves were committed fresh on top as `8a0e204` and
+`c8b0427` respectively.
+
 ### Phase 10 execution retro (added 2026-04-08 after Step 44 landed)
 
 Phase 10 was the largest single phase by file count (~150 files moved)
@@ -406,6 +465,16 @@ Phase 9+ must respect or address:
   no source emits into it — and only matters if a future damage
   source (e.g. an explosion AOE area) opts into hurtbox-side
   monitoring. Documented inline.
+  **CORRECTION (added 2026-04-08):** the cannonball-as-active-monitor
+  reasoning was right but masked a separate bug: the hurtbox itself
+  needs `monitorable = true` (it has it) AND its Area2D needs to track
+  the entity's position for the cannonball to detect overlap. With
+  `HurtboxComponent extends Node`, the Area2D was stuck at world
+  origin (plain `Node` breaks the CanvasItem transform chain), so
+  cannonballs from either team never connected. Fixed by amending
+  Step 23 + Step 39 to make `HurtboxComponent extends Node2D` and
+  the scene `Hurtbox` nodes `type="Node2D"`. See "Post-Phase 10
+  hot-fix: Hurtbox transform inheritance" above.
 
 - **`EnemyShip.take_damage(direction, amount, by_mine)` keeps the
   3-arg signature for sea_mine compatibility**, but the `amount`
@@ -920,6 +989,13 @@ Phase 5+ must respect or address:
   to enemy_ship.tscn on its own enemy hurtbox layer; switch player
   cannonballs from `body_entered` to `area_entered`; delete the legacy
   `EnemyShip.take_damage()` direct call site in `cannonball.gd`.
+  **NOTE (added 2026-04-08):** the player hurtbox area introduced in
+  this step was silently broken — `HurtboxComponent extends Node` left
+  the child Area2D stranded at world origin (CanvasItem transform chain
+  doesn't walk through plain `Node` parents). Sea mines kept working
+  via `process_hit()`; cannonballs vs the player did not. Fixed by
+  amending this commit to extend `Node2D`. See the
+  "Post-Phase 10 hot-fix: Hurtbox transform inheritance" section above.
 
 - **`HealthComponent.setup(stats)` injection pattern**: stats is NOT an
   `@export` on HealthComponent — Ship root injects it from its own stats
