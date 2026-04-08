@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://resources/dash_stats.tres" id="5_dash_config"]
 [ext_resource type="PackedScene" path="res://scenes/dash_fire_effect.tscn" id="6_fire_effect"]
 [ext_resource type="Script" path="res://scripts/player_input.gd" id="7_player_input"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="8_health"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -19,6 +20,9 @@ collision_mask = 2
 script = ExtResource("1_ship")
 config = ExtResource("4_config")
 dash_stats = ExtResource("5_dash_config")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("8_health")
 
 [node name="PlayerInput" type="Node" parent="."]
 script = ExtResource("7_player_input")

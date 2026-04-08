@@ -1120,7 +1120,7 @@ order, and any same-frame signal connection benefits from predictable order.
 Order chosen to minimize inter-component coupling risk. **After each commit:
 launch, play one wave, die, respawn, verify.**
 
-- [ ] **Step 21** — `HealthComponent` (cleanest boundary; reads from injected
+- [x] **Step 21** — `HealthComponent` (cleanest boundary; reads from injected
   SpawnPoint; moves `take_damage()` from [ship.gd:303](../../scripts/ship.gd#L303)).
   **Respawn contract:** sets `_hp = max_hp` *before* emitting `health_changed`;
   exactly ONE emission per respawn. **Also owns the `_invincible` cheat

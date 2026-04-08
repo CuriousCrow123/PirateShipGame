@@ -19,8 +19,6 @@ const HIT_TRAUMA: float = 0.85
 const HIT_FLASH_DURATION: float = 0.35
 const HIT_SHAKE_DURATION: float = 0.6
 const HIT_SHAKE_MAX_INTENSITY: float = 5.0
-const HIT_IFRAME_DURATION: float = 1.2
-const RESPAWN_IFRAME_DURATION: float = 2.5
 const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
 
 @export var config: ShipConfig
@@ -39,21 +37,18 @@ var _hit_flash_tween: Tween = null
 var _hit_shake_timer: float = 0.0
 var _hull_original_pos: Vector2 = Vector2.ZERO
 var _sail_original_pos: Vector2 = Vector2.ZERO
-var _health: int = 0
-var _lives: int = 0
-var _iframes_left: float = 0.0
 var _is_dead: bool = false
 var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
 var _spawn_rotation: float = 0.0
 var _blink_tween: Tween = null
-var _invincible: bool = false
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
 @onready var _player_input: PlayerInputComponent = $PlayerInput
+@onready var _health_component: HealthComponent = $Health
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -65,6 +60,7 @@ func _ready() -> void:
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
 	assert(_player_input != null, "Ship: PlayerInput node is missing")
+	assert(_health_component != null, "Ship: Health node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -78,17 +74,35 @@ func _ready() -> void:
 	_sail_original_pos = _sail_sprite.position
 	_spawn_position = global_position
 	_spawn_rotation = rotation
-	_health = stats.max_health
-	_lives = stats.max_lives
 	_apply_config()
-	# Defer so Main has time to wire signals in its own _ready before the
-	# initial health_changed / lives_changed emit.
-	call_deferred("_emit_initial_status")
+	# Wire HealthComponent and re-emit its signals on the legacy Ship signals
+	# so HUD/main.gd subscribers don't notice the seam.
+	_health_component.health_changed.connect(_on_health_changed)
+	_health_component.lives_changed.connect(_on_lives_changed)
+	_health_component.died.connect(_on_health_died)
+	_health_component.respawn_ready.connect(_on_health_respawn_ready)
+	_health_component.game_over.connect(_on_health_game_over)
+	_health_component.invincibility_changed.connect(_on_health_invincibility_changed)
+	_health_component.iframes_started.connect(_start_blink_tween)
+	_health_component.iframes_ended.connect(_end_blink)
+	_health_component.setup(stats)
 
 
-func _emit_initial_status() -> void:
-	health_changed.emit(_health, stats.max_health)
-	lives_changed.emit(_lives, stats.max_lives)
+func _on_health_changed(current: int, maximum: int) -> void:
+	_update_hull_variant(current, maximum)
+	health_changed.emit(current, maximum)
+
+
+func _on_lives_changed(current: int, maximum: int) -> void:
+	lives_changed.emit(current, maximum)
+
+
+func _on_health_game_over() -> void:
+	game_over.emit()
+
+
+func _on_health_invincibility_changed(active: bool) -> void:
+	invincibility_changed.emit(active)
 
 
 func _exit_tree() -> void:
@@ -99,10 +113,6 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _iframes_left > 0.0:
-		_iframes_left -= delta
-		if _iframes_left <= 0.0:
-			_end_blink()
 	if _is_dead:
 		return
 	if _port_cooldown > 0.0:
@@ -185,7 +195,7 @@ func _process_collision_pushback(pushback_scale: float) -> void:
 			# cannonball DPS stays unaffected by ram iframes. Damage is mutual
 			# only when the player is NOT invincible — an invincible player
 			# should just bounce off without harming the enemy either.
-			if _iframes_left <= 0.0 and not _is_dead:
+			if not _health_component.has_iframes() and not _is_dead:
 				take_damage(-collision.get_normal())
 				enemy.take_ram_damage(collision.get_normal())
 			return
@@ -242,13 +252,7 @@ func _spawn_ghost() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Secret Invincible cheat (Shift+5). Checked BEFORE the input_locked
-	# guard so the cheat still toggles during respawn iframes / death.
-	if event is InputEventKey and event.pressed and not event.echo:
-		var key_event: InputEventKey = event
-		if key_event.shift_pressed and key_event.physical_keycode == KEY_5:
-			_toggle_invincibility()
-			return
+	# Invincibility cheat now lives in HealthComponent (A1 fusion).
 	if _input_locked:
 		return
 	if _player_input.is_fire_port_just_pressed(event) and _port_cooldown <= 0.0:
@@ -268,34 +272,19 @@ func get_mine_cooldown_progress() -> float:
 	return clampf(1.0 - (_mine_cooldown_left / stats.mine_cooldown), 0.0, 1.0)
 
 
-func _toggle_invincibility() -> void:
-	_invincible = not _invincible
-	invincibility_changed.emit(_invincible)
-
-
-## Takes a single hit. Respects iframes; decrements HP; fires visual feedback;
-## triggers death at zero. This is the sole public damage entry point.
+## Takes a single hit. The HealthComponent gates iframes/invincibility and
+## fires `iframes_started`/`died` signals which Ship root listens to.
+## Cannonball/SeaMine/ram-collision call this — it stays the public entry point.
 func take_damage(_from_direction: Vector2) -> void:
-	if _is_dead or _iframes_left > 0.0 or _invincible:
+	if _is_dead:
 		return
-	_health -= 1
-	_apply_hit_feedback()
-	_update_hull_variant()
-	health_changed.emit(_health, stats.max_health)
-	if _health <= 0:
-		_enter_death()
-		return
-	_start_iframes(HIT_IFRAME_DURATION)
+	if _health_component.apply_damage(1):
+		_apply_hit_feedback()
 
 
-func _update_hull_variant() -> void:
-	var variant: int = clampi(stats.max_health - _health, 0, 3)
+func _update_hull_variant(current: int, maximum: int) -> void:
+	var variant: int = clampi(maximum - current, 0, 3)
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(variant)
-
-
-func _start_iframes(duration: float) -> void:
-	_iframes_left = duration
-	_start_blink_tween()
 
 
 func _start_blink_tween() -> void:
@@ -313,7 +302,9 @@ func _end_blink() -> void:
 	modulate.a = 1.0
 
 
-func _enter_death() -> void:
+## HealthComponent emitted `died` — clean up the scene presence. The component
+## owns the respawn cooldown and re-emits `respawn_ready` when it elapses.
+func _on_health_died() -> void:
 	_is_dead = true
 	_input_locked = true
 	if _dash_active:
@@ -329,27 +320,13 @@ func _enter_death() -> void:
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
-	_lives -= 1
-	lives_changed.emit(_lives, stats.max_lives)
 	died.emit()
-	if _lives <= 0:
-		# Terminal death — no respawn. Main listens for game_over and shows
-		# the stats screen.
-		game_over.emit()
-		return
-	get_tree().create_timer(stats.respawn_delay).timeout.connect(
-		func() -> void:
-			if is_instance_valid(self):
-				_respawn()
-	)
 
 
-func _respawn() -> void:
+func _on_health_respawn_ready() -> void:
 	global_position = _spawn_position
 	rotation = _spawn_rotation
 	velocity = Vector2.ZERO
-	_health = stats.max_health
-	_update_hull_variant()
 	_is_dead = false
 	_input_locked = false
 	visible = true
@@ -357,8 +334,7 @@ func _respawn() -> void:
 	set_collision_mask_value(2, true)
 	set_collision_mask_value(5, true)
 	respawned.emit()
-	health_changed.emit(_health, stats.max_health)
-	_start_iframes(RESPAWN_IFRAME_DURATION)
+	_health_component.reset_for_respawn()
 
 
 ## Visual-only hit feedback: camera shake + per-sprite shake + white flash.
