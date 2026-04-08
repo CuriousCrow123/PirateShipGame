@@ -119,6 +119,143 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Phase 7 execution retro (added 2026-04-07 after Steps 35–38 landed)
+
+Carry-over items and deviations discovered while executing Phase 7 that
+Phase 8+ must respect or address:
+
+- **`main.gd` final size: 92 LOC** (down from ~454 LOC pre-Phase-7).
+  Already under the <100 LOC Phase 7 acceptance target, so no
+  Phase 11 line-budget follow-up is owed. What remains on main.gd is
+  pure orchestration: `@onready` refs, the `setup()` / `connect()`
+  wiring pass, scene-level input toggles (fullscreen, explosion
+  toggle), `Ship.invincibility_changed` → WaveToast cheat banner, and
+  an `Events.wave_announced` → `WaveToast.show_wave` bridge.
+
+- **WaveToast is still not bus-aware**: `WaveDirector` emits
+  `Events.wave_announced(index)` on the bus per the plan, but
+  `WaveToast` doesn't subscribe yet. `main.gd._on_wave_announced`
+  forwards the bus signal to `_wave_toast.show_wave(wave)`. The
+  invincibility cheat toast still rides `Ship.invincibility_changed`
+  directly and has no bus hop yet. **Phase 9/10 HUD pass:** move
+  WaveToast to a bus subscription + migrate the cheat banner to
+  `Events.cheat_toggled(&"invincibility", active)` (already on the
+  bus, unused). Both of those forwarders can then leave main.gd.
+
+- **`Events.wave_started` / `wave_cleared` are emitted but unused**:
+  WaveDirector publishes `wave_started(wave, enemy_count)` at the
+  `INTERMISSION → SPAWNING` transition. `wave_cleared(index,
+  duration)` is **not yet emitted** because the CLEARING→ENDED /
+  CLEARING→INTERMISSION branches still call `_stats.end_wave()`
+  directly and route victory via `Events.run_ended`. The
+  `wave_cleared` signal is declared on the bus (Phase 1) and will
+  become load-bearing once StatsTracker migrates to bus subscriptions
+  in Phase 8+. **Phase 8 note:** when StatsTracker flips to bus
+  subscriptions, WaveDirector needs to `emit Events.wave_cleared(
+  _current_wave - 1, elapsed)` in both cleared-branch arms, and
+  `end_wave()` migrates off the shared RunStats ref onto a bus
+  handler.
+
+- **RunStats is still shared-by-reference, not bus-driven**: The plan
+  text for Step 37 says "StatsTracker subscribes to bus, updates
+  `GameState.RunStats` via `stat_recorded`". In practice, StatsTracker
+  creates a `RunStats` instance and hands it out via `get_stats()`,
+  which `main.gd._ready` then passes into `WaveDirector.setup()` and
+  `SpawnService.setup()` as a direct reference. Those services call
+  `register_shot_fired()` / `register_shot_hit()` /
+  `register_enemy_destroyed()` / `start_wave()` / `end_wave()` on the
+  shared instance the same way pre-refactor main.gd did. The bus has
+  typed stat signals (`kill_recorded`, `death_recorded`,
+  `damage_recorded`, `wave_time_recorded`) but **nothing emits them
+  yet** — and critically, there is no `shot_fired_recorded` /
+  `shot_hit_recorded` bus signal. Fully migrating StatsTracker to bus
+  subscriptions requires (a) publishers in Ship/Enemy/WaveDirector
+  paths, (b) either adding shot-tracking signals to the bus or
+  keeping those two call sites local, and (c) deleting the shared
+  RunStats ref-threading in `main.gd`. That work is a proper chunk,
+  not a trivial follow-on. **Phase 8 task:** decide on shot-tracking
+  signal shape and land the publishers before Phase 11 Step 46's
+  ADR 013 is written (ADR 013 must accurately describe the final
+  StatsTracker surface, not the Phase 7 transitional form).
+
+- **Cannonball water impact dispatch — two-hop is intentional**:
+  Phase 7 Step 38's Research Delta #10 dispatch path is:
+  `Cannonball.water_impacted` → `WaterEffectsManager.
+  on_cannonball_water_impact` (direct local connection from
+  SpawnService's spawn sites) → `displacement_stamps.spawn_impact()`
+  + `Events.cannonball_water_impact.emit(pos)` → SpawnService's
+  `_on_cannonball_water_impact` bus subscriber → `_mines.duplicate()`
+  snapshot iterate. The local-then-bus split is deliberate so that
+  displacement stays off the bus (Phase 9's water_listener will
+  collapse the displacement half of this) while the mine fan-out
+  stays decoupled from the cannonball spawn site. **Phase 9 water
+  listener note:** when `water_listener.gd` lands, it subscribes to a
+  new `Events.displacement_impact_requested(pos, radius, dur)` and
+  WaterEffectsManager's direct `displacement_stamps.spawn_impact`
+  call becomes a bus emit. The bus re-emit of
+  `cannonball_water_impact` stays as-is — it's the mine cross-
+  coupling dispatch, not a displacement request.
+
+- **Mine destruction displacement stays on direct-call**:
+  `SpawnService._on_mine_destroyed` calls
+  `_water_effects.spawn_displacement_impact(pos, 128.0, 2.5)` — a
+  direct method call on WaterEffectsManager, not a bus emit. Same
+  Phase 9 migration path as above: flip to
+  `Events.displacement_impact_requested` once water_listener lands.
+  The plan's note about `Events.explosion_requested.emit.call_deferred`
+  for mine detonation is a *separate* signal (the VFX explosion VS
+  the water displacement pulse) and neither is bussed yet — Phase 9
+  owns the VFX side via vfx_listener.
+
+- **Reentrancy guard lives on the bus subscriber, not the caller**:
+  Phase 6 Step 34g moved chain-detonation scheduling onto the
+  target-side `SeaMine.schedule_chain_detonation()`, which is
+  idempotent and safe. But the bus handler
+  `SpawnService._on_cannonball_water_impact` still iterates the mine
+  list, and mine detonation can synchronously remove mines from
+  `_mines` via the destroyed → `_on_mine_destroyed` → `_mines.erase`
+  chain. `_mines.duplicate()` is still required at the iteration
+  site. Documented in SpawnService inline.
+
+- **`_physics_process` channels**: three of the four new services
+  leave their process channels at default OFF. WaveDirector enables
+  `_physics_process` for the wave FSM tick (same cadence as
+  pre-refactor main.gd). SpawnService enables `_physics_process` for
+  the distant-enemy despawn pass. WaterEffectsManager enables
+  `_process` for the per-frame shader writes + wake accumulators.
+  StatsTracker is `_process`-OFF by default and only enables itself
+  during the ~1s run-end grace window, disabling in the same handler
+  that fires the results screen (same polled-Cooldown pattern as
+  Phase 6 Step 34a's HealthComponent respawn window).
+
+- **WaveDirector `_ready` asserts on `wave_set` Resource**: the export
+  moved from `Main` to `WaveDirector`'s own instance override in
+  `main.tscn`. If the wave_set export goes missing the assert fires
+  in WaveDirector's own `_ready`, not main.gd's. The error message
+  still identifies the service by name so debugging isn't confused.
+
+- **Class cache hand-edit dance held**: 4 new `class_name`s landed
+  (`WaveDirector`, `SpawnService`, `StatsTracker`,
+  `WaterEffectsManager`) and all 4 were appended to
+  `.godot/global_script_class_cache.cfg` by hand before the first
+  smoke run. Same Phase 4/5 pattern. Editor reopen will regenerate.
+
+- **`gdlint` class-definitions-order pitfall**: WaveDirector tripped
+  `Definition out of order in global scope (class-definitions-order)`
+  because the initial draft ordered `signal → const → enum → @export`.
+  gdlint's class member order is **signals → enums → constants →
+  exports → vars**. Enum must come *before* constants. Fixed by
+  swapping the enum/const order. **Future authors:** the `Cooldown`
+  systems class's existing ordering is a good reference.
+
+- **No GUT tests added**: Phase 7 ships without new unit tests per
+  the plan; Step 45 owns the `test_wave_config.gd` /
+  `test_run_stats.gd` / `test_health_component.gd` suites. Phase 7
+  was verified via gdformat + gdlint clean and a single MCP smoke
+  run (`run_project` → `get_debug_output` → `stop_project`) with
+  zero new errors beyond the pre-existing UID + `Cooldown.start(
+  duration)` shadow set.
+
 ### Phase 0/1 execution retro (added 2026-04-07 after Steps 1\u201310 landed)
 
 Carry-over items discovered while executing Phases 0\u20131 that future steps
