@@ -1,10 +1,15 @@
 class_name Ship
 extends CharacterBody2D
-## Player-controlled ship with floaty, momentum-based movement.
-## Thrust accumulates velocity; viscous drag decays it exponentially.
-## Brake (S key) decelerates to zero via move_toward.
-## Broadside cannons fire perpendicular to the ship (Q = port, E = starboard).
-## Space dashes the ship forward with a tunable feel mode (see DashStats).
+## Player-controlled ship — slim orchestrator that wires its child components
+## together and re-emits their signals for legacy main.gd / HUD subscribers.
+##
+## Behavior lives in components:
+##   PlayerInput  · Movement · Dash · Health · Hurtbox · HitFeedback
+##
+## Phase 4 Steps 21–25 + 32 extracted everything except cannon/broadside/mine
+## drop wiring (Steps 26–28) and audio (Step 32). Ship still owns the legacy
+## broadside/mine/respawn signals on the public surface so main.gd doesn't
+## have to migrate this same commit; Step 27/28 will move those publishers.
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
@@ -22,11 +27,6 @@ signal invincibility_changed(active: bool)
 var _port_cooldown: float = 0.0
 var _starboard_cooldown: float = 0.0
 var _mine_cooldown_left: float = 0.0
-var _dash_ready: bool = true
-var _dash_active: bool = false
-var _dash_remaining: float = 0.0
-var _next_ghost_in: float = 0.0
-var _ghost_additive_material: CanvasItemMaterial
 var _is_dead: bool = false
 var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
@@ -41,6 +41,7 @@ var _spawn_rotation: float = 0.0
 @onready var _movement: MovementComponent = $Movement
 @onready var _hurtbox: HurtboxComponent = $Hurtbox
 @onready var _hit_feedback: HitFeedbackComponent = $HitFeedback
+@onready var _dash: DashComponent = $Dash
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -56,20 +57,14 @@ func _ready() -> void:
 	assert(_movement != null, "Ship: Movement node is missing")
 	assert(_hurtbox != null, "Ship: Hurtbox node is missing")
 	assert(_hit_feedback != null, "Ship: HitFeedback node is missing")
+	assert(_dash != null, "Ship: Dash node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
 	assert(stats != null, "Ship: stats (ShipStats) Resource is missing")
-	# Cached additive material reused across all ghost spawns (Godot does NOT
-	# fork CanvasItemMaterial on assignment — all ghosts share the same RID
-	# and batch together).
-	_ghost_additive_material = CanvasItemMaterial.new()
-	_ghost_additive_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_spawn_position = global_position
 	_spawn_rotation = rotation
 	_apply_config()
-	# Wire HealthComponent and re-emit its signals on the legacy Ship signals
-	# so HUD/main.gd subscribers don't notice the seam.
 	_hit_feedback.setup(self, _hull_sprite, _sail_sprite)
 	_health_component.health_changed.connect(_on_health_changed)
 	_health_component.lives_changed.connect(_on_lives_changed)
@@ -83,6 +78,9 @@ func _ready() -> void:
 	_movement.setup(self, stats, _player_input)
 	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
 	_hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
+	_dash.setup(self, dash_stats, _player_input, _fire_effect, _ghost_sources, _ghost_container)
+	_dash.dash_started.connect(_on_dash_started)
+	_dash.dash_ended.connect(_on_dash_ended)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -102,11 +100,12 @@ func _on_health_invincibility_changed(active: bool) -> void:
 	invincibility_changed.emit(active)
 
 
-func _exit_tree() -> void:
-	# Defensive: if a time_dip lambda failed mid-burst (freed instance, etc.),
-	# make sure we never leave the engine in scaled time when the ship leaves.
-	if not is_equal_approx(Engine.time_scale, 1.0):
-		Engine.time_scale = 1.0
+func _on_dash_started() -> void:
+	_movement.set_enabled(false)
+
+
+func _on_dash_ended() -> void:
+	_movement.set_enabled(true)
 
 
 func _physics_process(delta: float) -> void:
@@ -119,43 +118,6 @@ func _physics_process(delta: float) -> void:
 	if _mine_cooldown_left > 0.0:
 		_mine_cooldown_left -= delta
 
-	# Dash motion still lives on Ship; Step 25 (DashComponent) extracts it.
-	# While dashing, MovementComponent is disabled and Ship drives the body
-	# directly via the dash branch below. Otherwise MovementComponent ticks
-	# itself in its own _physics_process.
-	if _dash_active:
-		_tick_dash_physics(delta)
-
-
-func _tick_dash_physics(delta: float) -> void:
-	_dash_remaining -= delta
-	if _dash_remaining <= 0.0:
-		_end_dash()
-		# MovementComponent re-enables on _end_dash and will tick its own
-		# physics next frame; no need to apply normal movement this frame.
-		return
-	var is_braking: bool = _player_input.is_brake_pressed()
-	var turn_input: float = _player_input.get_turn_axis()
-	match dash_stats.feel_mode:
-		DashStats.FeelMode.LOCKED_HEADING:
-			velocity *= stats.linear_drag
-			# stats.thrust + steering ignored during locked-heading burst
-		DashStats.FeelMode.STEERABLE:
-			if not is_braking and _player_input.is_thrust_pressed():
-				velocity += transform.y * stats.thrust * delta
-			velocity *= stats.linear_drag
-			rotation += turn_input * stats.turn_speed * delta
-		DashStats.FeelMode.VELOCITY_ALIGNED:
-			velocity *= stats.linear_drag
-			rotation += turn_input * stats.turn_speed * delta
-		DashStats.FeelMode.OVERSPEED_CAP:
-			if not is_braking and _player_input.is_thrust_pressed():
-				velocity += transform.y * stats.thrust * delta
-			velocity *= dash_stats.overspeed_drag
-			rotation += turn_input * stats.turn_speed * delta
-	move_and_slide()
-	_movement.process_collision_pushback(dash_stats.collision_pushback_scale)
-
 
 func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
 	# Mutual ram damage; iframes guard multi-hits. Damage is mutual only when
@@ -164,55 +126,6 @@ func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
 		return
 	take_damage(-normal)
 	(enemy as EnemyShip).take_ram_damage(normal)
-
-
-func _process(delta: float) -> void:
-	# Visuals run on render frames so the burst animates smoothly on
-	# high-refresh displays. Motion stays in _physics_process.
-	if _dash_active:
-		_tick_dash_visuals(delta)
-
-
-func _tick_dash_visuals(delta: float) -> void:
-	var t: float = 1.0 - clampf(_dash_remaining / dash_stats.duration, 0.0, 1.0)
-	var dash_strength: float = 1.0
-	if dash_stats.intensity_curve != null:
-		dash_strength = dash_stats.intensity_curve.sample_baked(t)
-	_fire_effect.set_dash_strength(dash_strength)
-	# Ghost trail spawn ticker.
-	if dash_stats.ghost_count > 0:
-		_next_ghost_in -= delta
-		if _next_ghost_in <= 0.0:
-			_spawn_ghost()
-			_next_ghost_in = dash_stats.ghost_spawn_interval
-
-
-func _spawn_ghost() -> void:
-	if _ghost_container == null:
-		return
-	for src: Sprite2D in _ghost_sources:
-		if src == null:
-			continue
-		var ghost: Sprite2D = Sprite2D.new()
-		ghost.texture = src.texture
-		ghost.region_enabled = src.region_enabled
-		ghost.region_rect = src.region_rect
-		ghost.centered = src.centered
-		ghost.offset = src.offset
-		ghost.global_transform = src.global_transform
-		ghost.modulate = dash_stats.ghost_start_tint
-		# Render ghosts above the ship (ship.z_index = 2). Absolute z since the
-		# ghost is reparented to the world container, not the ship.
-		ghost.z_as_relative = false
-		ghost.z_index = 10
-		if dash_stats.ghost_additive:
-			ghost.material = _ghost_additive_material
-		_ghost_container.add_child(ghost)
-		var tw: Tween = ghost.create_tween()
-		tw.tween_property(
-			ghost, "modulate", dash_stats.ghost_end_tint, dash_stats.ghost_fade_duration
-		)
-		tw.tween_callback(ghost.queue_free)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -225,8 +138,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_broadside("starboard")
 	elif _player_input.is_drop_mine_just_pressed(event) and _mine_cooldown_left <= 0.0:
 		_drop_mine()
-	elif _player_input.is_dash_just_pressed(event) and _dash_ready and not _dash_active:
-		_start_dash()
+	elif _player_input.is_dash_just_pressed(event):
+		_dash.try_start()
 
 
 ## 0.0 = just dropped (fully on cooldown), 1.0 = ready to drop again.
@@ -252,7 +165,7 @@ func _apply_damage() -> void:
 	if _is_dead:
 		return
 	if _health_component.apply_damage(1):
-		_apply_hit_feedback()
+		_hit_feedback.play_hit()
 
 
 func _update_hull_variant(current: int, maximum: int) -> void:
@@ -266,8 +179,7 @@ func _on_health_died() -> void:
 	_is_dead = true
 	_input_locked = true
 	_movement.set_locked(true)
-	if _dash_active:
-		_end_dash()
+	_dash.stop()
 	_hit_feedback.end_blink()
 	velocity = Vector2.ZERO
 	visible = false
@@ -297,10 +209,6 @@ func _on_health_respawn_ready() -> void:
 	_hurtbox.set_active(true)
 	respawned.emit()
 	_health_component.reset_for_respawn()
-
-
-func _apply_hit_feedback() -> void:
-	_hit_feedback.play_hit()
 
 
 ## Applies a new ship configuration, updating sprites and cannon slots.
@@ -348,90 +256,3 @@ func _drop_mine() -> void:
 	var drop_pos: Vector2 = global_position - transform.y * 24.0
 	mine_dropped.emit(drop_pos)
 	_mine_cooldown_left = stats.mine_cooldown
-
-
-func _start_dash() -> void:
-	_dash_ready = false
-	_dash_active = true
-	_dash_remaining = dash_stats.duration
-	# Hand motion off to Ship's local dash branch; MovementComponent stops
-	# ticking until _end_dash flips this back. Step 25 will move both halves
-	# into DashComponent and Movement gets a single set_enabled toggle.
-	_movement.set_enabled(false)
-
-	# Apply initial impulse based on feel mode.
-	match dash_stats.feel_mode:
-		DashStats.FeelMode.VELOCITY_ALIGNED:
-			if velocity.length() < 1.0:
-				velocity += transform.y * dash_stats.impulse_speed
-			else:
-				velocity += velocity.normalized() * dash_stats.impulse_speed
-		_:
-			# Dash has three behaviors at once:
-			# - Forward component is kept (so dashing while already moving
-			#   forward stacks → actually goes faster).
-			# - Backward component is discarded (reverse dash = clean reset,
-			#   not an anemic trickle fighting prior momentum).
-			# - Perpendicular component is discarded (sharp turn-dashes
-			#   don't get dragged sideways by prior drift).
-			var forward: Vector2 = transform.y
-			var kept_forward_speed: float = maxf(velocity.dot(forward), 0.0)
-			velocity = forward * (kept_forward_speed + dash_stats.impulse_speed)
-
-	# Push current fire-config uniforms onto the 3D effect and start emitting.
-	# The effect renders into a 32x64 SubViewport for pixel-art crunch and
-	# composites back into 2D via SubViewportContainer.
-	_fire_effect.start(dash_stats)
-
-	# Reset ghost spawn timer so the first ghost spawns next render tick.
-	_next_ghost_in = 0.0
-
-	# Bump shake trauma via the bus — GameCamera owns the shake state now.
-	Events.screen_shake_requested.emit(dash_stats.shake_trauma_initial)
-
-	# Optional zoom punch — GameCamera's bus listener tweens its own zoom.
-	if dash_stats.zoom_punch_duration > 0.0:
-		Events.camera_zoom_punch_requested.emit(
-			dash_stats.zoom_punch_target, dash_stats.zoom_punch_duration
-		)
-
-	# Optional Celeste-style freeze frames at burst start.
-	if dash_stats.freeze_frames > 0:
-		var freeze_seconds: float = float(dash_stats.freeze_frames) / 60.0
-		Engine.time_scale = 0.0
-		# process_always=true, ignore_time_scale=true so the timer fires in
-		# real time even with Engine.time_scale = 0.
-		get_tree().create_timer(freeze_seconds, true, false, true).timeout.connect(
-			func() -> void:
-				if is_instance_valid(self):
-					Engine.time_scale = 1.0
-		)
-	# Optional time-scale dip (mutually exclusive in practice with freeze; if
-	# both are set, freeze wins because it sets time_scale = 0 first).
-	elif dash_stats.time_dip_value < 1.0 and dash_stats.time_dip_duration > 0.0:
-		Engine.time_scale = dash_stats.time_dip_value
-		get_tree().create_timer(dash_stats.time_dip_duration, true, false, true).timeout.connect(
-			func() -> void:
-				if is_instance_valid(self):
-					Engine.time_scale = 1.0
-		)
-
-	get_tree().create_timer(dash_stats.cooldown).timeout.connect(
-		func() -> void:
-			if is_instance_valid(self):
-				_dash_ready = true
-	)
-
-
-func _end_dash() -> void:
-	_dash_active = false
-	_dash_remaining = 0.0
-	_movement.set_enabled(true)
-	# Effect resets DashStrength to 0 internally and schedules SubViewport
-	# shutdown after particles fully die. In-flight particles still drift and
-	# fade naturally during the tail.
-	_fire_effect.stop()
-	# Defensive: if a dip lambda hasn't fired yet (or won't), restore time
-	# scale here so a stalled dip can't outlive the burst.
-	if not is_equal_approx(Engine.time_scale, 1.0):
-		Engine.time_scale = 1.0

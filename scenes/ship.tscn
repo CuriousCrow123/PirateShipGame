@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/movement_component.gd" id="9_movement"]
 [ext_resource type="Script" path="res://scripts/hurtbox_component.gd" id="10_hurtbox"]
 [ext_resource type="Script" path="res://scripts/hit_feedback_component.gd" id="11_hit_feedback"]
+[ext_resource type="Script" path="res://scripts/dash_component.gd" id="12_dash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -47,6 +48,9 @@ shape = SubResource("RectangleShape2D_hull")
 
 [node name="HitFeedback" type="Node" parent="."]
 script = ExtResource("11_hit_feedback")
+
+[node name="Dash" type="Node" parent="."]
+script = ExtResource("12_dash")
 
 [node name="HullSprite" type="Sprite2D" parent="." unique_id=1672109739]
 scale = Vector2(0.5, 0.5)

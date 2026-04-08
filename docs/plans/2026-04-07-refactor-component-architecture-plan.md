@@ -1145,7 +1145,7 @@ launch, play one wave, die, respawn, verify.**
   emits `screen_shake_requested`). Moves code at
   [ship.gd:390-413](../../scripts/ship.gd#L390-L413) and iframe blink at
   326-340. **`shake_on_hit: bool` export** — player=true, enemy=false.
-- [ ] **Step 25** — `DashComponent` (dash impulse, cooldown, freeze frames,
+- [x] **Step 25** — `DashComponent` (dash impulse, cooldown, freeze frames,
   time-dip). **Owns `Engine.time_scale` writes** at
   [ship.gd:513, 524, 547](../../scripts/ship.gd#L513) **and the defensive
   `_exit_tree()` reset** at [ship.gd:102](../../scripts/ship.gd#L102) — the
