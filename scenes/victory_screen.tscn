@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvictory0001"]
+
+[ext_resource type="PackedScene" uid="uid://bv0gameover01" path="res://scenes/game_over_screen.tscn" id="1_base"]
+
+[node name="VictoryScreen" instance=ExtResource("1_base")]

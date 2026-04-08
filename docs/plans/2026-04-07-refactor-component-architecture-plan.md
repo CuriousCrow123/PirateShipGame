@@ -880,7 +880,7 @@ Phase 6 must address all 10. Unit-tested.
 
 #### Phase 3.5 — Victory screen (small new feature)
 
-- [ ] **Step 20a** — Create `features/hud/victory_screen.tscn` as a sibling of
+- [x] **Step 20a** — Create `features/hud/victory_screen.tscn` as a sibling of
   `game_over_screen.tscn`, reading from the same `RunStats`. Wire
   `WaveDirector` to emit `run_ended(stats, victory: bool)` with
   `victory = true` when the last `WaveConfig` in the active `WaveSet` clears.

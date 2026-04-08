@@ -3,7 +3,7 @@ extends Node2D
 ## keeps the displacement viewport tracking the ship, spawns cannonballs,
 ## and manages enemy ship spawning/despawning, wake trails, and displacement.
 
-enum WavePhase { INTERMISSION, SPAWNING, CLEARING }
+enum WavePhase { INTERMISSION, SPAWNING, CLEARING, ENDED }
 
 const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
 const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
@@ -47,6 +47,7 @@ var _stats: RunStats = null
 @onready var _wave_toast: WaveToast = $WaveToast
 @onready var _lives_display: LivesDisplay = $LivesDisplay
 @onready var _game_over_screen: GameOverScreen = $GameOverScreen
+@onready var _victory_screen: GameOverScreen = $VictoryScreen
 @onready var _mine_cooldown_display: MineCooldownDisplay = $MineCooldownDisplay
 @onready var _camera: GameCamera = $GameCamera
 
@@ -62,6 +63,7 @@ func _ready() -> void:
 	assert(_wave_toast != null, "Main: WaveToast not found")
 	assert(_lives_display != null, "Main: LivesDisplay not found")
 	assert(_game_over_screen != null, "Main: GameOverScreen not found")
+	assert(_victory_screen != null, "Main: VictoryScreen not found")
 	assert(_mine_cooldown_display != null, "Main: MineCooldownDisplay not found")
 	assert(_camera != null, "Main: GameCamera not found")
 	assert(wave_set != null, "Main: wave_set (WaveSet) Resource is missing")
@@ -88,6 +90,7 @@ func _ready() -> void:
 	_ship.respawned.connect(_on_ship_respawned)
 	_ship.game_over.connect(_on_game_over)
 	_ship.invincibility_changed.connect(_on_invincibility_changed)
+	Events.run_ended.connect(_on_run_ended)
 	_minimap_display.setup(_ship)
 	_hp_display.setup(_ship)
 	_lives_display.setup(_ship)
@@ -199,13 +202,27 @@ func _on_invincibility_changed(active: bool) -> void:
 
 
 func _on_game_over() -> void:
+	# Guard against a victory→death race: if the last wave already cleared
+	# and we're waiting on the 1s grace timer, swallow the death.
+	if _wave_phase == WavePhase.ENDED:
+		return
 	# The in-progress wave is intentionally NOT closed out — only fully
-	# completed waves get a row in the stats list.
-	# Short grace so the death explosion + HP drain reads before the panel
-	# slides in.
+	# completed waves get a row in the stats list. Halt wave progression so
+	# no new enemies spawn between death and the run_ended route.
+	_wave_phase = WavePhase.ENDED
+	Events.run_ended.emit(_stats, false)
+
+
+func _on_run_ended(stats: RunStats, victory: bool) -> void:
+	# Short grace so the death explosion + HP drain (or final-wave clear
+	# flourish) reads before the panel slides in.
 	await get_tree().create_timer(1.0).timeout
-	if is_instance_valid(_game_over_screen):
-		_game_over_screen.show_results(_stats)
+	if victory:
+		if is_instance_valid(_victory_screen):
+			_victory_screen.show_results(stats, true)
+	else:
+		if is_instance_valid(_game_over_screen):
+			_game_over_screen.show_results(stats, false)
 
 
 func _on_enemy_cannon_fired(pos: Vector2, dir: Vector2) -> void:
@@ -274,10 +291,20 @@ func _update_wave_state(delta: float) -> void:
 		WavePhase.CLEARING:
 			if _alive_enemy_count() == 0:
 				_stats.end_wave()
-				# Pull the next wave's intermission duration from the WaveSet
-				# so designers can tune per-wave breathers.
-				_intermission_timer = _wave_config_for(_current_wave).intermission_duration
-				_wave_phase = WavePhase.INTERMISSION
+				# Phase 3.5: if the cleared wave was the last one in the
+				# active WaveSet, end the run with a victory instead of
+				# rolling into another intermission.
+				if wave_set.is_final_wave(_current_wave - 1):
+					_wave_phase = WavePhase.ENDED
+					Events.run_ended.emit(_stats, true)
+				else:
+					# Pull the next wave's intermission duration from the
+					# WaveSet so designers can tune per-wave breathers.
+					_intermission_timer = (_wave_config_for(_current_wave).intermission_duration)
+					_wave_phase = WavePhase.INTERMISSION
+		WavePhase.ENDED:
+			# Run over — no further spawning, ticking, or state changes.
+			pass
 
 
 func _begin_wave(wave: int) -> void:

@@ -4,6 +4,10 @@ extends CanvasLayer
 ## panel into view. Shows enemies sunk, shots fired, hit rate, and a scrollable
 ## list of per-wave completion times. Restart button reloads the current scene.
 ##
+## Phase 3.5: same scene+script drives both the defeat and victory screens.
+## `show_results(stats, victory)` picks the title/subtitle. The victory variant
+## lives at scenes/victory_screen.tscn (scene inheritance — same structure).
+##
 ## The Panel is auto-sized and centered by a full-rect CenterContainer, so we
 ## animate the slide by tweening the CanvasLayer's `offset` (a uniform child
 ## translation) instead of fighting the container's layout pass on the Panel's
@@ -17,6 +21,7 @@ var _active_tween: Tween = null
 
 @onready var _background: ColorRect = $Background
 @onready var _panel: PanelContainer = $Centerer/Panel
+@onready var _title: Label = %Title
 @onready var _subtitle: Label = %Subtitle
 @onready var _enemies_label: Label = %EnemiesValue
 @onready var _mine_kills_label: Label = %MineKillsValue
@@ -38,8 +43,8 @@ func _ready() -> void:
 	_restart_button.pressed.connect(_on_restart_pressed)
 
 
-func show_results(stats: RunStats) -> void:
-	_populate(stats)
+func show_results(stats: RunStats, victory: bool = false) -> void:
+	_populate(stats, victory)
 	_panel.visible = true
 	_background.visible = true
 	offset = Vector2(0.0, SLIDE_OFFSET_Y)
@@ -65,8 +70,13 @@ func _on_slide_in_complete() -> void:
 	_restart_button.grab_focus()
 
 
-func _populate(stats: RunStats) -> void:
-	_subtitle.text = "scuttled at wave %d" % maxi(stats.final_wave, 1)
+func _populate(stats: RunStats, victory: bool) -> void:
+	if victory:
+		_title.text = "VICTORY"
+		_subtitle.text = "cleared all %d waves" % maxi(stats.waves_cleared, 1)
+	else:
+		_title.text = "GAME OVER"
+		_subtitle.text = "scuttled at wave %d" % maxi(stats.final_wave, 1)
 	_enemies_label.text = str(stats.kills)
 	_mine_kills_label.text = str(stats.enemies_destroyed_by_mine)
 	_shots_label.text = str(stats.player_shots_fired)
