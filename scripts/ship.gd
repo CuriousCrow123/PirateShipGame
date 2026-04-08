@@ -15,12 +15,6 @@ signal respawned
 signal game_over
 signal invincibility_changed(active: bool)
 
-const HIT_TRAUMA: float = 0.85
-const HIT_FLASH_DURATION: float = 0.35
-const HIT_SHAKE_DURATION: float = 0.6
-const HIT_SHAKE_MAX_INTENSITY: float = 5.0
-const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
-
 @export var config: ShipConfig
 @export var dash_stats: DashStats
 @export var stats: ShipStats
@@ -33,15 +27,10 @@ var _dash_active: bool = false
 var _dash_remaining: float = 0.0
 var _next_ghost_in: float = 0.0
 var _ghost_additive_material: CanvasItemMaterial
-var _hit_flash_tween: Tween = null
-var _hit_shake_timer: float = 0.0
-var _hull_original_pos: Vector2 = Vector2.ZERO
-var _sail_original_pos: Vector2 = Vector2.ZERO
 var _is_dead: bool = false
 var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
 var _spawn_rotation: float = 0.0
-var _blink_tween: Tween = null
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
@@ -51,6 +40,7 @@ var _blink_tween: Tween = null
 @onready var _health_component: HealthComponent = $Health
 @onready var _movement: MovementComponent = $Movement
 @onready var _hurtbox: HurtboxComponent = $Hurtbox
+@onready var _hit_feedback: HitFeedbackComponent = $HitFeedback
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -65,6 +55,7 @@ func _ready() -> void:
 	assert(_health_component != null, "Ship: Health node is missing")
 	assert(_movement != null, "Ship: Movement node is missing")
 	assert(_hurtbox != null, "Ship: Hurtbox node is missing")
+	assert(_hit_feedback != null, "Ship: HitFeedback node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -74,21 +65,20 @@ func _ready() -> void:
 	# and batch together).
 	_ghost_additive_material = CanvasItemMaterial.new()
 	_ghost_additive_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	_hull_original_pos = _hull_sprite.position
-	_sail_original_pos = _sail_sprite.position
 	_spawn_position = global_position
 	_spawn_rotation = rotation
 	_apply_config()
 	# Wire HealthComponent and re-emit its signals on the legacy Ship signals
 	# so HUD/main.gd subscribers don't notice the seam.
+	_hit_feedback.setup(self, _hull_sprite, _sail_sprite)
 	_health_component.health_changed.connect(_on_health_changed)
 	_health_component.lives_changed.connect(_on_lives_changed)
 	_health_component.died.connect(_on_health_died)
 	_health_component.respawn_ready.connect(_on_health_respawn_ready)
 	_health_component.game_over.connect(_on_health_game_over)
 	_health_component.invincibility_changed.connect(_on_health_invincibility_changed)
-	_health_component.iframes_started.connect(_start_blink_tween)
-	_health_component.iframes_ended.connect(_end_blink)
+	_health_component.iframes_started.connect(_hit_feedback.start_blink)
+	_health_component.iframes_ended.connect(_hit_feedback.end_blink)
 	_health_component.setup(stats)
 	_movement.setup(self, stats, _player_input)
 	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
@@ -181,7 +171,6 @@ func _process(delta: float) -> void:
 	# high-refresh displays. Motion stays in _physics_process.
 	if _dash_active:
 		_tick_dash_visuals(delta)
-	_process_hit_shake(delta)
 
 
 func _tick_dash_visuals(delta: float) -> void:
@@ -271,21 +260,6 @@ func _update_hull_variant(current: int, maximum: int) -> void:
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(variant)
 
 
-func _start_blink_tween() -> void:
-	if _blink_tween and _blink_tween.is_valid():
-		_blink_tween.kill()
-	_blink_tween = create_tween().set_loops()
-	_blink_tween.tween_property(self, "modulate:a", 0.35, IFRAME_BLINK_INTERVAL)
-	_blink_tween.tween_property(self, "modulate:a", 1.0, IFRAME_BLINK_INTERVAL)
-
-
-func _end_blink() -> void:
-	if _blink_tween and _blink_tween.is_valid():
-		_blink_tween.kill()
-	_blink_tween = null
-	modulate.a = 1.0
-
-
 ## HealthComponent emitted `died` — clean up the scene presence. The component
 ## owns the respawn cooldown and re-emits `respawn_ready` when it elapses.
 func _on_health_died() -> void:
@@ -294,7 +268,7 @@ func _on_health_died() -> void:
 	_movement.set_locked(true)
 	if _dash_active:
 		_end_dash()
-	_end_blink()
+	_hit_feedback.end_blink()
 	velocity = Vector2.ZERO
 	visible = false
 	# Disable collisions without tearing down the node so Main's signal
@@ -325,31 +299,8 @@ func _on_health_respawn_ready() -> void:
 	_health_component.reset_for_respawn()
 
 
-## Visual-only hit feedback: camera shake + per-sprite shake + white flash.
 func _apply_hit_feedback() -> void:
-	Events.screen_shake_requested.emit(HIT_TRAUMA)
-	_hit_shake_timer = HIT_SHAKE_DURATION
-	if _hit_flash_tween and _hit_flash_tween.is_valid():
-		_hit_flash_tween.kill()
-	modulate = Color(3.0, 3.0, 3.0, 1.0)
-	_hit_flash_tween = create_tween()
-	_hit_flash_tween.tween_property(self, "modulate", Color.WHITE, HIT_FLASH_DURATION)
-
-
-func _process_hit_shake(delta: float) -> void:
-	if _hit_shake_timer <= 0.0:
-		return
-	_hit_shake_timer -= delta
-	if _hit_shake_timer <= 0.0:
-		_hull_sprite.position = _hull_original_pos
-		_sail_sprite.position = _sail_original_pos
-		return
-	var intensity: float = _hit_shake_timer / HIT_SHAKE_DURATION * HIT_SHAKE_MAX_INTENSITY
-	var offset: Vector2 = Vector2(
-		roundf(randf_range(-intensity, intensity)), roundf(randf_range(-intensity, intensity))
-	)
-	_hull_sprite.position = _hull_original_pos + offset
-	_sail_sprite.position = _sail_original_pos + offset
+	_hit_feedback.play_hit()
 
 
 ## Applies a new ship configuration, updating sprites and cannon slots.

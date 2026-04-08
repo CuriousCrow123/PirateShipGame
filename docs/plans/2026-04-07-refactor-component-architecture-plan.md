@@ -1141,7 +1141,7 @@ launch, play one wave, die, respawn, verify.**
   resolve the opposing Ship root. Toggles to `monitoring` use
   `set_deferred("monitoring", false)` to avoid "can't change state during
   query flush" errors when disabling during a contact callback.
-- [ ] **Step 24** — `HitFeedbackComponent` (flash + hit shake + iframe blink +
+- [x] **Step 24** — `HitFeedbackComponent` (flash + hit shake + iframe blink +
   emits `screen_shake_requested`). Moves code at
   [ship.gd:390-413](../../scripts/ship.gd#L390-L413) and iframe blink at
   326-340. **`shake_on_hit: bool` export** — player=true, enemy=false.
