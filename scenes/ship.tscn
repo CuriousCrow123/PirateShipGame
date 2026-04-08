@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/broadside_component.gd" id="13_broadside"]
 [ext_resource type="Script" path="res://scripts/mine_drop_component.gd" id="14_mine_drop"]
 [ext_resource type="Script" path="res://scripts/audio_emitter_component.gd" id="15_audio_emitter"]
+[ext_resource type="Script" path="res://scripts/ship_fsm.gd" id="16_ship_fsm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -27,6 +28,9 @@ collision_mask = 2
 script = ExtResource("1_ship")
 config = ExtResource("4_config")
 dash_stats = ExtResource("5_dash_config")
+
+[node name="FSM" type="Node" parent="."]
+script = ExtResource("16_ship_fsm")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("8_health")

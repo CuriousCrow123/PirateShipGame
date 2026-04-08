@@ -3,9 +3,10 @@ extends Node
 
 ## Visual-only damage feedback: white flash on the parent CanvasItem,
 ## per-sprite shake on hull/sail, iframe blink, and an outgoing screen-shake
-## request on the Events bus. Listens to HealthComponent.iframes_started/
+## request on the Events bus. Listens to ShipFSM.iframes_started/
 ## iframes_ended for the blink envelope so the entity root doesn't have to
-## drive it manually.
+## drive it manually. (Phase 5 Step 33: signal moved from HealthComponent
+## to ShipFSM along with the iframe state itself.)
 ##
 ## Phase 4 Step 24: extracted from ship.gd's _apply_hit_feedback,
 ## _process_hit_shake, and _start_blink_tween / _end_blink. The
@@ -68,7 +69,7 @@ func play_hit() -> void:
 	_flash_tween.tween_property(_target, "modulate", Color.WHITE, HIT_FLASH_DURATION)
 
 
-## Wired by the entity root to HealthComponent.iframes_started.
+## Wired by the entity root to ShipFSM.iframes_started.
 func start_blink() -> void:
 	if _blink_tween and _blink_tween.is_valid():
 		_blink_tween.kill()
@@ -77,7 +78,7 @@ func start_blink() -> void:
 	_blink_tween.tween_property(_target, "modulate:a", 1.0, IFRAME_BLINK_INTERVAL)
 
 
-## Wired by the entity root to HealthComponent.iframes_ended.
+## Wired by the entity root to ShipFSM.iframes_ended.
 func end_blink() -> void:
 	if _blink_tween and _blink_tween.is_valid():
 		_blink_tween.kill()

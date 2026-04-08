@@ -4,12 +4,19 @@ extends CharacterBody2D
 ## together and re-emits their signals for legacy main.gd / HUD subscribers.
 ##
 ## Behavior lives in components:
-##   PlayerInput  · Movement · Dash · Health · Hurtbox · HitFeedback
+##   PlayerInput · Movement · Dash · Health · Hurtbox · HitFeedback · FSM
 ##
 ## Phase 4 Steps 21–25 + 32 extracted everything except cannon/broadside/mine
 ## drop wiring (Steps 26–28) and audio (Step 32). Ship still owns the legacy
 ## broadside/mine/respawn signals on the public surface so main.gd doesn't
 ## have to migrate this same commit; Step 27/28 will move those publishers.
+##
+## Phase 5 Step 33: the 5 flag-soup vars (`_is_dead`, `_input_locked`,
+## `_dash_active`, `_iframes_left`, `_invincible`) are gone. ShipFSM owns
+## the discrete state. Ship listens to FSM.state_changed for death/respawn
+## scene cleanup, and translates DashComponent / HealthComponent signals
+## into FSM transitions. MovementComponent, HurtboxComponent, and
+## PlayerInputComponent each subscribe to the FSM directly.
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
@@ -24,8 +31,6 @@ signal invincibility_changed(active: bool)
 @export var dash_stats: DashStats
 @export var stats: ShipStats
 
-var _is_dead: bool = false
-var _input_locked: bool = false
 var _spawn_position: Vector2 = Vector2.ZERO
 var _spawn_rotation: float = 0.0
 
@@ -33,6 +38,7 @@ var _spawn_rotation: float = 0.0
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
+@onready var _fsm: ShipFSM = $FSM
 @onready var _player_input: PlayerInputComponent = $PlayerInput
 @onready var _health_component: HealthComponent = $Health
 @onready var _movement: MovementComponent = $Movement
@@ -52,6 +58,7 @@ func _ready() -> void:
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
+	assert(_fsm != null, "Ship: FSM node is missing")
 	assert(_player_input != null, "Ship: PlayerInput node is missing")
 	assert(_health_component != null, "Ship: Health node is missing")
 	assert(_movement != null, "Ship: Movement node is missing")
@@ -69,15 +76,20 @@ func _ready() -> void:
 	_spawn_rotation = rotation
 	_apply_config()
 	_hit_feedback.setup(self, _hull_sprite, _sail_sprite)
+	# FSM authority — wire it BEFORE the components that subscribe to it.
+	_fsm.state_changed.connect(_on_fsm_state_changed)
+	_fsm.iframes_started.connect(_hit_feedback.start_blink)
+	_fsm.iframes_ended.connect(_hit_feedback.end_blink)
+	_fsm.invincibility_changed.connect(_on_fsm_invincibility_changed)
+	_player_input.connect_fsm(_fsm)
+	_movement.connect_fsm(_fsm)
+	_hurtbox.connect_fsm(_fsm)
 	_health_component.health_changed.connect(_on_health_changed)
 	_health_component.lives_changed.connect(_on_lives_changed)
 	_health_component.died.connect(_on_health_died)
 	_health_component.respawn_ready.connect(_on_health_respawn_ready)
 	_health_component.game_over.connect(_on_health_game_over)
-	_health_component.invincibility_changed.connect(_on_health_invincibility_changed)
-	_health_component.iframes_started.connect(_hit_feedback.start_blink)
-	_health_component.iframes_ended.connect(_hit_feedback.end_blink)
-	_health_component.setup(stats)
+	_health_component.setup(stats, _fsm)
 	_movement.setup(self, stats, _player_input)
 	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
 	_hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
@@ -111,31 +123,38 @@ func _on_health_game_over() -> void:
 	game_over.emit()
 
 
-func _on_health_invincibility_changed(active: bool) -> void:
+func _on_fsm_invincibility_changed(active: bool) -> void:
 	invincibility_changed.emit(active)
 
 
+func _on_fsm_state_changed(old: int, new_state: int) -> void:
+	# Death scene cleanup happens on entry to DEAD; respawn scene restoration
+	# happens on exit. The FSM doesn't touch the scene tree itself.
+	if new_state == ShipFSM.State.DEAD:
+		_enter_dead_scene_state()
+	elif old == ShipFSM.State.DEAD:
+		_exit_dead_scene_state()
+
+
 func _on_dash_started() -> void:
-	_movement.set_enabled(false)
+	_fsm.enter_dashing()
 
 
 func _on_dash_ended() -> void:
-	_movement.set_enabled(true)
+	_fsm.exit_dashing()
 
 
 func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
 	# Mutual ram damage; iframes guard multi-hits. Damage is mutual only when
 	# the player is NOT invincible — an invincible player just bounces off.
-	if _health_component.has_iframes() or _is_dead:
+	if not _fsm.is_vulnerable():
 		return
 	take_damage(-normal)
 	(enemy as EnemyShip).take_ram_damage(normal)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Invincibility cheat now lives in HealthComponent (A1 fusion).
-	if _input_locked:
-		return
+	# PlayerInput's getters are FSM-gated, so DEAD state silently no-ops.
 	if _player_input.is_fire_port_just_pressed(event):
 		_broadside.fire_port()
 	elif _player_input.is_fire_starboard_just_pressed(event):
@@ -166,8 +185,6 @@ func _on_hurtbox_hit_taken(_source: Node) -> void:
 
 
 func _apply_damage() -> void:
-	if _is_dead:
-		return
 	if _health_component.apply_damage(1):
 		_hit_feedback.play_hit()
 
@@ -177,14 +194,18 @@ func _update_hull_variant(current: int, maximum: int) -> void:
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(variant)
 
 
-## HealthComponent emitted `died` — clean up the scene presence. The component
-## owns the respawn cooldown and re-emits `respawn_ready` when it elapses.
+## HealthComponent emitted `died` — re-emit on the legacy ship surface.
+## Scene-tree cleanup happens via the FSM.state_changed handler so the
+## death side-effects fire even if the entity is killed by a code path
+## that doesn't route through HealthComponent.
 func _on_health_died() -> void:
-	_is_dead = true
-	_input_locked = true
-	_movement.set_locked(true)
+	died.emit()
+
+
+## Scene cleanup for entering DEAD. Driven by FSM, not by Health.died, so
+## any future code that pushes the FSM into DEAD will run the same cleanup.
+func _enter_dead_scene_state() -> void:
 	_dash.stop()
-	_hit_feedback.end_blink()
 	velocity = Vector2.ZERO
 	visible = false
 	# Disable collisions without tearing down the node so Main's signal
@@ -192,26 +213,27 @@ func _on_health_died() -> void:
 	set_collision_layer_value(1, false)
 	set_collision_mask_value(2, false)  # enemies
 	set_collision_mask_value(5, false)  # enemy projectiles
-	_hurtbox.set_active(false)
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
-	died.emit()
+
+
+func _exit_dead_scene_state() -> void:
+	visible = true
+	set_collision_layer_value(1, true)
+	set_collision_mask_value(2, true)
+	set_collision_mask_value(5, true)
 
 
 func _on_health_respawn_ready() -> void:
 	global_position = _spawn_position
 	rotation = _spawn_rotation
 	velocity = Vector2.ZERO
-	_is_dead = false
-	_input_locked = false
-	_movement.set_locked(false)
-	visible = true
-	set_collision_layer_value(1, true)
-	set_collision_mask_value(2, true)
-	set_collision_mask_value(5, true)
-	_hurtbox.set_active(true)
 	respawned.emit()
+	# reset_for_respawn() bumps HP and asks the FSM to transition DEAD →
+	# IFRAME (atomic via fsm.respawn). The FSM transition fires
+	# state_changed which restores collisions/visibility via
+	# _exit_dead_scene_state.
 	_health_component.reset_for_respawn()
 
 

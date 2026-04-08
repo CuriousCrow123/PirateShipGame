@@ -1297,7 +1297,7 @@ launch, play one wave, die, respawn, verify.**
 
 #### Phase 5 — Ship FSM
 
-- [ ] **Step 33** — Replace the 5 flag-soup vars (`_is_dead`, `_input_locked`,
+- [x] **Step 33** — Replace the 5 flag-soup vars (`_is_dead`, `_input_locked`,
   `_dash_active`, `_iframes_left`, `_invincible`) with a flat enum FSM at
   `features/ship/ship_fsm.gd`: `{NORMAL, DASHING, IFRAME, DEAD}`. Ship root
   emits `state_changed(old, new)`. `HurtboxComponent`, `PlayerInput`,

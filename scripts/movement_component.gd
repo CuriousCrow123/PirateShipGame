@@ -10,12 +10,17 @@ extends Node
 ## Phase 4 Step 22: extracted from ship.gd's `_apply_normal_movement` and
 ## `_process_collision_pushback`. The dash branch of Ship._physics_process
 ## stays on Ship for now and moves into DashComponent in Step 25.
+##
+## Phase 5 Step 33: subscribes to ShipFSM.state_changed and derives
+## `_locked` (true while DEAD) and `_enabled` (false while DASHING) from
+## the FSM state. Ship root no longer toggles these manually.
 
 signal rammed_enemy(enemy: Node, normal: Vector2)
 
 var _body: CharacterBody2D = null
 var _stats: ShipStats = null
 var _input: PlayerInputComponent = null
+var _fsm: ShipFSM = null
 var _locked: bool = false
 var _enabled: bool = true
 
@@ -37,16 +42,23 @@ func setup(body: CharacterBody2D, stats: ShipStats, input: PlayerInputComponent)
 	_input = input
 
 
-## Ship root flips this off while DashComponent is driving motion (Step 25).
-func set_enabled(enabled: bool) -> void:
-	_enabled = enabled
+## Subscribe to the Ship FSM. Ship root calls this in _ready after the FSM
+## node is available. Movement derives `_locked` (DEAD) and `_enabled`
+## (not DASHING) from the FSM state instead of manual flag flipping.
+func connect_fsm(fsm: ShipFSM) -> void:
+	assert(fsm != null, "MovementComponent.connect_fsm: fsm is null")
+	_fsm = fsm
+	_fsm.state_changed.connect(_on_fsm_state_changed)
+	_apply_state(_fsm.get_state())
 
 
-## Ship root flips this on while dead / input-locked. Locked still calls
-## move_and_slide so the body keeps participating in collisions, but no
-## thrust/turn input is read.
-func set_locked(locked: bool) -> void:
-	_locked = locked
+func _on_fsm_state_changed(_old: int, new_state: int) -> void:
+	_apply_state(new_state)
+
+
+func _apply_state(state: int) -> void:
+	_locked = state == ShipFSM.State.DEAD
+	_enabled = state != ShipFSM.State.DASHING
 
 
 func _physics_process(delta: float) -> void:

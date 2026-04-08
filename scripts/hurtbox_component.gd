@@ -18,12 +18,17 @@ extends Node2D
 ## that forwards into here so cannonball/sea_mine don't need to change in
 ## the same commit (the area-detection path is added in addition to the
 ## body-detection path; sea_mine still uses a physics shape query).
+##
+## Phase 5 Step 33: subscribes to ShipFSM.state_changed and disables its
+## Area2D when the entity is DEAD. Ship root no longer toggles the area
+## from its own death/respawn handlers.
 
 signal hit_taken(source: Node)
 
 @export_node_path("Area2D") var area_path: NodePath = ^"Area2D"
 
 var _area: Area2D = null
+var _fsm: ShipFSM = null
 
 
 func _ready() -> void:
@@ -32,6 +37,19 @@ func _ready() -> void:
 	_area = get_node(area_path) as Area2D
 	assert(_area != null, "HurtboxComponent: Area2D child not found at %s" % area_path)
 	_area.area_entered.connect(_on_area_entered)
+
+
+## Subscribe to the Ship FSM. Hurtbox auto-disables on DEAD and re-enables
+## on the way out.
+func connect_fsm(fsm: ShipFSM) -> void:
+	assert(fsm != null, "HurtboxComponent.connect_fsm: fsm is null")
+	_fsm = fsm
+	_fsm.state_changed.connect(_on_fsm_state_changed)
+	set_active(not _fsm.is_dead())
+
+
+func _on_fsm_state_changed(_old: int, new_state: int) -> void:
+	set_active(new_state != ShipFSM.State.DEAD)
 
 
 ## Toggle the hurtbox on/off. Uses set_deferred so callers can flip

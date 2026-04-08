@@ -1,16 +1,19 @@
 class_name HealthComponent
 extends Node
 
-## Owns HP, lives, iframes, the respawn cooldown, and the invincibility cheat.
-## Pure logic — no visual feedback, no scene-tree mutation. Ship root listens
-## to the signals below and dispatches to siblings (HitFeedback, Hurtbox, FSM).
+## Owns HP, lives, and the respawn cooldown. Pure logic — no visual feedback,
+## no scene-tree mutation. Ship root listens to the signals below and
+## dispatches to siblings (HitFeedback, Hurtbox, FSM).
 ##
 ## Phase 4 Step 21: extracted from ship.gd. Cheat (A1) fused per Appendix A.
-## Iframes still tick here until Phase 5 promotes them into the FSM.
+## Phase 5 Step 33: iframe ticking, _is_dead, _invincible, and the Shift+5
+## cheat input handler all moved into ShipFSM. HealthComponent now queries
+## the FSM for vulnerability and asks it to enter/exit DEAD on death/respawn.
 ##
 ## Respawn flow:
-##   Ship.take_damage() → apply_damage() → _hp == 0 → emit died →
-##   Ship cleans up + listens for respawn_ready → teleport + restore.
+##   Ship.take_damage() → apply_damage() → _hp == 0 → fsm.enter_dead() →
+##   emit died → Ship cleans up + listens for respawn_ready → teleport +
+##   reset_for_respawn() → fsm.respawn(RESPAWN_IFRAME_DURATION).
 ## HealthComponent itself does NOT touch the scene tree; the Ship root owns
 ## the death/respawn cleanup so this component stays portable to EnemyShip.
 
@@ -19,9 +22,6 @@ signal lives_changed(current: int, maximum: int)
 signal died
 signal respawn_ready
 signal game_over
-signal invincibility_changed(active: bool)
-signal iframes_started
-signal iframes_ended
 
 const HIT_IFRAME_DURATION: float = 1.2
 const RESPAWN_IFRAME_DURATION: float = 2.5
@@ -30,17 +30,14 @@ const RESPAWN_IFRAME_DURATION: float = 2.5
 @export var respawnable: bool = true
 
 var _stats: ShipStats = null
+var _fsm: ShipFSM = null
 var _hp: int = 0
 var _lives: int = 0
-var _iframes_left: float = 0.0
-var _invincible: bool = false
-var _is_dead: bool = false
 
 
 func _ready() -> void:
-	# Default-on for physics process: iframes need to tick. Phase 5 will move
-	# this into the FSM and flip the default off.
-	set_physics_process(true)
+	# Default-off per component doctrine. Iframe ticking moved to ShipFSM.
+	set_physics_process(false)
 	set_process(false)
 
 
@@ -49,9 +46,11 @@ func _ready() -> void:
 ## NOT an @export here because the player ship's stats Resource lives on the
 ## main.tscn ship instance — injecting it from the parent keeps that wiring
 ## centralized and avoids a parallel Health.stats override slot.
-func setup(stats: ShipStats) -> void:
+func setup(stats: ShipStats, fsm: ShipFSM) -> void:
 	assert(stats != null, "HealthComponent.setup: stats Resource is null")
+	assert(fsm != null, "HealthComponent.setup: ShipFSM is null")
 	_stats = stats
+	_fsm = fsm
 	_hp = _stats.max_health
 	_lives = _stats.max_lives
 	# Defer initial emission so the entity root has a chance to wire up.
@@ -63,36 +62,16 @@ func _emit_initial_status() -> void:
 	lives_changed.emit(_lives, _stats.max_lives)
 
 
-func _physics_process(delta: float) -> void:
-	if _iframes_left > 0.0:
-		_iframes_left -= delta
-		if _iframes_left <= 0.0:
-			iframes_ended.emit()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	# Secret invincibility cheat (Shift+5). Debug builds only — exporting a
-	# release strips this entire branch.
-	if not OS.is_debug_build():
-		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		var key_event: InputEventKey = event
-		if key_event.shift_pressed and key_event.physical_keycode == KEY_5:
-			_invincible = not _invincible
-			invincibility_changed.emit(_invincible)
-			Events.cheat_toggled.emit(&"invincibility", _invincible)
-
-
 ## Single damage entry point. Returns true if the hit landed.
 func apply_damage(_amount: int = 1) -> bool:
-	if _is_dead or _iframes_left > 0.0 or _invincible:
+	if not _fsm.is_vulnerable():
 		return false
 	_hp -= 1
 	health_changed.emit(_hp, _stats.max_health)
 	if _hp <= 0:
 		_enter_death()
 		return true
-	_start_iframes(HIT_IFRAME_DURATION)
+	_fsm.start_iframes(HIT_IFRAME_DURATION)
 	return true
 
 
@@ -100,9 +79,8 @@ func apply_damage(_amount: int = 1) -> bool:
 ## the respawn_ready signal lands and the entity has been teleported.
 func reset_for_respawn() -> void:
 	_hp = _stats.max_health
-	_is_dead = false
 	health_changed.emit(_hp, _stats.max_health)
-	_start_iframes(RESPAWN_IFRAME_DURATION)
+	_fsm.respawn(RESPAWN_IFRAME_DURATION)
 
 
 func get_hp() -> int:
@@ -114,21 +92,19 @@ func get_lives() -> int:
 
 
 func is_dead() -> bool:
-	return _is_dead
+	return _fsm.is_dead()
 
 
 func has_iframes() -> bool:
-	return _iframes_left > 0.0
+	return _fsm.has_iframes()
 
 
 func is_invincible() -> bool:
-	return _invincible
+	return _fsm.is_invincible()
 
 
 func _enter_death() -> void:
-	_is_dead = true
-	_iframes_left = 0.0
-	iframes_ended.emit()
+	_fsm.enter_dead()
 	_lives -= 1
 	lives_changed.emit(_lives, _stats.max_lives)
 	died.emit()
@@ -145,8 +121,3 @@ func _enter_death() -> void:
 			if is_instance_valid(self):
 				respawn_ready.emit()
 	)
-
-
-func _start_iframes(duration: float) -> void:
-	_iframes_left = duration
-	iframes_started.emit()
