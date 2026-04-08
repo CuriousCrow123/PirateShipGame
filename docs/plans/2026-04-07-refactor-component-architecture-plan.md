@@ -119,6 +119,128 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Phase 10 execution retro (added 2026-04-08 after Step 44 landed)
+
+Phase 10 was the largest single phase by file count (~150 files moved)
+but the smallest by behavioral risk: every commit was a pure path
+rename + reference update with zero logic changes. Landed as 12
+sub-commits on `refactor/component-architecture`, each smoke-tested
+independently via the MCP run-test cycle.
+
+Carry-over items and deviations discovered while executing Phase 10
+that Phase 11 must respect or address:
+
+- **12 sub-commits, not one mega-commit**: Option C (feature-by-feature)
+  was the right call. Each commit smoke-tested in isolation, so any
+  bisect after Phase 10 lands on a small, focused diff. Sequence was:
+  ship → enemies → weapons → waves → hud → vfx → water folder rename
+  → camera → systems orphans → main + project.godot → dev/ archives
+  → water assets → vfx assets → shared assets. The full plan-canonical
+  tree landed (no asset deferrals to Phase 11).
+
+- **`spawn_service.gd` and `stats_tracker.gd` landed in `systems/`**
+  (not `features/<x>/`): they're cross-feature services with no natural
+  feature home. Co-located with `cooldown.gd` and `run_stats.gd`. The
+  plan tree didn't list them explicitly. **Phase 11 ADR 010 note:**
+  document the systems/ inclusion criterion as "cross-feature
+  RefCounted helpers + service Nodes that aren't owned by a single
+  feature".
+
+- **`cannon` lives in `features/ship/components/`** (not
+  `features/weapons/`): the plan tree explicitly placed cannon under
+  ship components even though Cannonball is in weapons. Followed the
+  plan literally. EnemyShip references it via the same path
+  (`features/ship/components/cannon.tscn`). **Phase 11 ADR 010 note:**
+  the rule is "components that attach to the entity root live with
+  the entity that hosts them, even if cross-instanced". Cannonball is
+  a free-flying projectile, hence weapons/.
+
+- **`debug_overlay` moved to `dev/debug_overlay/`** (not yet
+  `addons/pirate_dev_tools/`): Phase 11 Step 47 will convert it to an
+  EditorPlugin. Until then, it lives in `dev/` and is still loaded by
+  `main/main.tscn` at runtime. The export-presets exclude in Phase 11
+  Step 50 must NOT exclude `dev/debug_overlay/` until Step 47 lands —
+  excluding it prematurely would strip a runtime dependency.
+
+- **The 3 archived test scenes (dash_fire_test, explosion_test,
+  stylized_flame_test) were moved as a *single* unit into
+  `dev/archived_test_scenes/`** with their `.gd`, `.gd.uid`, and
+  `.tscn` companions. Their internal path constants (CONFIG_PATH,
+  SNAPSHOT_PATH, MATERIAL_PATH, OUTPUT_DIR, etc.) and ext_resource
+  references were updated so each test scene still runs standalone
+  if anyone opens it. **Phase 11 Step 47 task:** delete these 6 files
+  + 3 .uid sidecars only after the addon migration succeeds, per the
+  plan's existing instruction.
+
+- **`scripts/`, `scenes/`, `resources/`, `shaders/`, `textures/`
+  directories all deleted**: empty after the moves, removed via
+  `rmdir`. The project root now matches the canonical tree exactly:
+  `addons/`, `assets/`, `autoload/`, `dev/`, `docs/`, `features/`,
+  `main/`, `systems/`, `tests/` (plus `CLAUDE.md`,
+  `export_presets.cfg`, `gdlintrc`, `icon.svg*`, `project.godot`,
+  `pixel-water-shader.md`, `todos`).
+
+- **`textures/.DS_Store` had to be removed manually**: macOS dropped
+  it after `git mv` operations. Not tracked, just blocking `rmdir`.
+  No git changes from this; mentioned for the Phase 11 / future-me
+  note that empty-folder cleanup may need a `find . -name .DS_Store
+  -delete` sweep.
+
+- **Pre-existing stale UID warnings persist throughout Phase 10**:
+  the warning message changed from `using text path instead:
+  res://scripts/<x>` to `using text path instead: res://features/<x>`
+  but the *count* of warnings stayed constant. The fallback path
+  is now correct in every case. Opening the editor would regenerate
+  the UID-by-text-path map and silence the warnings, but the MCP
+  workflow doesn't trigger that rescan. **Phase 11 finalization
+  task:** open the editor once before the final pre-merge smoke
+  test to clear these out — they're noise but they obscure real
+  errors in `get_debug_output`.
+
+- **Class cache hand-edits across all commits**: 35+ class_name
+  paths updated by hand in `.godot/global_script_class_cache.cfg`.
+  Same dance the Phase 2 retro flagged. Continued rule: any
+  class_name path change must be hand-edited until the editor is
+  opened.
+
+- **`features/water/displacement_stamps.gd` line-length workaround**:
+  the new BASE_MATERIAL preload path
+  (`res://features/water/shaders/displacement_stamp_material.tres`)
+  exceeded gdlint's 100-char line limit when written as
+  `const BASE_MATERIAL: ShaderMaterial = preload("...")`. Split into
+  a private `const _MAT_PATH: String = "..."` followed by
+  `const BASE_MATERIAL: ShaderMaterial = preload(_MAT_PATH)`.
+  **Phase 11 task:** decide whether the line-length cap should be
+  raised in `gdlintrc` or whether this two-step pattern becomes the
+  convention for long preload paths in feature subfolders.
+
+- **Phase 9's water folder consolidation paid off**: the
+  `scripts/water/` → `features/water/` rename in Phase 10 commit 7
+  was a single git mv + 8 Edit calls (replace_all on 2 files), much
+  smaller than what it would have been if Phase 9 hadn't already
+  consolidated the files. Phase 11 ADR 010 should call out the
+  pattern: "atomic feature moves are cheap; folder reorgs amortize
+  best when each feature is already cohesive".
+
+- **`docs/solutions/shared-resource-mutation.md` `trails.gd` link
+  updated again** (third time this refactor): from
+  `scripts/trails.gd` → `scripts/water/trails.gd` (Phase 9) →
+  `features/water/trails.gd` (Phase 10). The plan flagged
+  `line2d-round-joint-alpha-gradient-asymmetry.md` as also needing
+  updates but that file actually has no `scripts/` path references,
+  just narrative descriptions, so no edit was needed.
+
+- **`project.godot` `run/main_scene` updated** from
+  `res://scenes/main.tscn` → `res://main/main.tscn` in commit 10.
+  Autoload paths in `[autoload]` already pointed at `res://autoload/`
+  from before Phase 10 (Phase 1) so no changes needed there.
+
+- **No GUT tests added**: same posture as Phases 5/6/7/8/9 — Step 45
+  (Phase 11) owns the test suites. Phase 10 was verified via 12
+  consecutive gdformat-clean, gdlint-clean, MCP run-test cycles
+  with the same pre-existing UID + Camera2D warning set throughout
+  (no new errors introduced at any sub-commit).
+
 ### Phase 9 execution retro (added 2026-04-07 after Steps 41–43 landed)
 
 Carry-over items and deviations discovered while executing Phase 9 that
@@ -1970,7 +2092,7 @@ launch, play one wave, die, respawn, verify.**
 
 #### Phase 10 — Folder reorganization (mechanical)
 
-- [ ] **Step 44** — Move files into `features/`, `assets/`, `systems/`,
+- [x] **Step 44** — Move files into `features/`, `assets/`, `systems/`,
   `autoload/`, `main/`, `dev/`, `addons/`. **UID files travel with scripts.**
   Update preloads / `load()` paths / `class_name` registrations.
   **Also update:**
