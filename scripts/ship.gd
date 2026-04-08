@@ -55,6 +55,7 @@ var _invincible: bool = false
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
 @onready var _camera: Camera2D = $Camera2D
+@onready var _player_input: PlayerInputComponent = $PlayerInput
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -66,6 +67,7 @@ func _ready() -> void:
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
 	assert(_camera != null, "Ship: Camera2D node is missing")
+	assert(_player_input != null, "Ship: PlayerInput node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -117,7 +119,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
-	var is_braking: bool = Input.is_action_pressed("move_back")
+	var is_braking: bool = _player_input.is_brake_pressed()
 
 	if _dash_active:
 		_dash_remaining -= delta
@@ -126,14 +128,14 @@ func _physics_process(delta: float) -> void:
 			_apply_normal_movement(delta, is_braking)
 			return
 
-		var turn_input: float = Input.get_axis("turn_left", "turn_right")
+		var turn_input: float = _player_input.get_turn_axis()
 
 		match dash_stats.feel_mode:
 			DashStats.FeelMode.LOCKED_HEADING:
 				velocity *= stats.linear_drag
 				# stats.thrust + steering ignored during locked-heading burst
 			DashStats.FeelMode.STEERABLE:
-				if not is_braking and Input.is_action_pressed("move_forward"):
+				if not is_braking and _player_input.is_thrust_pressed():
 					velocity += transform.y * stats.thrust * delta
 				velocity *= stats.linear_drag
 				rotation += turn_input * stats.turn_speed * delta
@@ -141,7 +143,7 @@ func _physics_process(delta: float) -> void:
 				velocity *= stats.linear_drag
 				rotation += turn_input * stats.turn_speed * delta
 			DashStats.FeelMode.OVERSPEED_CAP:
-				if not is_braking and Input.is_action_pressed("move_forward"):
+				if not is_braking and _player_input.is_thrust_pressed():
 					velocity += transform.y * stats.thrust * delta
 				velocity *= dash_stats.overspeed_drag
 				rotation += turn_input * stats.turn_speed * delta
@@ -154,7 +156,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_normal_movement(delta: float, is_braking: bool) -> void:
-	if not is_braking and Input.is_action_pressed("move_forward"):
+	if not is_braking and _player_input.is_thrust_pressed():
 		velocity += transform.y * stats.thrust * delta
 
 	if is_braking:
@@ -162,7 +164,7 @@ func _apply_normal_movement(delta: float, is_braking: bool) -> void:
 	else:
 		velocity *= stats.linear_drag
 
-	var turn_input: float = Input.get_axis("turn_left", "turn_right")
+	var turn_input: float = _player_input.get_turn_axis()
 	rotation += turn_input * stats.turn_speed * delta
 
 	move_and_slide()
@@ -269,13 +271,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	if _input_locked:
 		return
-	if event.is_action_pressed("fire_port") and _port_cooldown <= 0.0:
+	if _player_input.is_fire_port_just_pressed(event) and _port_cooldown <= 0.0:
 		_fire_broadside("port")
-	elif event.is_action_pressed("fire_starboard") and _starboard_cooldown <= 0.0:
+	elif _player_input.is_fire_starboard_just_pressed(event) and _starboard_cooldown <= 0.0:
 		_fire_broadside("starboard")
-	elif event.is_action_pressed("drop_mine") and _mine_cooldown_left <= 0.0:
+	elif _player_input.is_drop_mine_just_pressed(event) and _mine_cooldown_left <= 0.0:
 		_drop_mine()
-	elif event.is_action_pressed("dash") and _dash_ready and not _dash_active:
+	elif _player_input.is_dash_just_pressed(event) and _dash_ready and not _dash_active:
 		_start_dash()
 
 

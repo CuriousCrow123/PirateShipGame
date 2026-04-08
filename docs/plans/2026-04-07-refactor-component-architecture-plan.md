@@ -849,7 +849,7 @@ Phase 6 must address all 10. Unit-tested.
 
 #### Phase 3 — Input + camera promotion
 
-- [ ] **Step 17** — Extract `PlayerInput` component. Add to Ship scene.
+- [x] **Step 17** — Extract `PlayerInput` component. Add to Ship scene.
   Replace all `Input.is_action_pressed()` / `Input.get_axis()` calls in
   [ship.gd:127, 136, 143, 151, 164, 172](../../scripts/ship.gd#L127) with
   reads from `_player_input.thrust_axis` etc.
