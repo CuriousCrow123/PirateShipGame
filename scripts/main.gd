@@ -48,6 +48,7 @@ var _stats: RunStats = null
 @onready var _lives_display: LivesDisplay = $LivesDisplay
 @onready var _game_over_screen: GameOverScreen = $GameOverScreen
 @onready var _mine_cooldown_display: MineCooldownDisplay = $MineCooldownDisplay
+@onready var _camera: GameCamera = $GameCamera
 
 
 func _ready() -> void:
@@ -62,6 +63,7 @@ func _ready() -> void:
 	assert(_lives_display != null, "Main: LivesDisplay not found")
 	assert(_game_over_screen != null, "Main: GameOverScreen not found")
 	assert(_mine_cooldown_display != null, "Main: MineCooldownDisplay not found")
+	assert(_camera != null, "Main: GameCamera not found")
 	assert(wave_set != null, "Main: wave_set (WaveSet) Resource is missing")
 	# Seed the first intermission timer from the WaveSet's first wave so the
 	# value is data-driven from frame 0.
@@ -90,6 +92,10 @@ func _ready() -> void:
 	_hp_display.setup(_ship)
 	_lives_display.setup(_ship)
 	_mine_cooldown_display.setup(_ship)
+	# Defer camera target injection: Ship's _ready has already run by the time
+	# Main._ready fires, but deferring keeps the contract explicit that the
+	# camera accepts target injection after-the-fact and handles null cleanly.
+	_camera.call_deferred("set_target", _ship)
 
 
 func _process(delta: float) -> void:
@@ -163,6 +169,9 @@ func _on_ship_respawned() -> void:
 	_last_wake_pos = _ship.global_position
 	_wake_distance = 0.0
 	_player_wake_line.set_process(true)
+	# Snap the camera to the respawn position so position_smoothing doesn't
+	# rubber-band the view back from the death location.
+	_camera.snap_to_target()
 
 
 func _on_cannon_fired(pos: Vector2, dir: Vector2) -> void:

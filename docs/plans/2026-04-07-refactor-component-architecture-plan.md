@@ -855,7 +855,7 @@ Phase 6 must address all 10. Unit-tested.
   reads from `_player_input.thrust_axis` etc.
 - [x] **Step 18** — Add `InputMap` remap support + gamepad detection layer +
   `user://keybinds.cfg` save/load. Default gamepad bindings for all 9 actions.
-- [ ] **Step 19+20 (SINGLE commit)** — Promote `Camera2D` to
+- [x] **Step 19+20 (SINGLE commit)** — Promote `Camera2D` to
   `features/camera/game_camera.tscn` under `main.tscn`, AND move camera shake
   + zoom-punch to bus listeners, **in the same commit**. Splitting them
   leaves one commit where shake is broken (current ship.gd writes

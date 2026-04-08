@@ -95,11 +95,6 @@ region_rect = Rect2(0, 1013, 26, 18)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_hull")
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=996880019]
-zoom = Vector2(1.2, 1.2)
-position_smoothing_enabled = true
-position_smoothing_speed = 10.0
-
 [node name="SternMarker" type="Marker2D" parent="."]
 position = Vector2(0, -28)
 

@@ -34,7 +34,6 @@ var _dash_ready: bool = true
 var _dash_active: bool = false
 var _dash_remaining: float = 0.0
 var _next_ghost_in: float = 0.0
-var _shake_trauma: float = 0.0
 var _ghost_additive_material: CanvasItemMaterial
 var _hit_flash_tween: Tween = null
 var _hit_shake_timer: float = 0.0
@@ -54,7 +53,6 @@ var _invincible: bool = false
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _cannon_slots: Node2D = $CannonSlots
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
-@onready var _camera: Camera2D = $Camera2D
 @onready var _player_input: PlayerInputComponent = $PlayerInput
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
@@ -66,7 +64,6 @@ func _ready() -> void:
 	assert(_sail_sprite != null, "Ship: SailSprite node is missing")
 	assert(_cannon_slots != null, "Ship: CannonSlots node is missing")
 	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
-	assert(_camera != null, "Ship: Camera2D node is missing")
 	assert(_player_input != null, "Ship: PlayerInput node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
@@ -199,7 +196,6 @@ func _process(delta: float) -> void:
 	# high-refresh displays. Motion stays in _physics_process.
 	if _dash_active:
 		_tick_dash_visuals(delta)
-	_process_camera_shake(delta)
 	_process_hit_shake(delta)
 
 
@@ -215,22 +211,6 @@ func _tick_dash_visuals(delta: float) -> void:
 		if _next_ghost_in <= 0.0:
 			_spawn_ghost()
 			_next_ghost_in = dash_stats.ghost_spawn_interval
-
-
-func _process_camera_shake(delta: float) -> void:
-	# Trauma-squared model (Eiserloh, GDC 2016): offset = trauma^2 * mag.
-	# Linear decay of trauma. Pixel-snapped via roundf for the 640x360
-	# integer-scale viewport. Writes Camera2D.offset (NOT position) so the
-	# existing position_smoothing_enabled doesn't swallow the shake.
-	if _shake_trauma <= 0.0:
-		if _camera.offset != Vector2.ZERO:
-			_camera.offset = Vector2.ZERO
-		return
-	_shake_trauma = maxf(0.0, _shake_trauma - dash_stats.shake_trauma_decay * delta)
-	var amplitude: float = _shake_trauma * _shake_trauma * dash_stats.shake_magnitude_px
-	_camera.offset = Vector2(
-		roundf(randf_range(-amplitude, amplitude)), roundf(randf_range(-amplitude, amplitude))
-	)
 
 
 func _spawn_ghost() -> void:
@@ -383,7 +363,7 @@ func _respawn() -> void:
 
 ## Visual-only hit feedback: camera shake + per-sprite shake + white flash.
 func _apply_hit_feedback() -> void:
-	_shake_trauma = maxf(_shake_trauma, HIT_TRAUMA)
+	Events.screen_shake_requested.emit(HIT_TRAUMA)
 	_hit_shake_timer = HIT_SHAKE_DURATION
 	if _hit_flash_tween and _hit_flash_tween.is_valid():
 		_hit_flash_tween.kill()
@@ -487,18 +467,14 @@ func _start_dash() -> void:
 	# Reset ghost spawn timer so the first ghost spawns next render tick.
 	_next_ghost_in = 0.0
 
-	# Bump shake trauma. max() so a re-trigger can never reduce in-flight shake.
-	_shake_trauma = maxf(_shake_trauma, dash_stats.shake_trauma_initial)
+	# Bump shake trauma via the bus — GameCamera owns the shake state now.
+	Events.screen_shake_requested.emit(dash_stats.shake_trauma_initial)
 
-	# Optional zoom punch.
+	# Optional zoom punch — GameCamera's bus listener tweens its own zoom.
 	if dash_stats.zoom_punch_duration > 0.0:
-		var base_zoom: Vector2 = Vector2(1.2, 1.2)
-		var punch_zoom: Vector2 = Vector2(
-			dash_stats.zoom_punch_target, dash_stats.zoom_punch_target
+		Events.camera_zoom_punch_requested.emit(
+			dash_stats.zoom_punch_target, dash_stats.zoom_punch_duration
 		)
-		var zoom_tween: Tween = create_tween()
-		zoom_tween.tween_property(_camera, "zoom", punch_zoom, dash_stats.zoom_punch_duration * 0.4)
-		zoom_tween.tween_property(_camera, "zoom", base_zoom, dash_stats.zoom_punch_duration * 0.6)
 
 	# Optional Celeste-style freeze frames at burst start.
 	if dash_stats.freeze_frames > 0:

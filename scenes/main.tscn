@@ -21,6 +21,7 @@
 [ext_resource type="PackedScene" path="res://scenes/lives_display.tscn" id="18_lives"]
 [ext_resource type="PackedScene" path="res://scenes/game_over_screen.tscn" id="19_game_over"]
 [ext_resource type="PackedScene" path="res://scenes/mine_cooldown_display.tscn" id="20_mine_cd"]
+[ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="23_camera"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -122,3 +123,5 @@ follow_target = NodePath("../..")
 [node name="GameOverScreen" parent="." instance=ExtResource("19_game_over")]
 
 [node name="MineCooldownDisplay" parent="." instance=ExtResource("20_mine_cd")]
+
+[node name="GameCamera" parent="." instance=ExtResource("23_camera")]
