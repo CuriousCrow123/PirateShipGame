@@ -1,3 +1,4 @@
+class_name WaterChunkManager
 extends Node2D
 ## Manages dynamic ocean chunk loading around the ship.
 ## Creates/frees TileMapLayer nodes as the ship moves through the world.

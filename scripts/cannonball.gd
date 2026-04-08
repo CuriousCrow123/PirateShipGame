@@ -78,7 +78,7 @@ func _on_area_entered(area: Area2D) -> void:
 		enemy.take_damage(_direction)
 		hit_registered.emit()
 	water_impacted.emit(global_position)
-	ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
+	Events.explosion_requested.emit(global_position, &"cannonball_impact", _direction, Vector2.ZERO)
 	queue_free()
 
 
@@ -86,7 +86,7 @@ func _impact() -> void:
 	if _impacted:
 		return
 	_impacted = true
-	# Both teams emit water_impacted so Main can spawn a displacement splash for parity.
+	# Both teams emit water_impacted so WaterEffects can spawn a displacement splash for parity.
 	water_impacted.emit(global_position)
-	ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
+	Events.explosion_requested.emit(global_position, &"cannonball_impact", _direction, Vector2.ZERO)
 	queue_free()

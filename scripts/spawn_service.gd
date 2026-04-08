@@ -69,7 +69,7 @@ func spawn_player_cannonball(pos: Vector2, dir: Vector2) -> void:
 	add_child(ball)
 	ball.setup(pos, dir, false)
 	_stats.register_shot_fired()
-	ExplosionSprite.create(self, pos, "muzzle_flash", dir, _ship.velocity * 0.75)
+	Events.explosion_requested.emit(pos, &"muzzle_flash", dir, _ship.velocity * 0.75)
 
 
 ## Connected to Ship.mine_dropped in main.gd.
@@ -114,7 +114,7 @@ func _on_enemy_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	add_child(ball)
 	# add_child must precede setup so _ready (body_entered.connect) has run.
 	ball.setup(pos, dir, true)
-	ExplosionSprite.create(self, pos, "muzzle_flash", dir)
+	Events.explosion_requested.emit(pos, &"muzzle_flash", dir, Vector2.ZERO)
 
 
 func _on_enemy_destroyed(_enemy: EnemyShip, by_mine: bool) -> void:
@@ -127,7 +127,7 @@ func _on_enemy_tree_exiting(enemy: EnemyShip) -> void:
 
 
 func _on_mine_destroyed(mine: SeaMine) -> void:
-	_water_effects.spawn_displacement_impact(mine.global_position, 128.0, 2.5)
+	_water_effects.on_mine_explosion(mine.global_position)
 	_mines.erase(mine)
 
 

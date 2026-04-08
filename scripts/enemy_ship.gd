@@ -148,11 +148,9 @@ func _on_health_died() -> void:
 	_is_destroyed = true
 	# Disable collision immediately (deferred for physics safety).
 	_collision_shape.set_deferred("disabled", true)
-	# Large destruction explosion — parented to get_parent() (Main) so it
-	# survives this node's queue_free.
-	ExplosionSprite.create(
-		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, velocity
-	)
+	# Large destruction explosion — routed through the bus so VfxListener
+	# owns the explosion's parent and it outlives this node's queue_free.
+	Events.explosion_requested.emit(global_position, &"enemy_destruction", Vector2.ZERO, velocity)
 	destroyed.emit(self, _by_mine_flag)
 	# Fade out then remove.
 	var tween: Tween = create_tween()

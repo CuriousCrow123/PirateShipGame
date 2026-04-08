@@ -2,35 +2,34 @@ class_name WaterEffectsManager
 extends Node
 
 ## Phase 7 Step 38 — Owns the water displacement / wake trail plumbing that
-## used to live inline on main.gd. Responsibilities:
+## used to live inline on main.gd. Phase 9 Step 42/43 — all direct
+## displacement_stamps.spawn_* calls were replaced with bus emits
+## (Events.displacement_*_requested); WaterListener is the subscriber that
+## forwards to displacement_stamps. Magic numbers moved to WaterTuning.tres.
+##
+## Responsibilities:
 ##   * Wires the displacement SubViewport texture into the shared water
 ##     ShaderMaterial and the WaterTrail SubViewport texture into the
 ##     TrailSprite overlay (both at `_ready`).
 ##   * Per-frame: tracks the ship's position on the DisplacementViewport +
 ##     WaterTrail containers, updates the water material's DisplacementOrigin
-##     and speed-scaled WakeTrailStrength, spawns player wake rings along
-##     the trail path, iterates SpawnService's enemy list for per-enemy
-##     wake rings, and iterates the mine list for idle bob displacement.
-##   * Receives `Cannonball.water_impacted` locally (via method reference
-##     passed into SpawnService on setup), spawns the displacement impact,
-##     and re-emits `Events.cannonball_water_impact(pos)` on the bus so
+##     and speed-scaled WakeTrailStrength, emits player wake ring events
+##     along the trail path, iterates SpawnService's enemy list for
+##     per-enemy wake ring events, and iterates the mine list for idle bob
+##     displacement events.
+##   * Receives `Cannonball.water_impacted` locally (via signal connection
+##     set up in SpawnService), emits `displacement_impact_requested` on
+##     the bus, and re-emits `Events.cannonball_water_impact(pos)` so
 ##     SpawnService can fan out to nearby mines. The local-then-bus split
 ##     is the dispatch path for Research Delta #10.
-##   * Manages the per-enemy wake Line2D registration under
-##     `$WaterTrail/SubViewport`. See the BEVEL joint_mode + width_curve
-##     duplicate notes preserved from main.gd.
-##
-## NOTE: displacement writes remain direct-call (not bussed). Phase 9's
-## water_listener will replace the direct `_displacement_stamps.spawn_*`
-## calls with bus subscriptions.
 
 const TrailsScript: Script = preload("res://scripts/trails.gd")
 const TrailWidthCurve: Curve = preload("res://resources/trail_width_curve.tres")
 const TrailGradientTex: Texture2D = preload("res://textures/WaterTrailGradient.png")
 
+@export var tuning: WaterTuning
 @export var displacement_viewport: Node2D
 @export var displacement_sub_viewport: SubViewport
-@export var displacement_stamps: Node2D
 @export var water_trail: Node2D
 @export var trail_sprite: Sprite2D
 @export var wake_subviewport: SubViewport
@@ -44,9 +43,9 @@ var _last_wake_pos: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
+	assert(tuning != null, "WaterEffects: tuning resource is null")
 	assert(displacement_viewport != null, "WaterEffects: displacement_viewport is null")
 	assert(displacement_sub_viewport != null, "WaterEffects: displacement_sub_viewport is null")
-	assert(displacement_stamps != null, "WaterEffects: displacement_stamps is null")
 	assert(water_trail != null, "WaterEffects: water_trail is null")
 	assert(trail_sprite != null, "WaterEffects: trail_sprite is null")
 	assert(wake_subviewport != null, "WaterEffects: wake_subviewport is null")
@@ -88,16 +87,21 @@ func _process(delta: float) -> void:
 	# Update the water shader's displacement origin and speed-scaled wake strength.
 	var water_mat: ShaderMaterial = chunk_container.get("water_material") as ShaderMaterial
 	water_mat.set_shader_parameter("DisplacementOrigin", _ship.global_position)
-	var speed_t: float = clampf(_ship.velocity.length() / 120.0, 0.0, 1.0)
-	water_mat.set_shader_parameter("WakeTrailStrength", lerpf(2.0, 10.0, speed_t))
+	var speed_t: float = clampf(_ship.velocity.length() / tuning.wake_speed_cap, 0.0, 1.0)
+	water_mat.set_shader_parameter(
+		"WakeTrailStrength", lerpf(tuning.wake_strength_idle, tuning.wake_strength_max, speed_t)
+	)
 
-	# Player wake expanding rings: spawn along the trail path at intervals.
+	# Player wake expanding rings: emit along the trail path at intervals.
 	_wake_distance += _ship.global_position.distance_to(_last_wake_pos)
 	_last_wake_pos = _ship.global_position
-	if _wake_distance >= 16.0 and _ship.velocity.length() > 5.0:
+	if (
+		_wake_distance >= tuning.wake_ring_spacing
+		and _ship.velocity.length() > tuning.wake_ring_speed_threshold
+	):
 		_wake_distance = 0.0
-		var wake_pos: Vector2 = _ship.global_position - _ship.transform.y * 12.0
-		displacement_stamps.spawn_wake_ring(wake_pos)
+		var wake_pos: Vector2 = _ship.global_position - _ship.transform.y * tuning.wake_ring_offset
+		Events.displacement_wake_ring_requested.emit(wake_pos)
 
 	if _spawn_service == null:
 		return
@@ -110,27 +114,33 @@ func _process(delta: float) -> void:
 		if traveled <= 0.0:
 			continue
 		if enemy.consume_wake_distance(traveled):
-			displacement_stamps.spawn_wake_ring(enemy.get_wake_ring_position())
+			Events.displacement_wake_ring_requested.emit(enemy.get_wake_ring_position())
 
 	# Mine idle bob displacement.
 	for mine: SeaMine in _spawn_service.get_mines():
 		if mine.is_detonated():
 			continue
-		displacement_stamps.spawn_bob(mine.global_position, mine.get_bob_phase())
+		Events.displacement_bob_requested.emit(mine.global_position, mine.get_bob_phase())
 
 
 ## Local receiver for Cannonball.water_impacted (connected in SpawnService).
-## Spawns the displacement impact and re-emits on the bus so SpawnService's
-## bus subscription fans out to nearby mines (Research Delta #10 dispatch).
+## Emits the displacement impact on the bus (picked up by WaterListener) and
+## re-emits on the bus so SpawnService's bus subscription fans out to nearby
+## mines (Research Delta #10 dispatch).
 func on_cannonball_water_impact(pos: Vector2) -> void:
-	displacement_stamps.spawn_impact(pos, 64.0, 2.0)
+	Events.displacement_impact_requested.emit(
+		pos, tuning.cannonball_impact_radius, tuning.cannonball_impact_duration
+	)
 	Events.cannonball_water_impact.emit(pos)
 
 
-## Direct passthrough for callers that need a displacement impact without
-## re-emitting on the bus (mine destruction, generic explosions).
-func spawn_displacement_impact(pos: Vector2, radius_px: float, duration: float) -> void:
-	displacement_stamps.spawn_impact(pos, radius_px, duration)
+## Emits a mine-explosion displacement pulse on the bus. Called from
+## SpawnService._on_mine_destroyed — owning the tuning lookup here keeps
+## SpawnService ignorant of WaterTuning.
+func on_mine_explosion(pos: Vector2) -> void:
+	Events.displacement_impact_requested.emit(
+		pos, tuning.mine_explosion_impact_radius, tuning.mine_explosion_impact_duration
+	)
 
 
 ## Connected to Ship.died in main.gd. Halts the player wake line so it

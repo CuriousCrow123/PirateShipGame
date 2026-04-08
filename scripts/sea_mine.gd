@@ -231,7 +231,7 @@ func _detonate() -> void:
 	var explosion_kind: StringName = (
 		weapon.explosion_kind if weapon != null else _DEFAULT_EXPLOSION_KIND
 	)
-	ExplosionSprite.create(get_parent(), global_position, String(explosion_kind))
+	Events.explosion_requested.emit(global_position, explosion_kind, Vector2.ZERO, Vector2.ZERO)
 
 	# Blast damage via direct physics query
 	_apply_blast_damage()

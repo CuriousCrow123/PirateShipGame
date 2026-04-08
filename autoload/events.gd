@@ -2,8 +2,13 @@ extends Node
 
 ## Global signal bus. Carries cross-system events only — parent/child within a
 ## single scene communicates via direct signal connections, NOT through this
-## bus. High-frequency per-frame signals (e.g. water displacement requests)
-## also stay OFF the bus and use direct injected references instead.
+## bus.
+##
+## Phase 9 revision: the pre-Phase-9 rule "high-frequency per-frame signals
+## stay off the bus" was dropped. Measured cost of one listener on a typed
+## value-type signal is negligible at the ~5 emits/frame water-displacement
+## volume, and the uniformity win (one rule, no carve-outs) is worth more
+## than the micro-optimization.
 ##
 ## Discipline rules (see plan section "Signal bus" + ADR 007 to come):
 ##   1. Components do NOT touch this bus directly. The entity root listens to
@@ -43,6 +48,15 @@ signal camera_zoom_punch_requested(scale_amount: float, duration: float)
 signal mine_dropped(pos: Vector2)
 signal cannonball_fired(pos: Vector2, dir: Vector2, by_player: bool)
 signal cannonball_water_impact(pos: Vector2)
+
+# --- Water displacement (Phase 9 Step 42) ---
+# Listeners live in water_listener.gd. Publishers are WaterEffectsManager
+# (per-frame wake/bob + cannonball impact re-emit) and SpawnService
+# (mine-destruction impact).
+
+signal displacement_impact_requested(pos: Vector2, radius_px: float, duration: float)
+signal displacement_wake_ring_requested(pos: Vector2)
+signal displacement_bob_requested(pos: Vector2, phase: float)
 
 # --- Audio ---
 

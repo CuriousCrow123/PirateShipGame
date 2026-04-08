@@ -213,8 +213,8 @@ func _enter_dead_scene_state() -> void:
 	set_collision_layer_value(1, false)
 	set_collision_mask_value(2, false)  # enemies
 	set_collision_mask_value(5, false)  # enemy projectiles
-	ExplosionSprite.create(
-		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
+	Events.explosion_requested.emit(
+		global_position, &"enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
 
 
