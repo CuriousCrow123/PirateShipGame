@@ -1,0 +1,61 @@
+name: Deploy Web Build to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Godot 4.6.1
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.1
+          use-dotnet: false
+
+      - name: Cache .godot import folder
+        uses: actions/cache@v4
+        with:
+          path: .godot
+          key: godot-import-${{ hashFiles('**/*.tscn', '**/*.tres', '**/*.gd', 'project.godot') }}
+          restore-keys: |
+            godot-import-
+
+      - name: Import project (first pass)
+        run: godot --headless --import || true
+
+      - name: Export Web build
+        run: |
+          mkdir -p build/web
+          godot --headless --export-release "Web" build/web/index.html
+          # .nojekyll prevents Pages' Jekyll processor from stripping
+          # files whose names start with an underscore.
+          touch build/web/.nojekyll
+
+      - name: List build output (sanity log)
+        run: ls -lh build/web/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
