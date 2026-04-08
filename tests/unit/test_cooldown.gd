@@ -81,3 +81,66 @@ func test_restart_extends_window() -> void:
 	cd.start(0.2)
 	assert_false(cd.is_ready(), "restart should re-arm")
 	assert_almost_eq(cd.duration(), 0.2, 0.001)
+
+
+# --- Phase 11 Step 45b regression tests --------------------------------------
+
+
+func test_progress_zero_duration_returns_one_not_crash() -> void:
+	# Phase 1 had a ternary-precedence bug where `progress()` on a 0-duration
+	# cooldown evaluated `1.0 - (_remaining / _duration if _duration > 0 else 0)`
+	# which bound the ternary to `0.0` and gave `1.0 - 0.0 = 1.0`, missing the
+	# intended short-circuit AND risking division by zero on some interpreters.
+	# The timestamp rewrite early-returns on `_duration_msec <= 0`. See ADR 014
+	# + Research Delta #13.
+	var cd: Object = CooldownClass.new()
+	cd.start(0.0)
+	# Must not crash, must return exactly 1.0.
+	assert_eq(
+		cd.progress(),
+		1.0,
+		"zero-duration progress must early-return 1.0 (Research Delta #13 regression)"
+	)
+
+
+func test_progress_before_start_returns_one() -> void:
+	# Fresh Cooldown has never been started; progress() must be defined and
+	# return 1.0 (ready state), not NaN or crash.
+	var cd: Object = CooldownClass.new()
+	assert_eq(cd.progress(), 1.0, "never-started Cooldown must report progress == 1.0")
+
+
+func test_cooldown_independent_of_engine_time_scale() -> void:
+	# ADR 014: Cooldown is wall-clock based via Time.get_ticks_msec(), which
+	# does NOT respect Engine.time_scale. This is the key trade-off that
+	# makes the helper the wrong tool for freeze-frame effects AND the right
+	# tool for every other cooldown. Document it executably.
+	var prior_scale: float = Engine.time_scale
+	Engine.time_scale = 0.1
+	var cd: Object = CooldownClass.new()
+	cd.start(0.05)
+	OS.delay_msec(80)  # real-time 80ms, scaled-time 8ms
+	# Wall-clock path: cooldown must be ready despite the 0.1x scale.
+	var ready_under_scale: bool = cd.is_ready()
+	# Restore BEFORE asserting so a failure doesn't leave the suite in scaled time.
+	Engine.time_scale = prior_scale
+	assert_true(
+		ready_under_scale,
+		"Cooldown should elapse in wall-clock time regardless of Engine.time_scale"
+	)
+
+
+func test_remaining_clamps_to_zero_after_expiry() -> void:
+	var cd: Object = CooldownClass.new()
+	cd.start(0.02)
+	OS.delay_msec(40)
+	assert_eq(cd.remaining(), 0.0, "remaining() must clamp at 0, never go negative")
+
+
+func test_restart_with_zero_resets_to_ready() -> void:
+	# Restarting with duration 0.0 is functionally a reset to ready-state.
+	var cd: Object = CooldownClass.new()
+	cd.start(5.0)
+	cd.start(0.0)
+	assert_true(cd.is_ready(), "restart(0.0) should leave the cooldown ready")
+	assert_eq(cd.progress(), 1.0)
