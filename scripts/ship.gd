@@ -49,6 +49,7 @@ var _blink_tween: Tween = null
 @onready var _fire_effect: DashFireEffect = $SternMarker/DashFireEffect
 @onready var _player_input: PlayerInputComponent = $PlayerInput
 @onready var _health_component: HealthComponent = $Health
+@onready var _movement: MovementComponent = $Movement
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -61,6 +62,7 @@ func _ready() -> void:
 	assert(_fire_effect != null, "Ship: SternMarker/DashFireEffect node is missing")
 	assert(_player_input != null, "Ship: PlayerInput node is missing")
 	assert(_health_component != null, "Ship: Health node is missing")
+	assert(_movement != null, "Ship: Movement node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -86,6 +88,8 @@ func _ready() -> void:
 	_health_component.iframes_started.connect(_start_blink_tween)
 	_health_component.iframes_ended.connect(_end_blink)
 	_health_component.setup(stats)
+	_movement.setup(self, stats, _player_input)
+	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -122,83 +126,51 @@ func _physics_process(delta: float) -> void:
 	if _mine_cooldown_left > 0.0:
 		_mine_cooldown_left -= delta
 
-	if _input_locked:
-		move_and_slide()
-		return
-
-	var is_braking: bool = _player_input.is_brake_pressed()
-
+	# Dash motion still lives on Ship; Step 25 (DashComponent) extracts it.
+	# While dashing, MovementComponent is disabled and Ship drives the body
+	# directly via the dash branch below. Otherwise MovementComponent ticks
+	# itself in its own _physics_process.
 	if _dash_active:
-		_dash_remaining -= delta
-		if _dash_remaining <= 0.0:
-			_end_dash()
-			_apply_normal_movement(delta, is_braking)
-			return
+		_tick_dash_physics(delta)
 
-		var turn_input: float = _player_input.get_turn_axis()
 
-		match dash_stats.feel_mode:
-			DashStats.FeelMode.LOCKED_HEADING:
-				velocity *= stats.linear_drag
-				# stats.thrust + steering ignored during locked-heading burst
-			DashStats.FeelMode.STEERABLE:
-				if not is_braking and _player_input.is_thrust_pressed():
-					velocity += transform.y * stats.thrust * delta
-				velocity *= stats.linear_drag
-				rotation += turn_input * stats.turn_speed * delta
-			DashStats.FeelMode.VELOCITY_ALIGNED:
-				velocity *= stats.linear_drag
-				rotation += turn_input * stats.turn_speed * delta
-			DashStats.FeelMode.OVERSPEED_CAP:
-				if not is_braking and _player_input.is_thrust_pressed():
-					velocity += transform.y * stats.thrust * delta
-				velocity *= dash_stats.overspeed_drag
-				rotation += turn_input * stats.turn_speed * delta
-
-		move_and_slide()
-		_process_collision_pushback(dash_stats.collision_pushback_scale)
+func _tick_dash_physics(delta: float) -> void:
+	_dash_remaining -= delta
+	if _dash_remaining <= 0.0:
+		_end_dash()
+		# MovementComponent re-enables on _end_dash and will tick its own
+		# physics next frame; no need to apply normal movement this frame.
 		return
-
-	_apply_normal_movement(delta, is_braking)
-
-
-func _apply_normal_movement(delta: float, is_braking: bool) -> void:
-	if not is_braking and _player_input.is_thrust_pressed():
-		velocity += transform.y * stats.thrust * delta
-
-	if is_braking:
-		velocity = velocity.move_toward(Vector2.ZERO, stats.brake_decel * delta)
-	else:
-		velocity *= stats.linear_drag
-
+	var is_braking: bool = _player_input.is_brake_pressed()
 	var turn_input: float = _player_input.get_turn_axis()
-	rotation += turn_input * stats.turn_speed * delta
-
+	match dash_stats.feel_mode:
+		DashStats.FeelMode.LOCKED_HEADING:
+			velocity *= stats.linear_drag
+			# stats.thrust + steering ignored during locked-heading burst
+		DashStats.FeelMode.STEERABLE:
+			if not is_braking and _player_input.is_thrust_pressed():
+				velocity += transform.y * stats.thrust * delta
+			velocity *= stats.linear_drag
+			rotation += turn_input * stats.turn_speed * delta
+		DashStats.FeelMode.VELOCITY_ALIGNED:
+			velocity *= stats.linear_drag
+			rotation += turn_input * stats.turn_speed * delta
+		DashStats.FeelMode.OVERSPEED_CAP:
+			if not is_braking and _player_input.is_thrust_pressed():
+				velocity += transform.y * stats.thrust * delta
+			velocity *= dash_stats.overspeed_drag
+			rotation += turn_input * stats.turn_speed * delta
 	move_and_slide()
-	_process_collision_pushback(1.0)
+	_movement.process_collision_pushback(dash_stats.collision_pushback_scale)
 
 
-func _process_collision_pushback(pushback_scale: float) -> void:
-	if pushback_scale <= 0.0:
+func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
+	# Mutual ram damage; iframes guard multi-hits. Damage is mutual only when
+	# the player is NOT invincible — an invincible player just bounces off.
+	if _health_component.has_iframes() or _is_dead:
 		return
-	for i: int in range(get_slide_collision_count()):
-		var collision: KinematicCollision2D = get_slide_collision(i)
-		var collider: Object = collision.get_collider()
-		if collider is EnemyShip:
-			var push: Vector2 = collision.get_normal() * 50.0 * pushback_scale
-			velocity += push
-			var enemy: EnemyShip = collider as EnemyShip
-			# Mutual ram damage; iframes on both sides guard multi-hits across
-			# physics sub-steps. Return after the first collision to ensure one
-			# collision event → at most one damage application per frame.
-			# Ship uses its regular iframe system; enemy uses take_ram_damage so
-			# cannonball DPS stays unaffected by ram iframes. Damage is mutual
-			# only when the player is NOT invincible — an invincible player
-			# should just bounce off without harming the enemy either.
-			if not _health_component.has_iframes() and not _is_dead:
-				take_damage(-collision.get_normal())
-				enemy.take_ram_damage(collision.get_normal())
-			return
+	take_damage(-normal)
+	(enemy as EnemyShip).take_ram_damage(normal)
 
 
 func _process(delta: float) -> void:
@@ -307,6 +279,7 @@ func _end_blink() -> void:
 func _on_health_died() -> void:
 	_is_dead = true
 	_input_locked = true
+	_movement.set_locked(true)
 	if _dash_active:
 		_end_dash()
 	_end_blink()
@@ -329,6 +302,7 @@ func _on_health_respawn_ready() -> void:
 	velocity = Vector2.ZERO
 	_is_dead = false
 	_input_locked = false
+	_movement.set_locked(false)
 	visible = true
 	set_collision_layer_value(1, true)
 	set_collision_mask_value(2, true)
@@ -415,6 +389,10 @@ func _start_dash() -> void:
 	_dash_ready = false
 	_dash_active = true
 	_dash_remaining = dash_stats.duration
+	# Hand motion off to Ship's local dash branch; MovementComponent stops
+	# ticking until _end_dash flips this back. Step 25 will move both halves
+	# into DashComponent and Movement gets a single set_enabled toggle.
+	_movement.set_enabled(false)
 
 	# Apply initial impulse based on feel mode.
 	match dash_stats.feel_mode:
@@ -483,6 +461,7 @@ func _start_dash() -> void:
 func _end_dash() -> void:
 	_dash_active = false
 	_dash_remaining = 0.0
+	_movement.set_enabled(true)
 	# Effect resets DashStrength to 0 internally and schedules SubViewport
 	# shutdown after particles fully die. In-flight particles still drift and
 	# fade naturally during the tail.

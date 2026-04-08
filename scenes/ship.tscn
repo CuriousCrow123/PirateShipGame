@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/dash_fire_effect.tscn" id="6_fire_effect"]
 [ext_resource type="Script" path="res://scripts/player_input.gd" id="7_player_input"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="8_health"]
+[ext_resource type="Script" path="res://scripts/movement_component.gd" id="9_movement"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -26,6 +27,9 @@ script = ExtResource("8_health")
 
 [node name="PlayerInput" type="Node" parent="."]
 script = ExtResource("7_player_input")
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("9_movement")
 
 [node name="HullSprite" type="Sprite2D" parent="." unique_id=1672109739]
 scale = Vector2(0.5, 0.5)

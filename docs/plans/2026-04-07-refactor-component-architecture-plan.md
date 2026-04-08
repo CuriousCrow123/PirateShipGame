@@ -1127,7 +1127,7 @@ launch, play one wave, die, respawn, verify.**
   toggle** (A1 fused: listens to its own cheat input in `_unhandled_input`
   guarded by `if not OS.is_debug_build(): return`; emits
   `Events.cheat_toggled(&"invincibility", _invincible)`).
-- [ ] **Step 22** — `MovementComponent` (thrust, turn, friction, brake,
+- [x] **Step 22** — `MovementComponent` (thrust, turn, friction, brake,
   ram-damage pushback coordination at [ship.gd:179](../../scripts/ship.gd#L179)).
   **CRITICAL:** ram-damage mutual iframe coordination with EnemyShip must be
   preserved; route via `HurtboxComponent.hit_taken` so both ships see it.
