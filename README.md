@@ -6,12 +6,9 @@ A pixel-art top-down pirate ship arena game built in Godot 4.6.
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Last commit](https://img.shields.io/github/last-commit/CuriousCrow123/PirateShipGame)
 
-![Hero placeholder](docs/media/hero.gif)
-
-> **Hero media is a placeholder** until a real gameplay GIF is
-> captured. See [docs/media/README.md](docs/media/README.md) for the
-> capture recipe. The repo is private-first and flips public only
-> after the real hero GIF lands.
+<p align="center">
+  <img src="docs/media/hero.gif" width="480" alt="Gameplay demo">
+</p>
 
 ## Play it in the browser
 
