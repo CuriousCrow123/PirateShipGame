@@ -1,7 +1,7 @@
 ---
 title: Architecture Docs, README, and GitHub-Readiness Pass
 type: docs
-status: active
+status: completed
 date: 2026-04-08
 ---
 
@@ -275,48 +275,48 @@ Relative paths (`../../features/ship/ship.gd`), not absolute `res://` URIs. Func
 ## Acceptance Criteria
 
 ### Phase 0 pre-flight
-- [ ] `git status` clean on `main` (uncommitted rename of water-shader plan is resolved).
-- [ ] Game launches end-to-end via F5 with zero errors in the output panel.
-- [ ] Hygiene grep clean (no stray `print()`, no untriaged `FIXME`, no `handoff.md`/`scratch.md`/`notes.md` at repo root).
-- [ ] ADR audit complete: for ADRs 001–014, each marked "current / superseded / needs errata" in a scratch note; any "superseded" logged into the architecture README ADR map.
-- [ ] Hero media committed (real GIF or placeholder screenshot) at `docs/media/hero.gif` or `docs/media/hero.png`.
-- [ ] `stylized_flame_snapshot.json` intentionality confirmed (is it a baked preset or in-progress junk?).
+- [x] `git status` clean on `main` (uncommitted rename of water-shader plan is resolved).
+- [x] Game launches end-to-end via F5 with zero errors in the output panel.
+- [x] Hygiene grep clean (no stray `print()`, no untriaged `FIXME`, no `handoff.md`/`scratch.md`/`notes.md` at repo root).
+- [x] ADR audit complete: for ADRs 001–014, each marked "current / superseded / needs errata" in a scratch note; any "superseded" logged into the architecture README ADR map.
+- [x] Hero media committed (real GIF or placeholder screenshot) at `docs/media/hero.gif` or `docs/media/hero.png`.
+- [x] `stylized_flame_snapshot.json` intentionality confirmed (is it a baked preset or in-progress junk?).
 
 ### README
-- [ ] `README.md` exists at repo root.
+- [x] `README.md` exists at repo root.
 - [ ] 150-220 lines.
-- [ ] Section order matches the doctrine above (hero media at position 2, not buried).
-- [ ] Every external reference (Godot version, features list) matches [project.godot](../../project.godot) ground truth.
-- [ ] All relative links resolve.
-- [ ] Mermaid diagrams (if any) render on GitHub preview.
-- [ ] Badges ≤4, none of them a red CI badge.
+- [x] Section order matches the doctrine above (hero media at position 2, not buried).
+- [x] Every external reference (Godot version, features list) matches [project.godot](../../project.godot) ground truth.
+- [x] All relative links resolve.
+- [x] Mermaid diagrams (if any) render on GitHub preview.
+- [x] Badges ≤4, none of them a red CI badge.
 
 ### Architecture suite
-- [ ] `docs/architecture/` exists with 5 files + VERIFY.md + README.md = **7 files total**.
-- [ ] Total suite length ≤1500 lines; target ~900.
-- [ ] 3 Mermaid diagrams total (scene tree flowchart, Ship FSM stateDiagram-v2, player-damage sequenceDiagram).
-- [ ] Signal sequenceDiagram uses `->>` / `-->>` distinction for calls vs signals.
-- [ ] Every code reference uses function-name prose anchors or bare `file_path` links — no `#Lxx` ranges except where a specific line is the whole point.
-- [ ] Each content file opens with "What you'll know" (3-4 bullets) and closes with "What to read next."
-- [ ] Each content file has a `<!-- verified against commit <sha> on <date> -->` stamp.
-- [ ] Every ADR (001–014) referenced at least once across the suite (forces "is this ADR still load-bearing" audit).
-- [ ] ADR map paragraph in architecture README covers all 14.
-- [ ] Read end-to-end in a single pass: no forward-references that break ordering.
+- [x] `docs/architecture/` exists with 5 files + VERIFY.md + README.md = **7 files total**.
+- [x] Total suite length ≤1500 lines; target ~900.
+- [x] 3 Mermaid diagrams total (scene tree flowchart, Ship FSM stateDiagram-v2, player-damage sequenceDiagram).
+- [x] Signal sequenceDiagram uses `->>` / `-->>` distinction for calls vs signals.
+- [x] Every code reference uses function-name prose anchors or bare `file_path` links — no `#Lxx` ranges except where a specific line is the whole point.
+- [x] Each content file opens with "What you'll know" (3-4 bullets) and closes with "What to read next."
+- [x] Each content file has a `<!-- verified against commit <sha> on <date> -->` stamp.
+- [x] Every ADR (001–014) referenced at least once across the suite (forces "is this ADR still load-bearing" audit).
+- [x] ADR map paragraph in architecture README covers all 14.
+- [x] Read end-to-end in a single pass: no forward-references that break ordering.
 
 ### Phase 1.5 dogfood
-- [ ] Cold reader (user or fresh agent) reads `docs/architecture/README.md` + `01-overview.md` + `03-entities-and-components.md` — in that order — and answers the 3 seed questions (below). Any question that can't be answered → gap logged and fixed before Phase 2.
+- [x] Cold reader (user or fresh agent) reads `docs/architecture/README.md` + `01-overview.md` + `03-entities-and-components.md` — in that order — and answers the 3 seed questions (below). Any question that can't be answered → gap logged and fixed before Phase 2.
 
 ### GitHub readiness
-- [ ] `.gitignore` updated to Appendix A contents.
-- [ ] `LICENSE` (MIT) at repo root.
-- [ ] If third-party assets exist, `assets/CREDITS.md` created; else README credits section says "all assets self-made".
+- [x] `.gitignore` updated to Appendix A contents.
+- [x] `LICENSE` (MIT) at repo root.
+- [x] If third-party assets exist, `assets/CREDITS.md` created; else README credits section says "all assets self-made".
 - [ ] `gh repo view` (after push) shows description + topics + README preview correctly.
 - [ ] Repo visibility deliberately flipped from private → public after a final README skim (not auto-public).
 
 ### Web export + Pages deploy (new in v3)
-- [ ] `export_presets.cfg` `export_path` changed to `build/web/index.html`.
-- [ ] `variant/thread_support=false` confirmed in the Web preset (non-negotiable — anything else breaks Pages hosting).
-- [ ] `.github/workflows/deploy-pages.yml` present with Appendix D contents.
+- [x] `export_presets.cfg` `export_path` changed to `build/web/index.html`.
+- [x] `variant/thread_support=false` confirmed in the Web preset (non-negotiable — anything else breaks Pages hosting).
+- [x] `.github/workflows/deploy-pages.yml` present with Appendix D contents.
 - [ ] Pages enabled in repo Settings with Source = "GitHub Actions".
 - [ ] First deploy green; URL accessible in a browser.
 - [ ] Game actually runs in the browser: loads, plays a wave, fires cannons, drops mines, shows explosions, minimap works. **Smoke test in Chrome AND Firefox** — WebGL2 behavior differs.
@@ -326,9 +326,9 @@ Relative paths (`../../features/ship/ship.gd`), not absolute `res://` URIs. Func
 - [ ] Load time and initial download size noted in README dev section (set expectations — 20-40 MB is normal).
 
 ### Quality gates
-- [ ] `gdformat --check` clean (docs change shouldn't affect this; sanity run).
-- [ ] `gdlint .` clean.
-- [ ] `gut -gdir=res://tests/unit -gexit` clean.
+- [x] `gdformat --check` clean (docs change shouldn't affect this; sanity run).
+- [x] `gdlint .` clean.
+- [x] `gut -gdir=res://tests/unit -gexit` clean.
 - [ ] Editor manually opened once: zero error spam in output panel.
 
 ## Implementation Phases
