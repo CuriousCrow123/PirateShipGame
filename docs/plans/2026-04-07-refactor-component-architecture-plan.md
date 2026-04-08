@@ -215,6 +215,124 @@ must respect or address:
   Phase 0/1 retro. The corresponding entry in the Phase 0/1 retro
   above is now stale historical context, not a TODO.
 
+### Phase 4 execution retro (added 2026-04-07 after Steps 21–28 + 32 landed)
+
+Carry-over items and deviations discovered while executing Phase 4 that
+Phase 5+ must respect or address:
+
+- **Class index cache hand-edits required for every new component**: 9
+  new `class_name`s landed in Phase 4 (`HealthComponent`, `MovementComponent`,
+  `HurtboxComponent`, `HitFeedbackComponent`, `DashComponent`,
+  `BroadsideComponent`, `MineDropComponent`, `AudioEmitterComponent`, plus
+  `Cooldown` which was missing from Phase 1). Each one had to be appended
+  to `.godot/global_script_class_cache.cfg` by hand because the MCP
+  `run_project` cycle never opens the editor and the cache only refreshes
+  on editor open. The Phase 3 retro flagged this as a 1–2 entry pattern;
+  in Phase 4 it became the dominant friction. **Phase 5+ practice:** add
+  the class-cache entry as the very first edit after writing the new
+  `class_name` line, before running any smoke test, or expect a "Could
+  not find type X" parser error on the next launch.
+
+- **`Cooldown` was missing from the class cache entirely**: discovered
+  when Step 27's BroadsideComponent + Step 26's Cannon both pulled
+  `Cooldown.new()` and the parser blew up at Cannon's `_init`-time field
+  default. Fixed by adding the entry. The user's editor will regenerate
+  the cache cleanly on next open; the manual entry survives until then.
+
+- **HurtboxComponent collision wiring is incomplete by design**: only
+  enemy cannonballs were rerouted to the new layer 6 `player_hurtbox`
+  Area2D in Step 23. Player cannonballs still detect EnemyShip bodies via
+  `body_entered` until Phase 8 Step 39 migrates EnemyShip to its own
+  hurtbox. SeaMine still uses its physics shape query against bodies and
+  enters via the legacy `Ship.take_damage()` proxy, which now forwards
+  into `Hurtbox.process_hit()`. **Phase 8 task:** add `HurtboxComponent`
+  to enemy_ship.tscn on its own enemy hurtbox layer; switch player
+  cannonballs from `body_entered` to `area_entered`; delete the legacy
+  `EnemyShip.take_damage()` direct call site in `cannonball.gd`.
+
+- **`HealthComponent.setup(stats)` injection pattern**: stats is NOT an
+  `@export` on HealthComponent — Ship root injects it from its own stats
+  Resource via a `setup()` call in Ship `_ready()`. This avoids a parallel
+  `Health.stats` slot in main.tscn alongside the existing `Ship.stats`
+  override and keeps wiring centralized. The plan's component skeleton
+  shows `@export var stats: ShipStats` directly on the component, but
+  that pattern only works when the .tscn instance owns the Resource
+  directly. **Phase 8:** EnemyShip will need the same injection pattern
+  (or migrate to a per-archetype Health.stats override on the enemy
+  scene instance — pick one and stay consistent).
+
+- **HealthComponent does NOT yet read from a SpawnPoint Marker2D**: the
+  plan calls for `_spawn_point: Marker2D` injected by main.tscn in
+  Step 21. The current implementation captures the entity's initial
+  global_position on Ship root and teleports there in `_on_health_respawn_ready`.
+  **Phase 5+ refinement (low priority):** add a SpawnPoint Marker2D to
+  main.tscn and have HealthComponent emit a `respawn_ready` payload
+  containing the spawn position so Ship root doesn't keep its own
+  `_spawn_position` field.
+
+- **MovementComponent + DashComponent both accept `body: CharacterBody2D`
+  via `setup()`**: the plan's "components don't reference parent" rule is
+  for sibling lookups, not for the body that a movement component drives.
+  Mutating the body's velocity / calling `move_and_slide()` is unavoidable.
+  Documented in MovementComponent's docstring. **No follow-up needed.**
+
+- **DashComponent leaks the Ship type slightly**: `_physics_process` calls
+  `(_body as Ship).get_node("Movement") as MovementComponent` to invoke
+  ram-pushback during dash. A cleaner pattern is to inject the
+  MovementComponent ref into DashComponent.setup() directly. **Phase 5+
+  cleanup:** add `movement: MovementComponent` to `DashComponent.setup()`
+  and replace the cast with a direct field. One-line change.
+
+- **Cannon dual API kept for EnemyShip compatibility**: Step 26's expansion
+  added `try_fire()` + `fired(pos, dir)` signal but kept the legacy
+  `fire() -> Dictionary` helper because `enemy_ship.gd._fire_broadside`
+  still consumes the dictionary form. **Phase 8 Step 39:** migrate enemy
+  ship to BroadsideComponent + try_fire, then delete the legacy `fire()`
+  method from cannon.gd.
+
+- **Ship root re-emits legacy signals**: `cannon_fired`, `mine_dropped`,
+  `health_changed`, `lives_changed`, `died`, `respawned`, `game_over`,
+  `invincibility_changed` are all still on Ship's signal surface. They
+  forward from the corresponding component signals so `main.gd` and the
+  HUD `setup(_ship)` callers don't have to migrate this commit. **Phase 7
+  HUD migration:** when StatsTracker / GameState autoload picks up these
+  per-stat signals, the Ship-side re-emit forwarders can be deleted.
+
+- **`Engine.time_scale` defensive reset moved to DashComponent**: the
+  `_exit_tree` reset that used to live on Ship is now on DashComponent
+  per Research Delta #9. Verified the reset path still fires on death
+  cleanup (Ship root calls `_dash.stop()` which calls `_end_dash()`
+  which performs the reset). **No follow-up.**
+
+- **Inline lambdas in connect() trigger gdlint max-line-length**:
+  Step 32's first attempt wired audio listeners as
+  `_broadside.cannon_fired.connect(func(_p, _d): _audio.play(&"cannon_fire"))`
+  and the line exceeded the 100-char limit. Fixed by extracting named
+  `_on_audio_*` methods. **Practice for Phase 5+:** prefer named methods
+  over inline lambdas in `connect()` calls — they format more reliably
+  and survive lint without manual rewrapping.
+
+- **Phase 6 Step 34a/b/c/d will simplify these components**: HealthComponent
+  still uses `get_tree().create_timer().timeout.connect(lambda)` for the
+  respawn cooldown (Step 34a). DashComponent still uses raw create_timer
+  for freeze-frames (34b), time-dip (34c), and dash cooldown (34d). The
+  Cooldown helper is already imported by Cannon, BroadsideComponent, and
+  MineDropComponent — Phase 6 just needs to swap the dash/health timers
+  to match.
+
+- **Iframes still tick in HealthComponent's `_physics_process`**: Phase 5
+  (FSM) is supposed to move iframe gating into the FSM state machine.
+  Until then HealthComponent has `set_physics_process(true)` which
+  breaks the "default OFF" doctrine for components. The doctrine
+  breakage is documented inline in `health_component.gd:_ready`.
+
+- **`ship.gd` final size: 258 LOC** (down from 548 LOC in Phase 0). Of
+  those 258 lines, the bulk is component wiring + legacy signal
+  re-emit forwarders — pure orchestration. The body_collision /
+  set_collision_layer_value death-cleanup block is the largest chunk of
+  remaining behavior and will move into a future LifecycleComponent or
+  the FSM in Phase 5.
+
 ### Phase 3 + 3.5 execution retro (added 2026-04-07 after Steps 17–20a landed)
 
 Carry-over items discovered while executing Phase 3 and 3.5 that
