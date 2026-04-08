@@ -9,27 +9,27 @@
 [ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://features/water/textures/CircleBlur64x64.png" id="8_circle"]
 [ext_resource type="Curve" path="res://features/water/trail_width_curve.tres" id="9_curve"]
 [ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://features/ship/ship.tscn" id="10_ship"]
-[ext_resource type="Resource" path="res://features/ship/stats/default_ship_stats.tres" id="21_ship_stats"]
-[ext_resource type="Resource" path="res://features/waves/sets/default_campaign.tres" id="22_campaign"]
 [ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://features/water/water_chunk_manager.gd" id="11_chunks"]
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://features/water/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://features/hud/controls_overlay.tscn" id="13_overlay"]
 [ext_resource type="PackedScene" path="res://features/hud/minimap.tscn" id="14_minimap"]
 [ext_resource type="PackedScene" path="res://dev/debug_overlay/debug_overlay.tscn" id="15_debug"]
-[ext_resource type="PackedScene" path="res://features/hud/hp_display.tscn" id="16_hp"]
-[ext_resource type="PackedScene" path="res://features/hud/wave_toast.tscn" id="17_wave_toast"]
-[ext_resource type="PackedScene" path="res://features/hud/lives_display.tscn" id="18_lives"]
-[ext_resource type="PackedScene" path="res://features/hud/game_over_screen.tscn" id="19_game_over"]
-[ext_resource type="PackedScene" path="res://features/hud/victory_screen.tscn" id="24_victory"]
-[ext_resource type="PackedScene" path="res://features/hud/mine_cooldown_display.tscn" id="20_mine_cd"]
-[ext_resource type="PackedScene" path="res://features/camera/game_camera.tscn" id="23_camera"]
-[ext_resource type="Script" path="res://features/waves/wave_director.gd" id="25_wave_dir"]
-[ext_resource type="Script" path="res://systems/spawn_service.gd" id="26_spawn"]
-[ext_resource type="Script" path="res://systems/stats_tracker.gd" id="27_stats"]
-[ext_resource type="Script" path="res://features/water/water_effects_manager.gd" id="28_water_fx"]
+[ext_resource type="PackedScene" uid="uid://bjiwoui3t2ow5" path="res://features/hud/hp_display.tscn" id="16_hp"]
+[ext_resource type="PackedScene" uid="uid://doull5gqh1vxv" path="res://features/hud/wave_toast.tscn" id="17_wave_toast"]
+[ext_resource type="PackedScene" uid="uid://c7pf83wmg3552" path="res://features/hud/lives_display.tscn" id="18_lives"]
+[ext_resource type="PackedScene" uid="uid://bv0gameover01" path="res://features/hud/game_over_screen.tscn" id="19_game_over"]
+[ext_resource type="PackedScene" uid="uid://bminecd0hud01" path="res://features/hud/mine_cooldown_display.tscn" id="20_mine_cd"]
+[ext_resource type="Resource" path="res://features/ship/stats/default_ship_stats.tres" id="21_ship_stats"]
+[ext_resource type="Resource" path="res://features/waves/sets/default_campaign.tres" id="22_campaign"]
+[ext_resource type="PackedScene" uid="uid://dcam3g4s6pd71" path="res://features/camera/game_camera.tscn" id="23_camera"]
+[ext_resource type="PackedScene" uid="uid://bvictory0001" path="res://features/hud/victory_screen.tscn" id="24_victory"]
+[ext_resource type="Script" uid="uid://dmub1k2ruhlv7" path="res://features/waves/wave_director.gd" id="25_wave_dir"]
+[ext_resource type="Script" uid="uid://cqitja326ukrr" path="res://systems/spawn_service.gd" id="26_spawn"]
+[ext_resource type="Script" uid="uid://d288smcilj10r" path="res://systems/stats_tracker.gd" id="27_stats"]
+[ext_resource type="Script" uid="uid://brf45k16koj1s" path="res://features/water/water_effects_manager.gd" id="28_water_fx"]
 [ext_resource type="Resource" path="res://features/water/water_tuning.tres" id="29_tuning"]
-[ext_resource type="Script" path="res://features/vfx/vfx_listener.gd" id="30_vfx_lis"]
-[ext_resource type="Script" path="res://features/water/water_listener.gd" id="31_water_lis"]
+[ext_resource type="Script" uid="uid://bg7s8ym2seffd" path="res://features/vfx/vfx_listener.gd" id="30_vfx_lis"]
+[ext_resource type="Script" uid="uid://csd7e461bveu4" path="res://features/water/water_listener.gd" id="31_water_lis"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -52,7 +52,7 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 [node name="Main" type="Node2D" unique_id=1211575893]
 script = ExtResource("3_main")
 
-[node name="SpawnPoint" type="Marker2D" parent="."]
+[node name="SpawnPoint" type="Marker2D" parent="." unique_id=1482109676]
 position = Vector2(176, 112)
 
 [node name="Ship" parent="." unique_id=1211440340 instance=ExtResource("10_ship")]
@@ -87,7 +87,6 @@ joint_mode = 1
 begin_cap_mode = 2
 end_cap_mode = 2
 script = ExtResource("6_trails")
-max_length = 90
 sub_viewport = NodePath("..")
 follow_target = NodePath("../../../Ship")
 pivot_target = NodePath("../../../Ship")
@@ -121,33 +120,33 @@ follow_target = NodePath("../..")
 
 [node name="DebugOverlay" parent="." unique_id=2046880645 instance=ExtResource("15_debug")]
 
-[node name="HPDisplay" parent="." instance=ExtResource("16_hp")]
+[node name="HPDisplay" parent="." unique_id=452466740 instance=ExtResource("16_hp")]
 
-[node name="WaveToast" parent="." instance=ExtResource("17_wave_toast")]
+[node name="WaveToast" parent="." unique_id=472896185 instance=ExtResource("17_wave_toast")]
 
-[node name="LivesDisplay" parent="." instance=ExtResource("18_lives")]
+[node name="LivesDisplay" parent="." unique_id=1958807345 instance=ExtResource("18_lives")]
 
-[node name="GameOverScreen" parent="." instance=ExtResource("19_game_over")]
+[node name="GameOverScreen" parent="." unique_id=1328342955 instance=ExtResource("19_game_over")]
 
-[node name="VictoryScreen" parent="." instance=ExtResource("24_victory")]
+[node name="VictoryScreen" parent="." unique_id=580029523 instance=ExtResource("24_victory")]
 
-[node name="MineCooldownDisplay" parent="." instance=ExtResource("20_mine_cd")]
+[node name="MineCooldownDisplay" parent="." unique_id=1655064477 instance=ExtResource("20_mine_cd")]
 
-[node name="GameCamera" parent="." instance=ExtResource("23_camera")]
+[node name="GameCamera" parent="." unique_id=423948184 instance=ExtResource("23_camera")]
 
-[node name="WaveDirector" type="Node" parent="."]
+[node name="WaveDirector" type="Node" parent="." unique_id=196938593]
 script = ExtResource("25_wave_dir")
 wave_set = ExtResource("22_campaign")
 
-[node name="SpawnService" type="Node" parent="."]
+[node name="SpawnService" type="Node" parent="." unique_id=1066037777]
 script = ExtResource("26_spawn")
 
-[node name="StatsTracker" type="Node" parent="." node_paths=PackedStringArray("game_over_screen", "victory_screen")]
+[node name="StatsTracker" type="Node" parent="." unique_id=127568337 node_paths=PackedStringArray("game_over_screen", "victory_screen")]
 script = ExtResource("27_stats")
 game_over_screen = NodePath("../GameOverScreen")
 victory_screen = NodePath("../VictoryScreen")
 
-[node name="WaterEffectsManager" type="Node" parent="." node_paths=PackedStringArray("displacement_viewport", "displacement_sub_viewport", "water_trail", "trail_sprite", "wake_subviewport", "player_wake_line", "chunk_container")]
+[node name="WaterEffectsManager" type="Node" parent="." unique_id=1983302313 node_paths=PackedStringArray("displacement_viewport", "displacement_sub_viewport", "water_trail", "trail_sprite", "wake_subviewport", "player_wake_line", "chunk_container")]
 script = ExtResource("28_water_fx")
 tuning = ExtResource("29_tuning")
 displacement_viewport = NodePath("../DisplacementViewport")
@@ -158,9 +157,9 @@ wake_subviewport = NodePath("../WaterTrail/SubViewport")
 player_wake_line = NodePath("../WaterTrail/SubViewport/Line2D")
 chunk_container = NodePath("../ChunkContainer")
 
-[node name="VfxListener" type="Node" parent="."]
+[node name="VfxListener" type="Node" parent="." unique_id=1123462985]
 script = ExtResource("30_vfx_lis")
 
-[node name="WaterListener" type="Node" parent="." node_paths=PackedStringArray("displacement_stamps")]
+[node name="WaterListener" type="Node" parent="." unique_id=1528829532 node_paths=PackedStringArray("displacement_stamps")]
 script = ExtResource("31_water_lis")
 displacement_stamps = NodePath("../DisplacementViewport/SubViewport/Stamps")
