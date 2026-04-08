@@ -119,6 +119,44 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Phase 0/1 execution retro (added 2026-04-07 after Steps 1\u201310 landed)
+
+Carry-over items discovered while executing Phases 0\u20131 that future steps
+must respect or address:
+
+- **GameState constants vs ShipStats** \u2014 [autoload/game_state.gd](../../autoload/game_state.gd)
+  currently hard-codes `_DEFAULT_MAX_HP = 4` and `_DEFAULT_MAX_LIVES = 2`.
+  **Phase 2 Step 11 MUST replace these with reads from `ShipStats.tres`**
+  the moment that Resource exists, or the GameState seed will silently
+  drift from the designer's intent.
+- **GUT test convention** \u2014 the headless `gut_cmdln.gd` parse pass does
+  not always pick up the global class index in time. **All test files in
+  `tests/unit/`** must `preload("res://path/to/foo.gd")` the SUT into a
+  local `const`, not rely on `class_name`. See
+  [tests/unit/test_cooldown.gd](../../tests/unit/test_cooldown.gd) for the
+  template.
+- **GUT loader patch** \u2014 [addons/gut/gut_loader.gd:35](../../addons/gut/gut_loader.gd#L35)
+  has a local null guard for `ProjectSettings.get("debug/gdscript/warnings/exclude_addons")`.
+  Any future GUT version bump must re-apply this patch (or upstream it),
+  otherwise the headless runner crashes during static-init with
+  "Trying to assign value of type 'Nil' to a variable of type 'bool'".
+- **Lint command divergence** \u2014 [CLAUDE.md](../../CLAUDE.md) was updated
+  in Step 4 to use
+  `find . -name "*.gd" -not -path "./addons/*" -not -path "./.git/*" -print0 | xargs -0 gdformat --check`
+  because gdformat has no exclude option. The `gdlintrc` at the project
+  root excludes `addons/` for gdlint. **Step 49 (CLAUDE.md update) must
+  not regress these.**
+- **Pre-existing warnings observed at every smoke test** (not introduced
+  by Phases 0\u20131; left for the phase that owns the corresponding code):
+  - `res://scenes/ship.tscn:5` stale UID for `cannon.tscn` \u2014 cleaned up
+    in Phase 4 Step 21+ (Cannon component extraction).
+  - `res://resources/dash_flame_sphere.tres` and `dash_flame_cone.tres`
+    stale UIDs pointing at `dash_flame_material.tres` \u2014 cleaned up in
+    Phase 10 (folder reorg + `git mv` + `.uid` regen).
+  - `Camera2D overridden to physics process mode due to use of physics
+    interpolation` \u2014 dissolves in Phase 3 Step 19+20 (camera promoted
+    out of Ship).
+
 ## Overview
 
 A big-bang refactor of PirateShipGame from a rapidly vibecoded codebase
@@ -571,13 +609,30 @@ Phase 6 must address all 10. Unit-tested.
   is the canonical authoring tool for `resources/dash_flame_material.tres`
   and `resources/stylized_flame_snapshot.json` (Research Delta #3).
   Deletion is deferred to Phase 11 step 47 AFTER addon replacement lands.
+  *(Done 2026-04-07: writeups at [docs/archived/dash_fire_test.md](../archived/dash_fire_test.md),
+  [docs/archived/explosion_test.md](../archived/explosion_test.md),
+  [docs/archived/stylized_flame_test.md](../archived/stylized_flame_test.md).
+  Each one flags critical impl notes the dev-tools-addon replacement
+  must preserve: dash_fire_test's per-emitter `.duplicate(true)` chain,
+  explosion_test's `effect_scale = 1.0` bake-time override, and
+  stylized_flame_test's `BLEND_MODE_PREMULT_ALPHA` blit on the
+  SubViewportContainers.)*
 - [x] **Step 6** — Add `Events` autoload at `autoload/events.gd` with all
   typed signals declared (empty bodies). Register in `project.godot` **FIRST
   in autoload order** — Events must be loaded before any other autoload or
   scene node can connect to its signals. **No file-scope `preload()` of other
   autoloads.** Autoloads may reference each other only inside `_ready()` or
   later. Add this as a rule in the Events ADR (pillar 007) to prevent
-  parse-time cycles.
+  parse-time cycles. *(Done 2026-04-07: 22 typed signals at
+  [autoload/events.gd](../../autoload/events.gd) wrapped in
+  `@warning_ignore_start("unused_signal")` because by-design no in-class
+  emitters exist. Displacement signals deliberately omitted per the
+  deepen-summary "high-frequency stays off the bus" rule. Also
+  forward-declares `RunStats` at [systems/run_stats.gd](../../systems/run_stats.gd)
+  with the **final** Step 9 field set so the typed
+  `run_ended(stats: RunStats, ...)` signature parses now \u2014 deviation
+  from the plan, which scheduled RunStats for Step 9. The Step 9 work
+  is now Cooldown + GUT suite only.)*
 - [x] **Step 7** — Add `GameState` autoload at `autoload/game_state.gd` —
   current wave/score/lives, `RunStats`. **Registered SECOND** in autoload
   order (after Events). `GameState` seeds initial values from `ShipStats.tres`
@@ -586,9 +641,24 @@ Phase 6 must address all 10. Unit-tested.
   (`start_new_run()`, `record_damage(amount)`, `record_kill()`,
   `record_death()`, `record_wave_cleared(index, duration)` …) plus
   read-only getters. External callers NEVER write fields directly.
+  *(Done 2026-04-07 at [autoload/game_state.gd](../../autoload/game_state.gd).
+  **TEMPORARY DEVIATION**: initial HP/lives are hard-coded constants
+  `_DEFAULT_MAX_HP = 4` / `_DEFAULT_MAX_LIVES = 2` matching current
+  ship.gd defaults, because `ShipStats.tres` does not exist until
+  Phase 2 Step 11. **Phase 2 Step 11 must replace these constants with
+  reads from ShipStats.** Also: no Events bus subscriptions yet \u2014 the
+  recorder methods exist but nothing emits into them. Wiring real bus
+  signals to the recorders happens incrementally in Phases 4\u20137 as the
+  emitting components/managers come online.)*
 - [x] **Step 8** — Add `AudioManager` autoload at `autoload/audio_manager.gd` —
   no-op until clips exist; subscribes to `Events.sound_requested` in its
   `_ready()`. **Registered THIRD** in autoload order.
+  *(Done 2026-04-07 at [autoload/audio_manager.gd](../../autoload/audio_manager.gd).
+  Routes `Events.sound_requested(sound_id, pos)` to `_on_sound_requested`
+  which is currently a no-op. The Events reference is taken inside
+  `_ready()`, never at file scope, per the deepen-summary autoload-order
+  rule. Real SoundLibrary lookup + AudioStreamPlayer2D pool lands in a
+  future phase together with the SoundConfig Resource.)*
 - [x] **Step 9** — Add `Cooldown` helper at `systems/cooldown.gd` + unit test
   at `tests/unit/test_cooldown.gd`. **Also add `RunStats` at
   `systems/run_stats.gd`** — `class_name RunStats extends Resource` with
@@ -596,8 +666,25 @@ Phase 6 must address all 10. Unit-tested.
   `time_elapsed: float`, `waves_cleared: int`, `wave_times: PackedFloat32Array`.
   Required because `signal run_ended(stats: RunStats, victory: bool)` will
   not resolve at parse time without the class_name.
+  *(Done 2026-04-07. Cooldown at [systems/cooldown.gd](../../systems/cooldown.gd)
+  is the timestamp-based design from the deepen-summary fix #1 \u2014
+  `progress()` short-circuits to 1.0 when `_duration_msec <= 0` so the
+  latent ternary-precedence bug from the original tick-based draft
+  cannot reappear. RunStats was added in Step 6 (early) so this step
+  reduces to Cooldown + tests. Test suite at
+  [tests/unit/test_cooldown.gd](../../tests/unit/test_cooldown.gd) has
+  7 tests / 26 asserts, all passing under headless GUT (337ms).
+  **Important detail for future test files:** the suite loads Cooldown
+  via `const CooldownClass: GDScript = preload("res://systems/cooldown.gd")`
+  rather than the global `class_name`, because the headless gut_cmdln.gd
+  parse pass doesn't always pick up the global class index in time.
+  All upcoming GUT tests under `tests/unit/` should follow the same
+  preload pattern.)*
 - [x] **Step 10** — Add `SpawnPoint` Marker2D to `main.tscn` at the current
-  ship start position.
+  ship start position. *(Done 2026-04-07: SpawnPoint Marker2D under Main
+  at `Vector2(176, 112)` \u2014 same as the Ship instance position. No script
+  reads it yet; HealthComponent picks it up in Phase 4 Step 21.
+  `validate_tscn.py` clean.)*
 
 #### Phase 2 — Resources first (data, no behavior change)
 
