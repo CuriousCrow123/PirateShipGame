@@ -42,7 +42,7 @@ The per-project linting, component, and Resource rules live in
 From [project.godot](../../project.godot) `[autoload]`:
 
 1. **Events** — [autoload/events.gd](../../autoload/events.gd) — typed signal bus.
-2. **GameState** — [autoload/game_state.gd](../../autoload/game_state.gd) — per-run snapshot + RunStats.
+2. **GameState** — [autoload/game_state.gd](../../autoload/game_state.gd) — per-run *aggregate* snapshot (current wave index, RunStats accumulator, HP/lives mirrored from the Ship for HUD reads). It does **not** own respawn state — that lives on `HealthComponent` on the Ship (HP + respawn timer + death/respawn signals). `GameState` is the aggregate; `HealthComponent` is the mechanism.
 3. **AudioManager** — [autoload/audio_manager.gd](../../autoload/audio_manager.gd) — bus subscriber for `sound_requested`.
 4. **KeybindsManager** — [autoload/keybinds_manager.gd](../../autoload/keybinds_manager.gd) — remap + gamepad + persistence.
 

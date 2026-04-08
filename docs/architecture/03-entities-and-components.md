@@ -21,11 +21,14 @@
 | **Cannonball** | [features/weapons/cannonball.tscn](../../features/weapons/cannonball.tscn) | [features/weapons/cannonball.gd](../../features/weapons/cannonball.gd) | `Area2D` | Travels a randomized distance, impacts water with an explosion + displacement stamp |
 | **SeaMine** | [features/weapons/sea_mine.tscn](../../features/weapons/sea_mine.tscn) | [features/weapons/sea_mine.gd](../../features/weapons/sea_mine.gd) | `Area2D` | Floats, arms, detonates on proximity, supports chain reactions via `SpawnService` |
 
-Player and enemy ships share the same component vocabulary (Health,
-Hurtbox, HitFeedback, Broadside, AudioEmitter, FSM) plus entity-
-specific ones (Ship adds Dash, MineDrop, PlayerInput, Movement;
-EnemyShip adds `EnemyAIMovement` and takes an `EnemyArchetype`
-Resource).
+Player and enemy ships share the same component vocabulary — Health,
+Hurtbox, HitFeedback, Broadside, AudioEmitter, FSM — which means
+`HealthComponent`, `HurtboxComponent`, etc. are **not Ship-specific**
+even though they live under `features/ship/components/`. Per CLAUDE.md,
+components live with their host entity; `EnemyShip` reusing them is
+the intended outcome. Ship adds Dash, MineDrop, PlayerInput, and
+Movement; EnemyShip adds `EnemyAIMovement` and takes an
+`EnemyArchetype` Resource in place of `ShipStats`.
 
 ## The 10 components under `features/ship/components/`
 
@@ -134,9 +137,12 @@ The Mermaid sequence diagram is in
    triggers `ShipFSM.start_iframes(duration)` and
    `HitFeedbackComponent.play_hit()`.
 6. If HP ≤ 0, `HealthComponent._enter_death()` calls
-   `ShipFSM.enter_dead()`, which emits `Ship.died`. Main reacts by
-   calling `WaterEffectsManager.on_player_died`; the ship's own
-   `died` handler emits an explosion via `Events.explosion_requested`.
+   `ShipFSM.enter_dead()`, which emits `Ship.died`.
+   [main.gd](../../main/main.gd) is already connected to that signal
+   (see the run loop in [01-overview.md](01-overview.md)) and calls
+   `WaterEffectsManager.on_player_died` to reset the wake trail; the
+   ship's own internal `died` handler emits an explosion via
+   `Events.explosion_requested`.
 7. After `respawn_delay`, `HealthComponent` emits `respawn_ready`.
    `Ship._on_health_respawn_ready` calls `ShipFSM.respawn(iframe_dur)`
    and re-emits `Ship.respawned`, which Main uses to snap the camera.
