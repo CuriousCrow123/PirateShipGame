@@ -119,6 +119,107 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Phase 9 execution retro (added 2026-04-07 after Steps 41–43 landed)
+
+Carry-over items and deviations discovered while executing Phase 9 that
+Phase 10+ must respect or address:
+
+- **VfxListener owns explosions only; camera shake/zoom punch stay on
+  GameCamera's own subscriptions**: the plan text said `vfx_listener.gd`
+  subscribes to `explosion_requested`, `screen_shake_requested`, AND
+  `camera_zoom_punch_requested`. But Phase 3 already wired GameCamera as
+  the direct subscriber for shake/zoom — the camera is the receiver and
+  forwarding through a listener would add a pointless hop. So VfxListener
+  subscribes to `explosion_requested` only (7 call sites migrated:
+  cannonball x2, sea_mine, ship, enemy_ship, spawn_service x2). All
+  explosion nodes parent to the VfxListener so they outlive the emitting
+  source's `queue_free()`. **Phase 11 ADR 007 note:** document the
+  "listener-owns-the-work" principle — signals that have a natural
+  single-owner receiver (camera shake → GameCamera) don't get an
+  intermediate listener even for uniformity.
+
+- **The pre-Phase-9 "high-frequency signals stay off the bus" discipline
+  rule was dropped**: Phase 1 added this rule to `events.gd` as a
+  prediction, not a measurement. Phase 9 measured: ~5 displacement emits
+  per frame on a typed value-type signal with one listener is
+  unmeasurable noise. The rule was rewritten in place. Three new bus
+  signals landed: `displacement_impact_requested(pos, radius, duration)`,
+  `displacement_wake_ring_requested(pos)`, and
+  `displacement_bob_requested(pos, phase)`. **Phase 11 ADR 007 note:**
+  document the rejection of per-frame bus carve-outs — uniformity beats
+  premature optimization.
+
+- **Publishers own the tuning lookup, listeners are dumb**: two-tier
+  design. `WaterEffectsManager` (smart) reads `WaterTuning.tres` and
+  emits bus signals with pre-computed radius/duration values. The new
+  `WaterListener` (dumb) just forwards the bus signal to
+  `displacement_stamps.spawn_*`. This keeps `WaterListener` ignorant of
+  `WaterTuning` and keeps WaterEffects as the single point where
+  displacement magic numbers are read.
+
+- **Mine-explosion displacement path migrated from
+  `spawn_displacement_impact(pos, 128.0, 2.5)` direct call to
+  `on_mine_explosion(pos)`** on WaterEffectsManager. SpawnService no
+  longer passes magic numbers — the tuning lookup lives inside
+  WaterEffects. The old `spawn_displacement_impact` public method was
+  deleted.
+
+- **WaterTuning.tres is hot-reloadable**: WaterEffectsManager reads
+  `tuning.wake_ring_spacing`, `tuning.wake_speed_cap`, etc. per-frame
+  in `_process`, so editing the inspector values mid-run propagates
+  live without restart. This satisfies the live-reload acceptance
+  criterion's spirit for water tuning (the written criterion only names
+  `default_ship_stats.tres`, but the pattern is the same).
+
+- **Water folder consolidation landed in Phase 9, not Phase 10**: the
+  plan put "water folder consolidation" under Step 43 and "folder
+  reorganization" under Step 44 — overlapping scopes. Phase 9 moved the
+  water files (`water_chunks.gd` → `water/water_chunk_manager.gd`,
+  `displacement_stamps.gd`, `trails.gd`, `water_effects_manager.gd`,
+  plus new `water_tuning.gd` and `water_listener.gd`) into
+  `scripts/water/` with `.uid` sidecars preserved via `git mv`. **Phase
+  10 task:** skip water entirely — it's already moved. The Phase 10 sweep
+  of everything else (`features/`, `assets/`, `systems/`, etc.) can
+  assume `scripts/water/` is the final resting place, or move it again
+  to `features/water/` if the canonical tree calls for it. Paths
+  updated:
+  - `scenes/main.tscn` ext_resource paths for trails / water_chunk_manager
+    / displacement_stamps / water_effects_manager / water_listener.
+  - `scripts/water/water_effects_manager.gd` preload path for trails.gd.
+  - `resources/water_tuning.tres` ext_resource path.
+  - `.godot/global_script_class_cache.cfg` — 4 new class_names added
+    (VfxListener, WaterListener, WaterTuning, WaterChunkManager) and
+    3 existing paths updated (WaterEffectsManager, WaterListener,
+    WaterTuning, WaterChunkManager all under `scripts/water/`).
+  - `docs/solutions/shared-resource-mutation.md` trails.gd path.
+
+- **`WaterChunks` → `WaterChunkManager` rename was class_name only**:
+  the scene references the script by path, not by class_name, so the
+  rename was a single `class_name WaterChunkManager` line addition with
+  no cascading scene edits needed. The node name in `main.tscn` remains
+  `ChunkContainer` because renaming a node has runtime cost (child
+  lookups, NodePath resolution) and no benefit.
+
+- **`vfx_listener.gd` stays in `scripts/` (not `scripts/water/`)**:
+  Phase 9 was scoped to the *water* folder consolidation. VfxListener
+  belongs in `features/vfx/` per the Phase 10 canonical tree. Leaving
+  it at `scripts/vfx_listener.gd` for now keeps the Phase 10 sweep's
+  inventory honest.
+
+- **No cannonball/mine path refactor to emit `explosion_requested`
+  from the entity root vs. the component**: Cannonball, SeaMine, Ship,
+  EnemyShip are all entity roots (per bus discipline rule #1), so
+  emitting directly from them is rule-compliant. SpawnService is a
+  service node and also qualifies as a publisher. No change of
+  emitter-ownership needed.
+
+- **No new GUT tests added**: same posture as Phases 5/6/7/8 — Step 45
+  (Phase 11) owns the test suites. Phase 9 was verified via gdformat
+  clean, gdlint clean, and two MCP smoke runs (pre- and post-folder-
+  move) with zero new errors beyond the pre-existing stale-UID and
+  Camera2D warnings documented in the Phase 0/1 retro and preserved
+  through all subsequent phases.
+
 ### Phase 8 execution retro (added 2026-04-07 after Steps 39–40 landed)
 
 Carry-over items and deviations discovered while executing Phase 8 that
@@ -1831,14 +1932,14 @@ launch, play one wave, die, respawn, verify.**
 
 #### Phase 9 — VFX + Water listeners (HIGH VISUAL-REGRESSION RISK)
 
-- [ ] **Step 41** — `vfx_listener.gd` subscribes to `explosion_requested`,
+- [x] **Step 41** — `vfx_listener.gd` subscribes to `explosion_requested`,
   `screen_shake_requested`, and new `camera_zoom_punch_requested`. Wraps
   existing `ExplosionSprite.create()` factory.
-- [ ] **Step 42** — `water_listener.gd` subscribes to the three typed
+- [x] **Step 42** — `water_listener.gd` subscribes to the three typed
   displacement signals. Replaces direct
   `_displacement_stamps.spawn_impact/spawn_wake_ring/spawn_bob` calls at
   [main.gd:118-123, 126-139, 218-222](../../scripts/main.gd#L118-L139).
-- [ ] **Step 43** — Full water subsystem refactor: `WaterChunkManager`, water
+- [x] **Step 43** — Full water subsystem refactor: `WaterChunkManager`, water
   folder consolidation, water tuning Resources. **Highest regression risk.**
   Verification checklist (expanded from brainstorm per Research Delta):
   - Spawn ship; wake rings appear at correct cadence.

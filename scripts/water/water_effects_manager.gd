@@ -23,7 +23,7 @@ extends Node
 ##     SpawnService can fan out to nearby mines. The local-then-bus split
 ##     is the dispatch path for Research Delta #10.
 
-const TrailsScript: Script = preload("res://scripts/trails.gd")
+const TrailsScript: Script = preload("res://scripts/water/trails.gd")
 const TrailWidthCurve: Curve = preload("res://resources/trail_width_curve.tres")
 const TrailGradientTex: Texture2D = preload("res://textures/WaterTrailGradient.png")
 
