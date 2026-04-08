@@ -564,7 +564,7 @@ Phase 6 must address all 10. Unit-tested.
 
 #### Phase 1 — Quick wins (autoloads, helpers, archive prep)
 
-- [ ] **Step 5** — For each of the 3 test scenes, write a thorough MD writeup
+- [x] **Step 5** — For each of the 3 test scenes, write a thorough MD writeup
   in `docs/archived/<name>.md` (purpose, setup, parameters, findings,
   screenshots). **DO NOT delete yet** — `explosion_test.gd` is an active atlas
   baker (writes to `res://textures/explosions/`) and `stylized_flame_test.gd`
