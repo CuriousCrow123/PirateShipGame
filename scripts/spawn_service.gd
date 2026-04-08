@@ -15,7 +15,7 @@ extends Node
 ## at the target side, but the caller still needs the snapshot).
 
 const CannonballScene: PackedScene = preload("res://scenes/cannonball.tscn")
-const EnemyShipScene: PackedScene = preload("res://scenes/enemy_ship.tscn")
+const EnemyShipScene: PackedScene = preload("res://features/enemies/enemy_ship.tscn")
 const SeaMineScene: PackedScene = preload("res://scenes/sea_mine.tscn")
 
 @export var spawn_distance: float = 550.0

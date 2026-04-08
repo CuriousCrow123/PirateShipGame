@@ -1,15 +1,15 @@
 [gd_scene load_steps=13 format=3 uid="uid://c2enemyship01"]
 
-[ext_resource type="Script" uid="uid://dhh4bsq5v8nwf" path="res://scripts/enemy_ship.gd" id="1_enemy_ship"]
+[ext_resource type="Script" uid="uid://dhh4bsq5v8nwf" path="res://features/enemies/enemy_ship.gd" id="1_enemy_ship"]
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
 [ext_resource type="PackedScene" uid="uid://crkk3p72st73n" path="res://features/ship/components/cannon.tscn" id="3_cannon"]
-[ext_resource type="Resource" path="res://resources/default_enemy_archetype.tres" id="4_archetype"]
+[ext_resource type="Resource" path="res://features/enemies/archetypes/default_enemy_archetype.tres" id="4_archetype"]
 [ext_resource type="Script" path="res://features/ship/ship_fsm.gd" id="5_fsm"]
 [ext_resource type="Script" path="res://features/ship/components/health_component.gd" id="6_health"]
 [ext_resource type="Script" path="res://features/ship/components/hurtbox_component.gd" id="7_hurtbox"]
 [ext_resource type="Script" path="res://features/ship/components/hit_feedback_component.gd" id="8_hit_feedback"]
 [ext_resource type="Script" path="res://features/ship/components/broadside_component.gd" id="9_broadside"]
-[ext_resource type="Script" path="res://scripts/enemy_ai_movement.gd" id="10_ai_movement"]
+[ext_resource type="Script" path="res://features/enemies/enemy_ai_movement.gd" id="10_ai_movement"]
 [ext_resource type="Script" path="res://features/ship/components/audio_emitter_component.gd" id="11_audio_emitter"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
