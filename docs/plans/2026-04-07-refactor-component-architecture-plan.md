@@ -733,10 +733,17 @@ Phase 6 must address all 10. Unit-tested.
   wave cadence and difficulty curve match the pre-refactor procedural values
   within ±10% on spawn interval and enemy count** (compute expected values
   from the formula at the same line).
-- [ ] **Step 15** — Rename `DashConfig` → `DashStats` (plain text replace +
+- [x] **Step 15** — Rename `DashConfig` → `DashStats` (plain text replace +
   run game + fix breaks). Update `resources/dash_config.tres` →
   `resources/dash_stats.tres` and `scripts/dash_config.gd` →
-  `scripts/dash_stats.gd`.
+  `scripts/dash_stats.gd`. *(Done 2026-04-07: `git mv` of both files plus
+  the .uid sidecar; class_name and field name `dash_config` \u2192 `dash_stats`
+  rewritten in scripts/ship.gd, scripts/dash_fire_effect.gd, scripts/
+  dash_stats.gd, scenes/ship.tscn, resources/dash_stats.tres. The
+  `DashStats.FeelMode` enum reference and `start(dash_stats)` call site in
+  dash_fire_effect.gd both updated. Cosmetic ExtResource id label
+  `id="5_dash_config"` left as-is in ship.tscn (it is just a string id,
+  not a reference). MCP run-test cycle clean.)*
 - [ ] **Step 16** — Rename `ExplosionConfig` → `ExplosionStats` (same
   procedure).
 

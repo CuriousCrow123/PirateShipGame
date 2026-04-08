@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
 [ext_resource type="PackedScene" uid="uid://bbdtkmcxp17m2" path="res://scenes/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://resources/default_ship_config.tres" id="4_config"]
-[ext_resource type="Resource" path="res://resources/dash_config.tres" id="5_dash_config"]
+[ext_resource type="Resource" path="res://resources/dash_stats.tres" id="5_dash_config"]
 [ext_resource type="PackedScene" path="res://scenes/dash_fire_effect.tscn" id="6_fire_effect"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
@@ -17,7 +17,7 @@ collision_layer = 1
 collision_mask = 2
 script = ExtResource("1_ship")
 config = ExtResource("4_config")
-dash_config = ExtResource("5_dash_config")
+dash_stats = ExtResource("5_dash_config")
 
 [node name="HullSprite" type="Sprite2D" parent="." unique_id=1672109739]
 scale = Vector2(0.5, 0.5)

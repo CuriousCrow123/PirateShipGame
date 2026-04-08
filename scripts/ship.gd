@@ -4,7 +4,7 @@ extends CharacterBody2D
 ## Thrust accumulates velocity; viscous drag decays it exponentially.
 ## Brake (S key) decelerates to zero via move_toward.
 ## Broadside cannons fire perpendicular to the ship (Q = port, E = starboard).
-## Space dashes the ship forward with a tunable feel mode (see DashConfig).
+## Space dashes the ship forward with a tunable feel mode (see DashStats).
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 signal mine_dropped(pos: Vector2)
@@ -24,7 +24,7 @@ const RESPAWN_IFRAME_DURATION: float = 2.5
 const IFRAME_BLINK_INTERVAL: float = 0.08  # seconds per on/off cycle
 
 @export var config: ShipConfig
-@export var dash_config: DashConfig
+@export var dash_stats: DashStats
 @export var stats: ShipStats
 
 var _port_cooldown: float = 0.0
@@ -68,7 +68,7 @@ func _ready() -> void:
 	assert(_camera != null, "Ship: Camera2D node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
-	assert(dash_config != null, "Ship: dash_config Resource is missing")
+	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
 	assert(stats != null, "Ship: stats (ShipStats) Resource is missing")
 	# Cached additive material reused across all ghost spawns (Godot does NOT
 	# fork CanvasItemMaterial on assignment — all ghosts share the same RID
@@ -128,26 +128,26 @@ func _physics_process(delta: float) -> void:
 
 		var turn_input: float = Input.get_axis("turn_left", "turn_right")
 
-		match dash_config.feel_mode:
-			DashConfig.FeelMode.LOCKED_HEADING:
+		match dash_stats.feel_mode:
+			DashStats.FeelMode.LOCKED_HEADING:
 				velocity *= stats.linear_drag
 				# stats.thrust + steering ignored during locked-heading burst
-			DashConfig.FeelMode.STEERABLE:
+			DashStats.FeelMode.STEERABLE:
 				if not is_braking and Input.is_action_pressed("move_forward"):
 					velocity += transform.y * stats.thrust * delta
 				velocity *= stats.linear_drag
 				rotation += turn_input * stats.turn_speed * delta
-			DashConfig.FeelMode.VELOCITY_ALIGNED:
+			DashStats.FeelMode.VELOCITY_ALIGNED:
 				velocity *= stats.linear_drag
 				rotation += turn_input * stats.turn_speed * delta
-			DashConfig.FeelMode.OVERSPEED_CAP:
+			DashStats.FeelMode.OVERSPEED_CAP:
 				if not is_braking and Input.is_action_pressed("move_forward"):
 					velocity += transform.y * stats.thrust * delta
-				velocity *= dash_config.overspeed_drag
+				velocity *= dash_stats.overspeed_drag
 				rotation += turn_input * stats.turn_speed * delta
 
 		move_and_slide()
-		_process_collision_pushback(dash_config.collision_pushback_scale)
+		_process_collision_pushback(dash_stats.collision_pushback_scale)
 		return
 
 	_apply_normal_movement(delta, is_braking)
@@ -202,17 +202,17 @@ func _process(delta: float) -> void:
 
 
 func _tick_dash_visuals(delta: float) -> void:
-	var t: float = 1.0 - clampf(_dash_remaining / dash_config.duration, 0.0, 1.0)
+	var t: float = 1.0 - clampf(_dash_remaining / dash_stats.duration, 0.0, 1.0)
 	var dash_strength: float = 1.0
-	if dash_config.intensity_curve != null:
-		dash_strength = dash_config.intensity_curve.sample_baked(t)
+	if dash_stats.intensity_curve != null:
+		dash_strength = dash_stats.intensity_curve.sample_baked(t)
 	_fire_effect.set_dash_strength(dash_strength)
 	# Ghost trail spawn ticker.
-	if dash_config.ghost_count > 0:
+	if dash_stats.ghost_count > 0:
 		_next_ghost_in -= delta
 		if _next_ghost_in <= 0.0:
 			_spawn_ghost()
-			_next_ghost_in = dash_config.ghost_spawn_interval
+			_next_ghost_in = dash_stats.ghost_spawn_interval
 
 
 func _process_camera_shake(delta: float) -> void:
@@ -224,8 +224,8 @@ func _process_camera_shake(delta: float) -> void:
 		if _camera.offset != Vector2.ZERO:
 			_camera.offset = Vector2.ZERO
 		return
-	_shake_trauma = maxf(0.0, _shake_trauma - dash_config.shake_trauma_decay * delta)
-	var amplitude: float = _shake_trauma * _shake_trauma * dash_config.shake_magnitude_px
+	_shake_trauma = maxf(0.0, _shake_trauma - dash_stats.shake_trauma_decay * delta)
+	var amplitude: float = _shake_trauma * _shake_trauma * dash_stats.shake_magnitude_px
 	_camera.offset = Vector2(
 		roundf(randf_range(-amplitude, amplitude)), roundf(randf_range(-amplitude, amplitude))
 	)
@@ -244,17 +244,17 @@ func _spawn_ghost() -> void:
 		ghost.centered = src.centered
 		ghost.offset = src.offset
 		ghost.global_transform = src.global_transform
-		ghost.modulate = dash_config.ghost_start_tint
+		ghost.modulate = dash_stats.ghost_start_tint
 		# Render ghosts above the ship (ship.z_index = 2). Absolute z since the
 		# ghost is reparented to the world container, not the ship.
 		ghost.z_as_relative = false
 		ghost.z_index = 10
-		if dash_config.ghost_additive:
+		if dash_stats.ghost_additive:
 			ghost.material = _ghost_additive_material
 		_ghost_container.add_child(ghost)
 		var tw: Tween = ghost.create_tween()
 		tw.tween_property(
-			ghost, "modulate", dash_config.ghost_end_tint, dash_config.ghost_fade_duration
+			ghost, "modulate", dash_stats.ghost_end_tint, dash_stats.ghost_fade_duration
 		)
 		tw.tween_callback(ghost.queue_free)
 
@@ -456,15 +456,15 @@ func _drop_mine() -> void:
 func _start_dash() -> void:
 	_dash_ready = false
 	_dash_active = true
-	_dash_remaining = dash_config.duration
+	_dash_remaining = dash_stats.duration
 
 	# Apply initial impulse based on feel mode.
-	match dash_config.feel_mode:
-		DashConfig.FeelMode.VELOCITY_ALIGNED:
+	match dash_stats.feel_mode:
+		DashStats.FeelMode.VELOCITY_ALIGNED:
 			if velocity.length() < 1.0:
-				velocity += transform.y * dash_config.impulse_speed
+				velocity += transform.y * dash_stats.impulse_speed
 			else:
-				velocity += velocity.normalized() * dash_config.impulse_speed
+				velocity += velocity.normalized() * dash_stats.impulse_speed
 		_:
 			# Dash has three behaviors at once:
 			# - Forward component is kept (so dashing while already moving
@@ -475,34 +475,32 @@ func _start_dash() -> void:
 			#   don't get dragged sideways by prior drift).
 			var forward: Vector2 = transform.y
 			var kept_forward_speed: float = maxf(velocity.dot(forward), 0.0)
-			velocity = forward * (kept_forward_speed + dash_config.impulse_speed)
+			velocity = forward * (kept_forward_speed + dash_stats.impulse_speed)
 
 	# Push current fire-config uniforms onto the 3D effect and start emitting.
 	# The effect renders into a 32x64 SubViewport for pixel-art crunch and
 	# composites back into 2D via SubViewportContainer.
-	_fire_effect.start(dash_config)
+	_fire_effect.start(dash_stats)
 
 	# Reset ghost spawn timer so the first ghost spawns next render tick.
 	_next_ghost_in = 0.0
 
 	# Bump shake trauma. max() so a re-trigger can never reduce in-flight shake.
-	_shake_trauma = maxf(_shake_trauma, dash_config.shake_trauma_initial)
+	_shake_trauma = maxf(_shake_trauma, dash_stats.shake_trauma_initial)
 
 	# Optional zoom punch.
-	if dash_config.zoom_punch_duration > 0.0:
+	if dash_stats.zoom_punch_duration > 0.0:
 		var base_zoom: Vector2 = Vector2(1.2, 1.2)
 		var punch_zoom: Vector2 = Vector2(
-			dash_config.zoom_punch_target, dash_config.zoom_punch_target
+			dash_stats.zoom_punch_target, dash_stats.zoom_punch_target
 		)
 		var zoom_tween: Tween = create_tween()
-		zoom_tween.tween_property(
-			_camera, "zoom", punch_zoom, dash_config.zoom_punch_duration * 0.4
-		)
-		zoom_tween.tween_property(_camera, "zoom", base_zoom, dash_config.zoom_punch_duration * 0.6)
+		zoom_tween.tween_property(_camera, "zoom", punch_zoom, dash_stats.zoom_punch_duration * 0.4)
+		zoom_tween.tween_property(_camera, "zoom", base_zoom, dash_stats.zoom_punch_duration * 0.6)
 
 	# Optional Celeste-style freeze frames at burst start.
-	if dash_config.freeze_frames > 0:
-		var freeze_seconds: float = float(dash_config.freeze_frames) / 60.0
+	if dash_stats.freeze_frames > 0:
+		var freeze_seconds: float = float(dash_stats.freeze_frames) / 60.0
 		Engine.time_scale = 0.0
 		# process_always=true, ignore_time_scale=true so the timer fires in
 		# real time even with Engine.time_scale = 0.
@@ -513,15 +511,15 @@ func _start_dash() -> void:
 		)
 	# Optional time-scale dip (mutually exclusive in practice with freeze; if
 	# both are set, freeze wins because it sets time_scale = 0 first).
-	elif dash_config.time_dip_value < 1.0 and dash_config.time_dip_duration > 0.0:
-		Engine.time_scale = dash_config.time_dip_value
-		get_tree().create_timer(dash_config.time_dip_duration, true, false, true).timeout.connect(
+	elif dash_stats.time_dip_value < 1.0 and dash_stats.time_dip_duration > 0.0:
+		Engine.time_scale = dash_stats.time_dip_value
+		get_tree().create_timer(dash_stats.time_dip_duration, true, false, true).timeout.connect(
 			func() -> void:
 				if is_instance_valid(self):
 					Engine.time_scale = 1.0
 		)
 
-	get_tree().create_timer(dash_config.cooldown).timeout.connect(
+	get_tree().create_timer(dash_stats.cooldown).timeout.connect(
 		func() -> void:
 			if is_instance_valid(self):
 				_dash_ready = true

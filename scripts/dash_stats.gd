@@ -1,11 +1,11 @@
-class_name DashConfig
+class_name DashStats
 extends Resource
-## Runtime-editable dash parameters, saved as res://resources/dash_config.tres.
+## Runtime-editable dash parameters, saved as res://resources/dash_stats.tres.
 ## Open the .tres in the Godot editor while the game runs — changes propagate to the
 ## running game (shared Resource cache) AND persist to disk on save.
 ## Changes apply to the NEXT dash; an in-flight burst keeps the values it started with.
 ##
-## IMPORTANT: never .duplicate() the top-level DashConfig — that severs the hot-reload
+## IMPORTANT: never .duplicate() the top-level DashStats — that severs the hot-reload
 ## link. Sub-resources (Curve, GradientTexture1D, Texture2D) only need duplication if
 ## the script mutates them; we only sample, so no duplication needed.
 

@@ -117,7 +117,7 @@ func _anchor_dome_to_stern() -> void:
 ## the config (so set_dash_strength can ramp it via the curve), turns on the
 ## SubViewport, and reveals the flame. Cancels any in-flight dissolve so a
 ## re-trigger during dissipation snaps back to a fresh full-strength burst.
-func start(config: DashConfig) -> void:
+func start(config: DashStats) -> void:
 	if config == null:
 		return
 	_base_brightness = config.flame_brightness
