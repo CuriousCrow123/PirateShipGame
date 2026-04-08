@@ -4,7 +4,7 @@ A pixel-art top-down pirate ship arena game built in Godot 4.6.
 
 ![Godot 4.6](https://img.shields.io/badge/Godot-4.6-478CBF?logo=godot-engine&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Last commit](https://img.shields.io/github/last-commit/alan/PirateShipGame)
+![Last commit](https://img.shields.io/github/last-commit/CuriousCrow123/PirateShipGame)
 
 ![Hero placeholder](docs/media/hero.gif)
 
@@ -17,7 +17,7 @@ A pixel-art top-down pirate ship arena game built in Godot 4.6.
 
 _Once the GitHub Pages deploy lands, this link will point at the live
 build:_
-**https://alan.github.io/PirateShipGame/**
+**https://curiouscrow123.github.io/PirateShipGame/**
 
 Workflow lives at [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).
 First deploy time is 2-4 minutes; subsequent deploys ~60-90s. Initial
