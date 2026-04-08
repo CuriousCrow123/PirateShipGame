@@ -1,0 +1,148 @@
+[gd_scene format=3 uid="uid://1god6doql3w"]
+
+[ext_resource type="Script" uid="uid://pbxfvht1lpa2" path="res://features/ship/ship.gd" id="1_ship"]
+[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://assets/textures/ships_spritesheet.png" id="2_spritesheet"]
+[ext_resource type="PackedScene" uid="uid://crkk3p72st73n" path="res://features/ship/components/cannon.tscn" id="3_cannon"]
+[ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://features/ship/config/default_ship_config.tres" id="4_config"]
+[ext_resource type="Resource" path="res://features/ship/components/dash_stats.tres" id="5_dash_config"]
+[ext_resource type="PackedScene" path="res://features/vfx/dash_fire_effect.tscn" id="6_fire_effect"]
+[ext_resource type="Script" path="res://features/ship/components/player_input.gd" id="7_player_input"]
+[ext_resource type="Script" path="res://features/ship/components/health_component.gd" id="8_health"]
+[ext_resource type="Script" path="res://features/ship/components/movement_component.gd" id="9_movement"]
+[ext_resource type="Script" path="res://features/ship/components/hurtbox_component.gd" id="10_hurtbox"]
+[ext_resource type="Script" path="res://features/ship/components/hit_feedback_component.gd" id="11_hit_feedback"]
+[ext_resource type="Script" path="res://features/ship/components/dash_component.gd" id="12_dash"]
+[ext_resource type="Script" path="res://features/ship/components/broadside_component.gd" id="13_broadside"]
+[ext_resource type="Script" path="res://features/ship/components/mine_drop_component.gd" id="14_mine_drop"]
+[ext_resource type="Script" path="res://features/ship/components/audio_emitter_component.gd" id="15_audio_emitter"]
+[ext_resource type="Script" path="res://features/ship/ship_fsm.gd" id="16_ship_fsm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
+size = Vector2(25, 54)
+
+[node name="Ship" type="CharacterBody2D" unique_id=602171339]
+z_index = 2
+scale = Vector2(0.5, 0.5)
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("1_ship")
+config = ExtResource("4_config")
+dash_stats = ExtResource("5_dash_config")
+
+[node name="FSM" type="Node" parent="."]
+script = ExtResource("16_ship_fsm")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("8_health")
+
+[node name="PlayerInput" type="Node" parent="."]
+script = ExtResource("7_player_input")
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("9_movement")
+
+[node name="Hurtbox" type="Node2D" parent="."]
+script = ExtResource("10_hurtbox")
+
+[node name="Area2D" type="Area2D" parent="Hurtbox"]
+collision_layer = 32
+collision_mask = 0
+monitorable = true
+monitoring = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox/Area2D"]
+shape = SubResource("RectangleShape2D_hull")
+
+[node name="HitFeedback" type="Node" parent="."]
+script = ExtResource("11_hit_feedback")
+
+[node name="Dash" type="Node" parent="."]
+script = ExtResource("12_dash")
+
+[node name="Broadside" type="Node" parent="."]
+script = ExtResource("13_broadside")
+
+[node name="MineDrop" type="Node" parent="."]
+script = ExtResource("14_mine_drop")
+
+[node name="AudioEmitter" type="Node" parent="."]
+script = ExtResource("15_audio_emitter")
+
+[node name="HullSprite" type="Sprite2D" parent="." unique_id=1672109739]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 522, 50, 108)
+
+[node name="CannonSlots" type="Node2D" parent="." unique_id=986708925]
+
+[node name="PortCannon1" type="Marker2D" parent="CannonSlots" unique_id=1126797519]
+position = Vector2(-12, -8)
+rotation = 3.14159
+
+[node name="Cannon" parent="CannonSlots/PortCannon1" unique_id=642077034 instance=ExtResource("3_cannon")]
+
+[node name="PortCannon2" type="Marker2D" parent="CannonSlots" unique_id=1492490705]
+position = Vector2(-12, 8)
+rotation = 3.14159
+
+[node name="Cannon" parent="CannonSlots/PortCannon2" unique_id=467869405 instance=ExtResource("3_cannon")]
+
+[node name="StarboardCannon1" type="Marker2D" parent="CannonSlots" unique_id=418826490]
+position = Vector2(12, -8)
+
+[node name="Cannon" parent="CannonSlots/StarboardCannon1" unique_id=922510899 instance=ExtResource("3_cannon")]
+
+[node name="StarboardCannon2" type="Marker2D" parent="CannonSlots" unique_id=65067514]
+position = Vector2(12, 8)
+
+[node name="Cannon" parent="CannonSlots/StarboardCannon2" unique_id=1362251288 instance=ExtResource("3_cannon")]
+
+[node name="SailSmallSprite" type="Sprite2D" parent="." unique_id=109672587]
+z_index = 2
+position = Vector2(0, 8)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 932, 42, 9)
+
+[node name="FlagSprite" type="Sprite2D" parent="." unique_id=1579220422]
+z_index = 3
+position = Vector2(0, -26)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 989, 6, 22)
+
+[node name="SailSprite" type="Sprite2D" parent="." unique_id=1156476428]
+z_index = 2
+position = Vector2(0, -6)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(66, 789, 66, 47)
+
+[node name="PoleSprite" type="Sprite2D" parent="." unique_id=461448554]
+z_index = 1
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(26, 1013, 26, 18)
+
+[node name="NestSprite" type="Sprite2D" parent="." unique_id=1294832598]
+z_index = 2
+position = Vector2(0, -20)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_spritesheet")
+region_enabled = true
+region_rect = Rect2(0, 1013, 26, 18)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_hull")
+
+[node name="SternMarker" type="Marker2D" parent="."]
+position = Vector2(0, -28)
+
+[node name="DashFireEffect" parent="SternMarker" instance=ExtResource("6_fire_effect")]
+z_index = 1
+visible = false

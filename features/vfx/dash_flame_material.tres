@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bjtvt631a818j"]
+
+[ext_resource type="Shader" uid="uid://chl3hguerek7t" path="res://features/vfx/shaders/stylized_flame.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://features/vfx/dash_fire_noise.tres" id="2_noise"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/TimeSpeed = 5.9
+shader_parameter/Spin = -0.05000000000000004
+shader_parameter/FlameBrightness = 1.0
+shader_parameter/ColorIntensity = 0.00999999999999978
+shader_parameter/HorizontalFrequency = 6.25
+shader_parameter/VerticalFrequency = 1.75
+shader_parameter/Size = -0.03000000000000002
+shader_parameter/CoreSize = 1.15
+shader_parameter/Opacity = 0.38
+shader_parameter/Dissolve = 0.0
+shader_parameter/NoiseTexture = ExtResource("2_noise")
+shader_parameter/Color1 = Color(1, 0.02, 0.99, 1)
+shader_parameter/Color2 = Color(0.97, 0.15, 0.01, 1)
+shader_parameter/Color3 = Color(1, 0.2, 0.02, 1)
+shader_parameter/Color4 = Color(1, 1, 1, 1)

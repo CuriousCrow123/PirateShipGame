@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cv70dajtpq3hy"]
+
+[ext_resource type="Shader" path="res://features/water/shaders/ripple.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/InitialAlpha = 0.6
+shader_parameter/Speed = 0.09
+shader_parameter/QuantizeColourAmount = 3.0
+shader_parameter/BrightnessOffset = 0.0
+shader_parameter/UpperCutoff = 0.5

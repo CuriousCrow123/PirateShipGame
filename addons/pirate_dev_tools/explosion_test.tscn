@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://d1uw7ypncj51s"]
+
+[ext_resource type="Script" uid="uid://dmb0367d3gr65" path="res://addons/pirate_dev_tools/explosion_test.gd" id="1_script"]
+
+[node name="ExplosionTest" type="Node2D" unique_id=334551323]
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1144125580]
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="Title" type="Label" parent="." unique_id=1089164065]
+offset_top = 10.0
+offset_right = 640.0
+offset_bottom = 30.0
+text = "Explosion Variants — Looping"
+horizontal_alignment = 1

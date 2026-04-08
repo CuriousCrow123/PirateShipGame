@@ -1,0 +1,62 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://features/weapons/sea_mine.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://b2s0meb8sevxu" path="res://features/weapons/sea_mine_model.tscn" id="2_model"]
+[ext_resource type="Shader" path="res://features/water/shaders/sea_mine_water.gdshader" id="3_water_shader"]
+[ext_resource type="Shader" path="res://features/water/shaders/sea_mine_ripple.gdshader" id="4_ripple_shader"]
+[ext_resource type="Resource" path="res://features/weapons/configs/sea_mine_weapon.tres" id="5_weapon"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+shader = ExtResource("3_water_shader")
+shader_parameter/WaterRadius = 0.12
+shader_parameter/BobOffset = 0.0
+shader_parameter/WaveAmplitude = 0.02
+shader_parameter/WaveFrequency = 5.0
+shader_parameter/WaveSpeed = 1.5
+shader_parameter/SubmergedMineOpacity = 0.35
+shader_parameter/FoamWidth = 0.04
+shader_parameter/FoamColor = Color(0.9, 0.95, 1.0, 0.7)
+shader_parameter/GlowIntensity = 0.0
+shader_parameter/GlowColor = Color(1.0, 0.15, 0.05, 1.0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ripple"]
+shader = ExtResource("4_ripple_shader")
+shader_parameter/RingCount = 2.0
+shader_parameter/RingThickness = 0.03
+shader_parameter/ExpandSpeed = -1.5
+shader_parameter/MaxRadius = 0.45
+shader_parameter/RingColor = Color(0.85, 0.92, 1.0, 0.18)
+shader_parameter/BobPhase = 0.0
+shader_parameter/PixelSnap = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_proximity"]
+radius = 16.0
+
+[node name="SeaMine" type="Area2D"]
+z_index = 1
+collision_layer = 8
+collision_mask = 3
+script = ExtResource("1_script")
+weapon = ExtResource("5_weapon")
+
+[node name="MineSubViewportContainer" type="SubViewportContainer" parent="."]
+material = SubResource("ShaderMaterial_water")
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 7.0
+offset_bottom = 7.0
+stretch = true
+
+[node name="SeaMineModel" parent="MineSubViewportContainer" instance=ExtResource("2_model")]
+handle_input_locally = false
+render_target_update_mode = 4
+
+[node name="RippleSprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_ripple")
+scale = Vector2(1.5, 1.5)
+
+[node name="ProximityShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_proximity")
+
+[node name="VisibleNotifier" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-10, -10, 20, 20)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyArchetype" format=3]
+
+[ext_resource type="Script" path="res://features/enemies/enemy_archetype.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+hp = 4
+chase_speed = 50.0
+circle_speed = 40.0
+turn_speed = 2.0
+circle_radius = 120.0
+broadside_cooldown = 2.0
+broadside_range = 130.0

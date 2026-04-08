@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShipStats" format=3]
+
+[ext_resource type="Script" path="res://features/ship/ship_stats.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+thrust = 120.0
+turn_speed = 2.5
+linear_drag = 0.99
+brake_decel = 120.0
+broadside_cooldown = 0.5
+mine_cooldown = 2.5
+max_health = 4
+max_lives = 2
+respawn_delay = 2.0

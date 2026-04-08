@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WaterTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://features/water/water_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+wake_ring_spacing = 16.0
+wake_ring_speed_threshold = 5.0
+wake_ring_offset = 12.0
+wake_speed_cap = 120.0
+wake_strength_idle = 2.0
+wake_strength_max = 10.0
+cannonball_impact_radius = 64.0
+cannonball_impact_duration = 2.0
+mine_explosion_impact_radius = 128.0
+mine_explosion_impact_duration = 2.5

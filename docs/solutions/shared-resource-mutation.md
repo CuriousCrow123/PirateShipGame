@@ -34,4 +34,4 @@ func _ready() -> void:
 
 ## Reference
 
-- Implementation: [trails.gd](../../scripts/trails.gd)
+- Implementation: [trails.gd](../../features/water/trails.gd)

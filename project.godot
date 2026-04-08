@@ -11,9 +11,16 @@ config_version=5
 [application]
 
 config/name="PirateShipGame"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://main/main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Events="*res://autoload/events.gd"
+GameState="*res://autoload/game_state.gd"
+AudioManager="*res://autoload/audio_manager.gd"
+KeybindsManager="*res://autoload/keybinds_manager.gd"
 
 [display]
 
@@ -22,6 +29,10 @@ window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="viewport"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/pirate_dev_tools/plugin.cfg")
 
 [input]
 
@@ -88,6 +99,8 @@ dash={
 2d_physics/layer_3="player_projectiles"
 2d_physics/layer_4="hazards"
 2d_physics/layer_5="enemy_projectiles"
+2d_physics/layer_6="player_hurtbox"
+2d_physics/layer_7="enemy_hurtbox"
 
 [physics]
 

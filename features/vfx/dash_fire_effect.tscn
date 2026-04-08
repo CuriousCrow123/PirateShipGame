@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/vfx/dash_fire_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://features/vfx/dash_fire_model.tscn" id="2_model"]
+
+[node name="DashFireEffect" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+offset_left = -48.0
+offset_top = -160.0
+offset_right = 48.0
+offset_bottom = 0.0
+stretch = true
+
+[node name="DashFireModel" parent="SubViewportContainer" instance=ExtResource("2_model")]
+handle_input_locally = false
+render_target_update_mode = 0
