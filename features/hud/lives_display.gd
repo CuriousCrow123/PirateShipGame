@@ -5,7 +5,7 @@ extends CanvasLayer
 ## lives drain to LOST_COLOR and shrink. The count is built dynamically from
 ## the Ship's stats.max_lives so the scene file stays generic.
 
-const SpritesheetTex: Texture2D = preload("res://textures/ships_spritesheet.png")
+const SpritesheetTex: Texture2D = preload("res://assets/textures/ships_spritesheet.png")
 
 const ACTIVE_COLOR: Color = Color(0.95, 0.93, 0.85, 1.0)
 const LOST_COLOR: Color = Color(0.35, 0.33, 0.3, 0.6)

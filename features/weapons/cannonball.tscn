@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dleyb2t273fm1"]
 
 [ext_resource type="Script" uid="uid://bgw01ft1rdw0c" path="res://features/weapons/cannonball.gd" id="1_cannonball"]
-[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
+[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://assets/textures/ships_spritesheet.png" id="2_spritesheet"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 3.0

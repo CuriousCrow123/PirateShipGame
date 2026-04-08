@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://dl0buc25vk1bg"]
 
-[ext_resource type="Shader" uid="uid://bdqhf20jrr375" path="res://shaders/chalkboard.gdshader" id="1_shader"]
+[ext_resource type="Shader" uid="uid://bdqhf20jrr375" path="res://features/hud/shaders/chalkboard.gdshader" id="1_shader"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_grain"]
 noise_type = 0

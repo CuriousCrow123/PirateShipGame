@@ -20,7 +20,7 @@ const CRITICAL_FLASH_BRIGHT: Color = Color(1.6, 1.6, 1.6, 1.0)
 const CRITICAL_SHAKE_AMPLITUDE: float = 1.0  # pixels (pixel-snapped)
 const CRITICAL_SHAKE_PROBABILITY: float = 0.8  # chance-per-frame of a jitter step
 
-const GOLD_GLEAM_SHADER: Shader = preload("res://shaders/hp_gold_gleam.gdshader")
+const GOLD_GLEAM_SHADER: Shader = preload("res://features/hud/shaders/hp_gold_gleam.gdshader")
 const GOLD_GLEAM_FADE_DURATION: float = 0.35
 
 var _pips: Array[ColorRect] = []

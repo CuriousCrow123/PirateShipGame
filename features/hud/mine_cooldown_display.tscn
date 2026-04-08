@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://bminecd0hud01"]
 
 [ext_resource type="Script" path="res://features/hud/mine_cooldown_display.gd" id="1_script"]
-[ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="2_frame_style"]
+[ext_resource type="StyleBox" path="res://features/hud/ui_frame_style.tres" id="2_frame_style"]
 
 [node name="MineCooldownDisplay" type="CanvasLayer"]
 layer = 50

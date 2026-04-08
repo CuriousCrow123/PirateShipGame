@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://doull5gqh1vxv"]
 
 [ext_resource type="Script" path="res://features/hud/wave_toast.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://caajgisses0ae" path="res://resources/fonts/kims_bit_hand.ttf" id="2_font"]
-[ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="3_frame_style"]
+[ext_resource type="FontFile" uid="uid://caajgisses0ae" path="res://assets/fonts/kims_bit_hand.ttf" id="2_font"]
+[ext_resource type="StyleBox" path="res://features/hud/ui_frame_style.tres" id="3_frame_style"]
 
 [node name="WaveToast" type="CanvasLayer"]
 layer = 60

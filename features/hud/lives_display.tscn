@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c7pf83wmg3552"]
 
 [ext_resource type="Script" uid="uid://bvwei5wnr7vlc" path="res://features/hud/lives_display.gd" id="1_script"]
-[ext_resource type="StyleBox" path="res://resources/ui_frame_style.tres" id="2_frame_style"]
+[ext_resource type="StyleBox" path="res://features/hud/ui_frame_style.tres" id="2_frame_style"]
 
 [node name="LivesDisplay" type="CanvasLayer" unique_id=112696732]
 layer = 50

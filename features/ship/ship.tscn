@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://1god6doql3w"]
 
 [ext_resource type="Script" uid="uid://pbxfvht1lpa2" path="res://features/ship/ship.gd" id="1_ship"]
-[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
+[ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://assets/textures/ships_spritesheet.png" id="2_spritesheet"]
 [ext_resource type="PackedScene" uid="uid://crkk3p72st73n" path="res://features/ship/components/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" uid="uid://0ahkfqpbwlaa" path="res://features/ship/config/default_ship_config.tres" id="4_config"]
 [ext_resource type="Resource" path="res://features/ship/components/dash_stats.tres" id="5_dash_config"]
