@@ -45,20 +45,21 @@ func _ready() -> void:
 			sprite.texture = at
 			sprite.centered = false
 			sprite.offset = Vector2(-float(origin[0]), -float(origin[1]))
-			sprite.position = Vector2(
-				cell_w * col + cell_w / 2.0, cell_h * row + cell_h / 2.0
-			)
+			sprite.position = Vector2(cell_w * col + cell_w / 2.0, cell_h * row + cell_h / 2.0)
 			add_child(sprite)
 
 			_sprites.append(sprite)
-			_variations.append(
-				{
-					"frame_w": fw,
-					"frame_h": fh,
-					"row_y": row_y,
-					"frame_count": int(var_data.frame_count),
-					"fps": fps,
-				}
+			(
+				_variations
+				. append(
+					{
+						"frame_w": fw,
+						"frame_h": fh,
+						"row_y": row_y,
+						"frame_count": int(var_data.frame_count),
+						"fps": fps,
+					}
+				)
 			)
 
 		# Row label

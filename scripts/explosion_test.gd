@@ -59,9 +59,7 @@ func _capture_all_variants() -> void:
 			var config: Dictionary = config_res.get_params(base_name)
 			config["cone_dir"] = cone_dir
 			config["effect_scale"] = 1.0
-			var effect: ExplosionEffect = ExplosionEffect.create(
-				self, Vector2(320, 180), config
-			)
+			var effect: ExplosionEffect = ExplosionEffect.create(self, Vector2(320, 180), config)
 
 			# Wait for effect to initialize (its _ready awaits one process_frame)
 			await get_tree().process_frame
