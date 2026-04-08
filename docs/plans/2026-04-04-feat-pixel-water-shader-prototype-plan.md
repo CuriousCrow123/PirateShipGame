@@ -32,7 +32,7 @@ deepened: 2026-04-04
 
 Implement a 2D pixel-art animated water shader prototype in Godot 4.6 based on the [jess-hammer/2d-pixel-water-shader-godot](https://github.com/jess-hammer/2d-pixel-water-shader-godot) reference. The effect has two independent systems: a water surface shader (caustics, specular, foam on a TileMap) and a ripple/trail system (Line2D in SubViewport with a ripple shader, driven by cursor position).
 
-Reference document: [pixel-water-shader.md](../../pixel-water-shader.md)
+Reference document: [pixel-water-shader-reference.md](../pixel-water-shader-reference.md)
 
 ## Problem Statement / Motivation
 
@@ -442,7 +442,7 @@ After implementation, document these solved problems for future reference:
 
 ## Sources & References
 
-- **Reference document:** [pixel-water-shader.md](../../pixel-water-shader.md) — complete GLSL, GDScript, scene structure, parameter tables
+- **Reference document:** [pixel-water-shader-reference.md](../pixel-water-shader-reference.md) — complete GLSL, GDScript, scene structure, parameter tables
 - **Original implementation:** [jess-hammer/2d-pixel-water-shader-godot](https://github.com/jess-hammer/2d-pixel-water-shader-godot) (Godot Mono 4.4, C#)
 - **Texture assets:** Same repo, download PNG files from the assets/textures directory
 
