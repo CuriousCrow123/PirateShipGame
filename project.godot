@@ -89,6 +89,10 @@ dash={
 2d_physics/layer_4="hazards"
 2d_physics/layer_5="enemy_projectiles"
 
+[autoload]
+
+Events="*res://autoload/events.gd"
+
 [debug]
 
 gdscript/warnings/exclude_addons=true

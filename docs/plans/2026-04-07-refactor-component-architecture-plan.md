@@ -571,7 +571,7 @@ Phase 6 must address all 10. Unit-tested.
   is the canonical authoring tool for `resources/dash_flame_material.tres`
   and `resources/stylized_flame_snapshot.json` (Research Delta #3).
   Deletion is deferred to Phase 11 step 47 AFTER addon replacement lands.
-- [ ] **Step 6** — Add `Events` autoload at `autoload/events.gd` with all
+- [x] **Step 6** — Add `Events` autoload at `autoload/events.gd` with all
   typed signals declared (empty bodies). Register in `project.godot` **FIRST
   in autoload order** — Events must be loaded before any other autoload or
   scene node can connect to its signals. **No file-scope `preload()` of other
