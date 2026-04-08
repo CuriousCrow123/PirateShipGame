@@ -596,7 +596,7 @@ Phase 6 must address all 10. Unit-tested.
   `time_elapsed: float`, `waves_cleared: int`, `wave_times: PackedFloat32Array`.
   Required because `signal run_ended(stats: RunStats, victory: bool)` will
   not resolve at parse time without the class_name.
-- [ ] **Step 10** — Add `SpawnPoint` Marker2D to `main.tscn` at the current
+- [x] **Step 10** — Add `SpawnPoint` Marker2D to `main.tscn` at the current
   ship start position.
 
 #### Phase 2 — Resources first (data, no behavior change)

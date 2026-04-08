@@ -41,6 +41,9 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 [node name="Main" type="Node2D" unique_id=1211575893]
 script = ExtResource("3_main")
 
+[node name="SpawnPoint" type="Marker2D" parent="."]
+position = Vector2(176, 112)
+
 [node name="Ship" parent="." unique_id=1211440340 instance=ExtResource("10_ship")]
 position = Vector2(176, 112)
 thrust = 120.0
