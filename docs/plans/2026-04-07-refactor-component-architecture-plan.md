@@ -578,7 +578,7 @@ Phase 6 must address all 10. Unit-tested.
   autoloads.** Autoloads may reference each other only inside `_ready()` or
   later. Add this as a rule in the Events ADR (pillar 007) to prevent
   parse-time cycles.
-- [ ] **Step 7** — Add `GameState` autoload at `autoload/game_state.gd` —
+- [x] **Step 7** — Add `GameState` autoload at `autoload/game_state.gd` —
   current wave/score/lives, `RunStats`. **Registered SECOND** in autoload
   order (after Events). `GameState` seeds initial values from `ShipStats.tres`
   at its own `_ready()` (NOT from a deferred HealthComponent emit) so HUD

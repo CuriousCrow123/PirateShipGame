@@ -92,6 +92,7 @@ dash={
 [autoload]
 
 Events="*res://autoload/events.gd"
+GameState="*res://autoload/game_state.gd"
 
 [debug]
 
