@@ -1133,7 +1133,7 @@ launch, play one wave, die, respawn, verify.**
   preserved; route via `HurtboxComponent.hit_taken` so both ships see it.
   **Moved earlier than Hurtbox** (swap from brainstorm order) so Ship root
   doesn't briefly own velocity AND relay hit events simultaneously.
-- [ ] **Step 23** — `HurtboxComponent` (Area2D, emits `hit_taken(source: Node)`;
+- [x] **Step 23** — `HurtboxComponent` (Area2D, emits `hit_taken(source: Node)`;
   Ship root relays to HealthComponent). **The Area2D and its CollisionShape2D
   are direct children of HurtboxComponent**, not the component itself.
   Collision layer/mask live on the Area2D, not the parent. Standard

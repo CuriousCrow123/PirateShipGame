@@ -50,6 +50,7 @@ var _blink_tween: Tween = null
 @onready var _player_input: PlayerInputComponent = $PlayerInput
 @onready var _health_component: HealthComponent = $Health
 @onready var _movement: MovementComponent = $Movement
+@onready var _hurtbox: HurtboxComponent = $Hurtbox
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -63,6 +64,7 @@ func _ready() -> void:
 	assert(_player_input != null, "Ship: PlayerInput node is missing")
 	assert(_health_component != null, "Ship: Health node is missing")
 	assert(_movement != null, "Ship: Movement node is missing")
+	assert(_hurtbox != null, "Ship: Hurtbox node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -90,6 +92,7 @@ func _ready() -> void:
 	_health_component.setup(stats)
 	_movement.setup(self, stats, _player_input)
 	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
+	_hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -244,10 +247,19 @@ func get_mine_cooldown_progress() -> float:
 	return clampf(1.0 - (_mine_cooldown_left / stats.mine_cooldown), 0.0, 1.0)
 
 
-## Takes a single hit. The HealthComponent gates iframes/invincibility and
-## fires `iframes_started`/`died` signals which Ship root listens to.
-## Cannonball/SeaMine/ram-collision call this — it stays the public entry point.
+## Legacy public damage entry. SeaMine still routes through here via a
+## physics shape query; cannonball-on-hurtbox detection now flows through
+## HurtboxComponent.area_entered → hit_taken. Both paths converge on
+## HealthComponent.apply_damage via _apply_damage().
 func take_damage(_from_direction: Vector2) -> void:
+	_hurtbox.process_hit(self)
+
+
+func _on_hurtbox_hit_taken(_source: Node) -> void:
+	_apply_damage()
+
+
+func _apply_damage() -> void:
 	if _is_dead:
 		return
 	if _health_component.apply_damage(1):
@@ -290,6 +302,7 @@ func _on_health_died() -> void:
 	set_collision_layer_value(1, false)
 	set_collision_mask_value(2, false)  # enemies
 	set_collision_mask_value(5, false)  # enemy projectiles
+	_hurtbox.set_active(false)
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, Vector2.ZERO
 	)
@@ -307,6 +320,7 @@ func _on_health_respawn_ready() -> void:
 	set_collision_layer_value(1, true)
 	set_collision_mask_value(2, true)
 	set_collision_mask_value(5, true)
+	_hurtbox.set_active(true)
 	respawned.emit()
 	_health_component.reset_for_respawn()
 
