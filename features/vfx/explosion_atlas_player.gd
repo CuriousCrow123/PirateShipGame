@@ -2,8 +2,8 @@ class_name ExplosionAtlasPlayer
 extends Node2D
 ## Loads explosion atlases from atlas_meta.json and plays all 20 variations on loop.
 
-const META_PATH: String = "res://textures/explosions/atlas_meta.json"
-const ATLAS_DIR: String = "res://textures/explosions"
+const META_PATH: String = "res://features/vfx/textures/explosions/atlas_meta.json"
+const ATLAS_DIR: String = "res://features/vfx/textures/explosions"
 
 var _sprites: Array[Sprite2D] = []
 var _variations: Array[Dictionary] = []

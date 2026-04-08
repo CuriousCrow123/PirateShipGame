@@ -4,8 +4,8 @@ extends Node2D
 ## Drop-in replacement for ExplosionEffect — no SubViewport, no 3D particles.
 ## Atlases and metadata are baked by scripts/explosion_test.gd.
 
-const META_PATH: String = "res://textures/explosions/atlas_meta.json"
-const ATLAS_DIR: String = "res://textures/explosions"
+const META_PATH: String = "res://features/vfx/textures/explosions/atlas_meta.json"
+const ATLAS_DIR: String = "res://features/vfx/textures/explosions"
 const CONFIG_PATH: String = "res://features/vfx/explosion_stats.tres"
 
 ## Draw order: above ships (z=2) and cannonballs (z=3).

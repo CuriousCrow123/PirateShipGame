@@ -11,12 +11,12 @@ extends Node2D
 ## resources/dash_flame_material.tres and is referenced by both viewports here
 ## and by scenes/dash_fire_model.tscn so live tuning still propagates.
 ## SAVE persists the material to disk via ResourceSaver. The lathe profile
-## values are written to res://resources/stylized_flame_snapshot.json so the
+## values are written to res://features/vfx/stylized_flame_snapshot.json so the
 ## game-side scene can rebuild the same shape.
 
-const SNAPSHOT_PATH: String = "res://resources/stylized_flame_snapshot.json"
-const MATERIAL_PATH: String = "res://resources/dash_flame_material.tres"
-const PROFILE_PATH: String = "res://resources/dash_flame_profile.tres"
+const SNAPSHOT_PATH: String = "res://features/vfx/stylized_flame_snapshot.json"
+const MATERIAL_PATH: String = "res://features/vfx/dash_flame_material.tres"
+const PROFILE_PATH: String = "res://features/vfx/dash_flame_profile.tres"
 
 var _flame_meshes: Array[MeshInstance3D] = []
 var _material: ShaderMaterial

@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://bjtvt631a818j"]
 
-[ext_resource type="Shader" uid="uid://chl3hguerek7t" path="res://shaders/stylized_flame.gdshader" id="1_shader"]
-[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://resources/dash_fire_noise.tres" id="2_noise"]
+[ext_resource type="Shader" uid="uid://chl3hguerek7t" path="res://features/vfx/shaders/stylized_flame.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://features/vfx/dash_fire_noise.tres" id="2_noise"]
 
 [resource]
 render_priority = 0

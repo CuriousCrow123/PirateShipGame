@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="SphereMesh" path="res://resources/dash_flame_sphere.tres" id="1_sphere"]
-[ext_resource type="CylinderMesh" path="res://resources/dash_flame_cone.tres" id="2_cone"]
+[ext_resource type="SphereMesh" path="res://features/vfx/dash_flame_sphere.tres" id="1_sphere"]
+[ext_resource type="CylinderMesh" path="res://features/vfx/dash_flame_cone.tres" id="2_cone"]
 
 [node name="DashFireModel" type="SubViewport" unique_id=1900000001]
 own_world_3d = true

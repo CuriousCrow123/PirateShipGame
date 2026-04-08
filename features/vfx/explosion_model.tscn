@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Shader" path="res://shaders/explosion_dissolve.gdshader" id="1_r6dgh"]
+[ext_resource type="Shader" path="res://features/vfx/shaders/explosion_dissolve.gdshader" id="1_r6dgh"]
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vertical"]
 emission_shape = 1

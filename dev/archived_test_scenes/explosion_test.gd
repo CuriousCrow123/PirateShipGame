@@ -2,14 +2,14 @@ class_name ExplosionTest
 extends Node2D
 ## Captures each explosion variant's SubViewport into sprite sheets and atlases.
 ## Each type gets one atlas PNG with all variations stacked as rows.
-## Auto-saves to res://textures/explosions/.
+## Auto-saves to res://features/vfx/textures/explosions/.
 
 const CAPTURE_FPS: int = 20
 const CAPTURE_INTERVAL: float = 1.0 / CAPTURE_FPS
 const TRIM_PADDING: int = 2
 const ALPHA_CUTOFF: int = 10  # 0-255; strips faint glow bleed
 const VARIATIONS: int = 10
-const OUTPUT_DIR: String = "res://textures/explosions"
+const OUTPUT_DIR: String = "res://features/vfx/textures/explosions"
 
 const CONFIG_PATH: String = "res://features/vfx/explosion_stats.tres"
 

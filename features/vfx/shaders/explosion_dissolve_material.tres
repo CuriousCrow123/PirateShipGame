@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://14mjfyewwpkm"]
 
-[ext_resource type="Shader" uid="uid://dxj2puikrrs77" path="res://shaders/explosion_dissolve.gdshader" id="1_shader"]
+[ext_resource type="Shader" uid="uid://dxj2puikrrs77" path="res://features/vfx/shaders/explosion_dissolve.gdshader" id="1_shader"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_dissolve"]
 noise_type = 3

@@ -1,6 +1,6 @@
 [gd_resource type="CylinderMesh" format=3 uid="uid://0yfvpu6qetwb"]
 
-[ext_resource type="Material" uid="uid://ca8bnbi8dkys4" path="res://resources/dash_flame_material.tres" id="1_material"]
+[ext_resource type="Material" uid="uid://bjtvt631a818j" path="res://features/vfx/dash_flame_material.tres" id="1_material"]
 
 [resource]
 material = ExtResource("1_material")

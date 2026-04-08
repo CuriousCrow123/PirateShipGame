@@ -3,7 +3,7 @@ extends Node2D
 ## Stamps encode radial displacement direction as RG color (0.5 = neutral).
 ## Lives as a child of the displacement SubViewport; main.gd calls its API.
 
-const STAMP_TEXTURE: Texture2D = preload("res://textures/white_4x4.png")
+const STAMP_TEXTURE: Texture2D = preload("res://features/vfx/textures/white_4x4.png")
 const _MAT_PATH: String = "res://features/water/shaders/displacement_stamp_material.tres"
 const BASE_MATERIAL: ShaderMaterial = preload(_MAT_PATH)
 

@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bnrgpw40rl82m"]
 
 [ext_resource type="Script" uid="uid://wmc23ja2pkf0" path="res://dev/archived_test_scenes/dash_fire_test.gd" id="1_test_script"]
-[ext_resource type="Shader" uid="uid://c4qyxxr1x6eww" path="res://shaders/stylized_fire.gdshader" id="2_shader"]
-[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://resources/dash_fire_noise.tres" id="3_noise"]
+[ext_resource type="Shader" uid="uid://c4qyxxr1x6eww" path="res://features/vfx/shaders/stylized_fire.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://b26xso14xi3tc" path="res://features/vfx/dash_fire_noise.tres" id="3_noise"]
 [ext_resource type="Texture2D" uid="uid://c6ilqsildwhhw" path="res://features/water/textures/CircleBlur64x64.png" id="4_mask"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]

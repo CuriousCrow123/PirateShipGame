@@ -23,8 +23,8 @@ extends Node2D
 
 const _BRIGHTNESS_PARAM: String = "FlameBrightness"
 const _DISSOLVE_PARAM: String = "Dissolve"
-const _MATERIAL_PATH: String = "res://resources/dash_flame_material.tres"
-const _PROFILE_PATH: String = "res://resources/dash_flame_profile.tres"
+const _MATERIAL_PATH: String = "res://features/vfx/dash_flame_material.tres"
+const _PROFILE_PATH: String = "res://features/vfx/dash_flame_profile.tres"
 const _VIEWPORT_SIZE: Vector2i = Vector2i(11, 19)
 # Dissipation duration after stop(): the flame ramps Dissolve 0->1 over this
 # many seconds (driven from _process), eroding the tail tip first, then the
