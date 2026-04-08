@@ -589,7 +589,7 @@ Phase 6 must address all 10. Unit-tested.
 - [x] **Step 8** — Add `AudioManager` autoload at `autoload/audio_manager.gd` —
   no-op until clips exist; subscribes to `Events.sound_requested` in its
   `_ready()`. **Registered THIRD** in autoload order.
-- [ ] **Step 9** — Add `Cooldown` helper at `systems/cooldown.gd` + unit test
+- [x] **Step 9** — Add `Cooldown` helper at `systems/cooldown.gd` + unit test
   at `tests/unit/test_cooldown.gd`. **Also add `RunStats` at
   `systems/run_stats.gd`** — `class_name RunStats extends Resource` with
   typed `@export` fields: `kills: int`, `deaths: int`, `damage_taken: int`,
