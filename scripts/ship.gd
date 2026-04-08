@@ -89,14 +89,14 @@ func _ready() -> void:
 	_health_component.died.connect(_on_health_died)
 	_health_component.respawn_ready.connect(_on_health_respawn_ready)
 	_health_component.game_over.connect(_on_health_game_over)
-	_health_component.setup(stats, _fsm)
+	_health_component.setup(stats.max_health, stats.max_lives, stats.respawn_delay, _fsm)
 	_movement.setup(self, stats, _player_input)
 	_movement.rammed_enemy.connect(_on_movement_rammed_enemy)
 	_hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
 	_dash.setup(self, dash_stats, _player_input, _fire_effect, _ghost_sources, _ghost_container)
 	_dash.dash_started.connect(_on_dash_started)
 	_dash.dash_ended.connect(_on_dash_ended)
-	_broadside.setup(_cannon_slots, stats)
+	_broadside.setup(_cannon_slots, stats.broadside_cooldown)
 	_broadside.cannon_fired.connect(_on_broadside_cannon_fired)
 	_mine_drop.setup(self, stats)
 	_mine_drop.mine_dropped.connect(_on_mine_drop_dropped)
@@ -150,7 +150,7 @@ func _on_movement_rammed_enemy(enemy: Node, normal: Vector2) -> void:
 	if not _fsm.is_vulnerable():
 		return
 	take_damage(-normal)
-	(enemy as EnemyShip).take_ram_damage(normal)
+	(enemy as EnemyShip).take_damage(normal)
 
 
 func _unhandled_input(event: InputEvent) -> void:

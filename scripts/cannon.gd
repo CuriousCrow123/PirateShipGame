@@ -28,6 +28,9 @@ func _ready() -> void:
 
 ## Returns true and emits `fired` if the per-cannon cooldown has elapsed.
 ## BroadsideComponent gates the salvo-wide cadence on top of this.
+##
+## Phase 8 Step 39: the legacy `fire() -> Dictionary` helper is gone.
+## EnemyShip now drives firing through BroadsideComponent like the player.
 func try_fire() -> bool:
 	if not _cooldown.is_ready():
 		return false
@@ -35,12 +38,3 @@ func try_fire() -> bool:
 		_cooldown.start(fire_cooldown)
 	fired.emit(_muzzle.global_position, global_transform.x.normalized())
 	return true
-
-
-## Legacy API kept for the EnemyShip path which still calls fire() directly
-## and consumes the returned Dictionary. Will migrate in Phase 8.
-func fire() -> Dictionary:
-	return {
-		"position": _muzzle.global_position,
-		"direction": global_transform.x.normalized(),
-	}

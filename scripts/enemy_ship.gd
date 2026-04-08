@@ -1,47 +1,45 @@
 class_name EnemyShip
 extends CharacterBody2D
-## Enemy ship that chases the player and circles at broadside range.
-## Takes 4 hits to destroy, with progressive hull damage visuals.
-## Fires broadside cannons at the player when aligned and in range.
+## Enemy ship — Phase 8 thin orchestrator. Reuses the same components the
+## player Ship does (HealthComponent, HurtboxComponent, HitFeedbackComponent,
+## BroadsideComponent, Cannon, AudioEmitterComponent, ShipFSM) plus a
+## bespoke EnemyAIMovement (Step 40) for chase-and-circle behavior.
+##
+## Public surface kept for SpawnService / wake bookkeeping:
+##   * destroyed(ship, by_mine) — terminal death signal (HealthComponent.died)
+##   * cannon_fired(pos, dir)   — re-emitted from BroadsideComponent
+##   * setup(target)            — inject the player ship as the AI target
+##   * apply_wave_modifiers(speed_mult, cooldown_mult) — per-wave scaling
+##   * is_destroyed()           — alive/dead check used by SpawnService
+##                                + WaterEffectsManager
+##   * consume_wake_distance() / get_wake_ring_position() — wake bookkeeping
+##   * take_damage(direction, by_mine) — sea_mine still calls this directly
+##                                       via its physics shape query
 
 signal destroyed(ship: EnemyShip, by_mine: bool)
 signal cannon_fired(pos: Vector2, dir: Vector2)
 
-const SHAKE_DURATION: float = 0.3
-const SHAKE_MAX_INTENSITY: float = 3.0
 const WAKE_RING_INTERVAL: float = 24.0  # px between wake-ring stamps
-const BROADSIDE_ALIGNMENT_THRESHOLD: float = 0.85  # |dot(starboard, to_target)|
-const RAM_IFRAME_DURATION: float = 0.4  # multi-hit guard for ship-ship collisions
 
 @export var archetype: EnemyArchetype
-@export var chase_speed: float = 50.0
-@export var circle_speed: float = 40.0
-@export var turn_speed: float = 2.0
-@export var circle_radius: float = 120.0
-@export var max_health: int = 4
-@export var broadside_cooldown: float = 2.0
-@export var broadside_range: float = 130.0  # must be <= Cannonball.max_range
 
-var _health: int = 0
 var _is_destroyed: bool = false
-var _is_shaking: bool = false
-var _shake_timer: float = 0.0
-var _original_hull_pos: Vector2 = Vector2.ZERO
-var _flash_tween: Tween = null
 var _target: Node2D = null
-var _port_cooldown: float = 0.0
-var _starboard_cooldown: float = 0.0
-# Per-enemy wake state — owned by the enemy, not Main, so cleanup is automatic.
+var _by_mine_flag: bool = false  # carried from take_damage to died handler
 var _wake_accum: float = 0.0
 var _last_wake_pos: Vector2 = Vector2.ZERO
-var _iframes_left: float = 0.0
-var _port_cannons: Array[Cannon] = []
-var _starboard_cannons: Array[Cannon] = []
 
 @onready var _hull_sprite: Sprite2D = $HullSprite
 @onready var _sail_sprite: Sprite2D = $SailSprite
 @onready var _collision_shape: CollisionShape2D = $CollisionShape
 @onready var _cannon_slots: Node2D = $CannonSlots
+@onready var _fsm: ShipFSM = $FSM
+@onready var _health: HealthComponent = $Health
+@onready var _hurtbox: HurtboxComponent = $Hurtbox
+@onready var _hit_feedback: HitFeedbackComponent = $HitFeedback
+@onready var _broadside: BroadsideComponent = $Broadside
+@onready var _ai_movement: EnemyAIMovement = $AIMovement
+@onready var _audio: AudioEmitterComponent = $AudioEmitter
 
 
 func _ready() -> void:
@@ -49,41 +47,41 @@ func _ready() -> void:
 	assert(_sail_sprite != null, "EnemyShip: SailSprite not found")
 	assert(_collision_shape != null, "EnemyShip: CollisionShape not found")
 	assert(_cannon_slots != null, "EnemyShip: CannonSlots not found")
-	# broadside_range MUST stay <= Cannonball.max_range (default 150) so balls
-	# can actually reach the player at max firing distance.
-	# Phase 2 Step 13: archetype Resource is the source of truth for hp +
-	# chase_speed when assigned. Fall back to the legacy @exports otherwise so
-	# any spawner that hasn't been migrated yet still works (Phase 8 wires the
-	# rest of the fields when EnemyAIMovement is extracted).
-	if archetype != null:
-		max_health = archetype.hp
-		chase_speed = archetype.chase_speed
-	_health = max_health
-	_original_hull_pos = _hull_sprite.position
+	assert(_fsm != null, "EnemyShip: FSM not found")
+	assert(_health != null, "EnemyShip: Health not found")
+	assert(_hurtbox != null, "EnemyShip: Hurtbox not found")
+	assert(_hit_feedback != null, "EnemyShip: HitFeedback not found")
+	assert(_broadside != null, "EnemyShip: Broadside not found")
+	assert(_ai_movement != null, "EnemyShip: AIMovement not found")
+	assert(_audio != null, "EnemyShip: AudioEmitter not found")
+	assert(archetype != null, "EnemyShip: archetype Resource is missing")
+
 	_last_wake_pos = global_position
-	_cache_cannon_refs()
+
+	# Mute the player-only Shift+5 invincibility cheat on enemy FSMs — the
+	# cheat handler lives in ShipFSM._unhandled_input and would otherwise
+	# fire on every enemy instance simultaneously.
+	_fsm.set_process_unhandled_input(false)
+
+	# Component wiring (FSM-first, then components that subscribe to it).
+	_health.respawnable = false
+	_hit_feedback.shake_on_hit = false
+	_health.setup(archetype.hp, 1, 0.0, _fsm)
+	_hurtbox.connect_fsm(_fsm)
+	_hit_feedback.setup(self, _hull_sprite, _sail_sprite)
+	_fsm.iframes_started.connect(_hit_feedback.start_blink)
+	_fsm.iframes_ended.connect(_hit_feedback.end_blink)
+	_broadside.setup(_cannon_slots, archetype.broadside_cooldown)
+	_broadside.cannon_fired.connect(_on_broadside_cannon_fired)
+	_ai_movement.setup(self, archetype)
+	_ai_movement.connect_fsm(_fsm)
+	_ai_movement.broadside_fire_requested.connect(_on_broadside_fire_requested)
+	_audio.setup(self)
+	_health.died.connect(_on_health_died)
+	_hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
+
 	_randomize_appearance()
 	add_to_group("enemy_ships")
-
-
-func _physics_process(delta: float) -> void:
-	# Despawning enemies still get one extra physics tick before queue_free
-	# completes — guard so they cannot fire a final invisible salvo.
-	if is_queued_for_deletion():
-		return
-
-	if _iframes_left > 0.0:
-		_iframes_left -= delta
-	if _port_cooldown > 0.0:
-		_port_cooldown -= delta
-	if _starboard_cooldown > 0.0:
-		_starboard_cooldown -= delta
-
-	if not _is_destroyed and _target and is_instance_valid(_target):
-		_steer_toward_target(delta)
-		_try_fire_at_target()
-	move_and_slide()
-	_process_shake(delta)
 
 
 func is_destroyed() -> bool:
@@ -92,19 +90,21 @@ func is_destroyed() -> bool:
 
 func setup(target: Node2D) -> void:
 	_target = target
+	_ai_movement.set_target(target)
 
 
 func apply_wave_modifiers(speed_mult: float, cooldown_mult: float) -> void:
-	## Per-wave difficulty scaling. Called by Main right after setup() so the
-	## modifiers stack onto the @export defaults rather than baseline constants.
-	chase_speed *= speed_mult
-	circle_speed *= speed_mult
-	broadside_cooldown *= cooldown_mult
+	## Per-wave difficulty scaling. Called by SpawnService right after
+	## setup() so the modifiers stack onto the archetype defaults rather
+	## than baseline constants.
+	_ai_movement.apply_wave_modifiers(speed_mult)
+	_broadside.fire_rate_mult = 1.0 / cooldown_mult
 
 
 func consume_wake_distance(traveled: float) -> bool:
-	## Returns true (and resets) when the enemy has moved >= WAKE_RING_INTERVAL
-	## since the last wake ring. Main calls this each frame.
+	## Returns true (and resets) when the enemy has moved >=
+	## WAKE_RING_INTERVAL since the last wake ring. WaterEffectsManager
+	## calls this each frame from its per-enemy loop.
 	_wake_accum += traveled
 	if _wake_accum >= WAKE_RING_INTERVAL:
 		_wake_accum = 0.0
@@ -116,145 +116,61 @@ func get_wake_ring_position() -> Vector2:
 	return global_position - transform.y * 12.0
 
 
-func take_damage(_from_direction: Vector2, amount: int = 1, by_mine: bool = false) -> void:
-	if _is_destroyed or is_queued_for_deletion():
+## Public damage entry point. Cannonballs hit the HurtboxComponent.Area2D
+## and resolve to this method via the entity root; sea_mine still uses a
+## physics shape query against bodies and routes through here as well.
+## The `_amount` parameter is currently ignored — HealthComponent always
+## applies 1 HP per hit. Per-source damage scaling is a Phase 11+ task.
+func take_damage(_from_direction: Vector2, _amount: int = 1, by_mine: bool = false) -> void:
+	if _is_destroyed:
 		return
-	_health -= amount
-	if _health <= 0:
-		_is_destroyed = true
-		_destroy(by_mine)
+	_by_mine_flag = by_mine
+	_hurtbox.process_hit(self)
+
+
+func _on_hurtbox_hit_taken(_source: Node) -> void:
+	if _is_destroyed:
 		return
-	# Update hull damage variant (0=healthy, 3=heavily damaged)
-	var damage_variant: int = max_health - _health
+	if _health.apply_damage(1):
+		_hit_feedback.play_hit()
+		_apply_hull_damage_variant()
+
+
+func _apply_hull_damage_variant() -> void:
+	# 0=healthy, 3=heavily damaged. HealthComponent emits health_changed
+	# but enemies don't subscribe to it; the variant update only matters
+	# right after a hit lands, so do it inline.
+	var damage_variant: int = archetype.hp - _health.get_hp()
 	_hull_sprite.region_rect = ShipConfig.get_hull_region(mini(damage_variant, 3))
-	_start_shake()
-	_flash_white()
 
 
-## Ram-damage entry point. Same as take_damage but adds a short iframe so
-## ship-ship collisions can't apply damage across multiple physics sub-steps.
-## Cannonball hits still go through take_damage and bypass this iframe.
-func take_ram_damage(from_direction: Vector2) -> void:
-	if _iframes_left > 0.0:
-		return
-	_iframes_left = RAM_IFRAME_DURATION
-	take_damage(from_direction)
-
-
-func _cache_cannon_refs() -> void:
-	for slot: Node in _cannon_slots.get_children():
-		if slot.get_child_count() == 0:
-			continue
-		var cannon: Cannon = slot.get_child(0) as Cannon
-		if cannon == null:
-			continue
-		if String(slot.name).begins_with("Port"):
-			_port_cannons.append(cannon)
-		elif String(slot.name).begins_with("Starboard"):
-			_starboard_cannons.append(cannon)
-
-
-func _try_fire_at_target() -> void:
-	if _target == null or not is_instance_valid(_target):
-		return
-	var to_target: Vector2 = _target.global_position - global_position
-	var dist: float = to_target.length()
-	if dist > broadside_range or dist < 0.001:
-		return
-	var dir_to_target: Vector2 = to_target / dist
-	# Ship right (starboard) is +transform.x; left (port) is -transform.x.
-	# transform.x has length == scale.x (0.5), so normalize before the dot
-	# or the threshold (0.85) is unreachable.
-	var starboard: Vector2 = transform.x.normalized()
-	var dot: float = starboard.dot(dir_to_target)
-	if dot >= BROADSIDE_ALIGNMENT_THRESHOLD and _starboard_cooldown <= 0.0:
-		_fire_broadside(true)
-	elif dot <= -BROADSIDE_ALIGNMENT_THRESHOLD and _port_cooldown <= 0.0:
-		_fire_broadside(false)
-
-
-func _fire_broadside(is_starboard: bool) -> void:
-	var cannons: Array[Cannon] = _starboard_cannons if is_starboard else _port_cannons
-	for cannon: Cannon in cannons:
-		var result: Dictionary = cannon.fire()
-		cannon_fired.emit(result["position"], result["direction"])
-	if is_starboard:
-		_starboard_cooldown = broadside_cooldown
-	else:
-		_port_cooldown = broadside_cooldown
-
-
-func _destroy(by_mine: bool = false) -> void:
-	# Kill any active flash tween to prevent conflict with fade-out
-	if _flash_tween and _flash_tween.is_valid():
-		_flash_tween.kill()
-	# Disable collision immediately (deferred for physics safety)
+func _on_health_died() -> void:
+	_is_destroyed = true
+	# Disable collision immediately (deferred for physics safety).
 	_collision_shape.set_deferred("disabled", true)
 	# Large destruction explosion — parented to get_parent() (Main) so it
-	# survives this node's queue_free
+	# survives this node's queue_free.
 	ExplosionSprite.create(
 		get_parent(), global_position, "enemy_destruction", Vector2.ZERO, velocity
 	)
-	destroyed.emit(self, by_mine)
-	# Fade out then remove
+	destroyed.emit(self, _by_mine_flag)
+	# Fade out then remove.
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(queue_free)
 
 
-func _steer_toward_target(delta: float) -> void:
-	var to_target: Vector2 = _target.global_position - global_position
-	var dist: float = to_target.length()
-	var desired_dir: Vector2
+func _on_broadside_cannon_fired(pos: Vector2, dir: Vector2) -> void:
+	cannon_fired.emit(pos, dir)
 
-	if dist > circle_radius:
-		# Chase: steer directly toward the player
-		desired_dir = to_target.normalized()
+
+func _on_broadside_fire_requested(starboard: bool) -> void:
+	if _is_destroyed:
+		return
+	if starboard:
+		_broadside.fire_starboard()
 	else:
-		# Circle: steer perpendicular (clockwise) for broadside orbiting
-		desired_dir = Vector2(to_target.y, -to_target.x).normalized()
-
-	# Smoothly rotate toward desired heading (-transform.y is our forward)
-	var forward: Vector2 = -transform.y
-	var desired_angle: float = desired_dir.angle()
-	var current_angle: float = forward.angle()
-	var angle_diff: float = wrapf(desired_angle - current_angle, -PI, PI)
-	rotation += clampf(angle_diff, -turn_speed * delta, turn_speed * delta)
-
-	# Speed: full chase speed when far, circle speed when orbiting
-	var speed: float = chase_speed if dist > circle_radius else circle_speed
-	velocity = -transform.y * speed
-
-
-func _start_shake() -> void:
-	_is_shaking = true
-	_shake_timer = SHAKE_DURATION
-
-
-func _process_shake(delta: float) -> void:
-	if not _is_shaking:
-		return
-	_shake_timer -= delta
-	if _shake_timer <= 0.0:
-		_is_shaking = false
-		_hull_sprite.position = _original_hull_pos
-		_sail_sprite.position = Vector2.ZERO
-		return
-	var intensity: float = _shake_timer / SHAKE_DURATION * SHAKE_MAX_INTENSITY
-	# Snap to whole pixels for pixel-art consistency
-	var offset: Vector2 = Vector2(
-		roundf(randf_range(-intensity, intensity)), roundf(randf_range(-intensity, intensity))
-	)
-	_hull_sprite.position = _original_hull_pos + offset
-	_sail_sprite.position = offset
-
-
-func _flash_white() -> void:
-	if _flash_tween and _flash_tween.is_valid():
-		_flash_tween.kill()
-	modulate = Color(3.0, 3.0, 3.0, 1.0)
-	_flash_tween = create_tween()
-	_flash_tween.tween_property(self, "modulate", Color.WHITE, 0.15)
+		_broadside.fire_port()
 
 
 func _randomize_appearance() -> void:

@@ -119,6 +119,118 @@ Appendix A:
   the same `wave_03.tres` get the *same* in-memory instance. Plan's
   "runtime state in Node vars" doctrine covers this; unit test verifies.
 
+### Phase 8 execution retro (added 2026-04-07 after Steps 39–40 landed)
+
+Carry-over items and deviations discovered while executing Phase 8 that
+Phase 9+ must respect or address:
+
+- **`enemy_ship.gd` final size: 179 LOC + `enemy_ai_movement.gd` 128 LOC**
+  (down from a 264 LOC monolith). The orchestrator owns wiring +
+  destruction VFX + wake bookkeeping; the AI component owns chase /
+  circle / broadside-alignment geometry. The Phase 8 acceptance is
+  decomposition rather than line-budget; no LOC target was specified.
+
+- **No EnemyStats Resource — HealthComponent + BroadsideComponent took
+  primitives instead**: the obvious bridge would have been a parallel
+  `EnemyStats` Resource mirroring `ShipStats` but with enemy-relevant
+  fields. I rejected that as an unnecessary parallel hierarchy. Instead,
+  `HealthComponent.setup()` and `BroadsideComponent.setup()` now take
+  plain ints/floats (`max_health`, `max_lives`, `respawn_delay`,
+  `broadside_cooldown`) so EnemyShip passes
+  `archetype.hp / 1 / 0.0` and `archetype.broadside_cooldown` directly
+  with no Resource hop. Player Ship's call sites became
+  `_health.setup(stats.max_health, stats.max_lives, stats.respawn_delay,
+  _fsm)` and `_broadside.setup(_cannon_slots, stats.broadside_cooldown)`
+  — same Resource, just unpacked at the call site.
+
+  **Phase 11 hot-reload note:** the live-reload acceptance criterion for
+  `default_ship_stats.tres` only currently flows through Movement +
+  PlayerInput's per-frame Resource reads. Health and Broadside cache
+  their values at setup time, so editing `max_health` /
+  `broadside_cooldown` in the inspector mid-run does NOT propagate.
+  Pre-Phase-8 the same caching existed (`_hp = _stats.max_health`), so
+  this is no regression — but if Phase 11 wants those fields to be
+  hot-editable, the components need to either re-store the Resource ref
+  or expose `set_*` methods called from a watcher.
+
+- **Player and enemy share the same `ShipFSM` script**: each EnemyShip
+  instance instantiates its own FSM via the .tscn. The Shift+5
+  invincibility cheat handler lives in `ShipFSM._unhandled_input` and
+  would otherwise toggle every enemy FSM in parallel, so EnemyShip._ready
+  calls `_fsm.set_process_unhandled_input(false)` on its FSM instance
+  to mute the handler. This preserves the cheat for the player without
+  forking the FSM script. **Phase 11 ADR 006 note:** "flat enum FSM
+  over HSM" should mention that the FSM is reused across entity types
+  via per-instance handler muting, not subclassing.
+
+- **Enemy hurtbox = layer 7**: added `2d_physics/layer_7="enemy_hurtbox"`
+  to project.godot. Cannonball collision masks split: player balls now
+  mask `MASK_ENEMY_HURTBOX (1<<6)`, enemy balls keep
+  `MASK_PLAYER_HURTBOX (1<<5)`. Both team's projectiles now route
+  through `Area2D.area_entered` against hurtbox Area2Ds — `body_entered`
+  was deleted from cannonball.gd entirely. The legacy
+  `(body as EnemyShip).take_damage(...)` direct-call path is gone.
+  **Phase 11 ADR 007 note:** the layer table grew by one slot; the bus
+  discipline rules in ADR 007 should reference layer 7 alongside layer 6.
+
+- **Hurtbox Area2D `monitoring = false` is intentional**: enemy and
+  player hurtboxes both have `collision_mask = 0` and the enemy
+  hurtbox additionally has `monitoring = false`. The player hurtbox
+  was authored with `monitoring = true` in Phase 4 but its mask is 0
+  too — neither hurtbox actually consumes incoming `area_entered`
+  events because the cannonball is the active monitor. The
+  HurtboxComponent's `area_entered` connection is dead code today —
+  no source emits into it — and only matters if a future damage
+  source (e.g. an explosion AOE area) opts into hurtbox-side
+  monitoring. Documented inline.
+
+- **`EnemyShip.take_damage(direction, amount, by_mine)` keeps the
+  3-arg signature for sea_mine compatibility**, but the `amount`
+  parameter is currently ignored — HealthComponent always applies 1
+  HP per hit. The sea_mine call site still passes
+  `weapon.damage`/`_DEFAULT_DAMAGE_TO_ENEMIES`. **Phase 11+ task:**
+  either propagate amount through HealthComponent.apply_damage or
+  delete the parameter from sea_mine. Per-source damage scaling is
+  not in any current acceptance criterion.
+
+- **Cannon legacy `fire() -> Dictionary` is gone**: every fire path now
+  flows through `try_fire()` + the `fired(pos, dir)` signal. Phase 4
+  Step 26 retro's "delete the legacy `fire()` method from cannon.gd"
+  is closed.
+
+- **`EnemyShip.take_ram_damage()` is gone**: replaced by routing the
+  player→enemy ram path through `take_damage(normal)`. The original
+  0.4s `RAM_IFRAME_DURATION` multi-substep guard is replaced by
+  HealthComponent's 1.2s `HIT_IFRAME_DURATION`, which more than covers
+  the multi-substep window. Ship's `_on_movement_rammed_enemy` was
+  updated to call `take_damage(normal)` instead. No behavior loss
+  observed in the smoke run.
+
+- **Wave-modifier split**: `apply_wave_modifiers(speed_mult,
+  cooldown_mult)` on EnemyShip now delegates the speed half to
+  `_ai_movement.apply_wave_modifiers(speed_mult)` and the cooldown half
+  to `_broadside.fire_rate_mult = 1.0 / cooldown_mult`. The
+  cooldown side flips the polarity (mult vs. divisor) because
+  BroadsideComponent uses `cooldown / fire_rate_mult` — so a wave
+  cooldown_mult of 0.5 (twice as fast) becomes fire_rate_mult = 2.0.
+  Verified through wave 2+ in the smoke run.
+
+- **EnemyArchetype field consumption status**: Phase 8 wired `hp`,
+  `chase_speed`, `circle_speed`, `turn_speed`, `circle_radius`,
+  `broadside_cooldown`, `broadside_range`. Still **not yet read**:
+  `sprite_region` (no per-archetype hull/sail variant slot), `score`
+  (no scoring system), `ai_kind` (single AI strategy hard-coded —
+  YAGNI gate), `weapon` (cannons are spawned with their own
+  `WeaponConfig` from cannon.tscn, not from archetype). **Phase 11
+  cleanup task:** decide whether to wire `sprite_region` + `score`
+  now or strip them as unused. The Phase 2 retro flagged these as
+  "Phase 4 / Phase 8 reads"; Phase 8 chose to defer.
+
+- **No GUT tests added**: same posture as Phase 5/6/7 — Step 45 owns
+  the unit test suites. Phase 8 was verified via gdformat + gdlint
+  clean and a single MCP smoke run with zero new errors beyond the
+  pre-existing UID + cooldown shadow set.
+
 ### Phase 7 execution retro (added 2026-04-07 after Steps 35–38 landed)
 
 Carry-over items and deviations discovered while executing Phase 7 that
@@ -1712,9 +1824,9 @@ launch, play one wave, die, respawn, verify.**
 
 #### Phase 8 — Enemy decomposition
 
-- [ ] **Step 39** — `EnemyShip` reuses `HealthComponent`, `HurtboxComponent`,
+- [x] **Step 39** — `EnemyShip` reuses `HealthComponent`, `HurtboxComponent`,
   `BroadsideComponent`, `Cannon`, `HitFeedbackComponent`, `AudioEmitterComponent`.
-- [ ] **Step 40** — `EnemyAIMovement` extracted as bespoke movement component
+- [x] **Step 40** — `EnemyAIMovement` extracted as bespoke movement component
   (single chase-and-shoot strategy, no inheritance hierarchy yet).
 
 #### Phase 9 — VFX + Water listeners (HIGH VISUAL-REGRESSION RISK)

@@ -9,11 +9,10 @@ signal hit_registered  ## Emitted when a PLAYER-owned ball hits an EnemyShip.
 # Layer/mask bit math (Godot layers are 1-indexed in UI, 0-indexed for `1 << n`).
 const LAYER_PLAYER_BALL: int = 1 << 2  # layer 3 = player_projectiles
 const LAYER_ENEMY_BALL: int = 1 << 4  # layer 5 = enemy_projectiles
-const MASK_ENEMIES: int = 1 << 1  # layer 2 = enemies (player balls hit enemy bodies)
-# Enemy balls now hit the player's HurtboxComponent.Area2D (layer 6) instead
-# of the CharacterBody2D directly (Phase 4 Step 23). EnemyShip's hurtbox
-# extraction lands in Phase 8 Step 39; until then player balls still detect
-# enemy bodies via `body_entered`.
+# Phase 8 Step 39: both teams now hit hurtbox Area2Ds rather than the
+# CharacterBody2D directly. Player balls mask the enemy_hurtbox layer
+# (layer 7); enemy balls mask the player_hurtbox layer (layer 6).
+const MASK_ENEMY_HURTBOX: int = 1 << 6  # layer 7 = enemy_hurtbox
 const MASK_PLAYER_HURTBOX: int = 1 << 5  # layer 6 = player_hurtbox
 
 const ENEMY_TINT: Color = Color(1.4, 0.7, 0.6)  # warm red so enemy shots are readable
@@ -30,7 +29,6 @@ var _impacted: bool = false
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 
 
@@ -45,7 +43,7 @@ func setup(pos: Vector2, dir: Vector2, from_enemy: bool = false) -> void:
 		modulate = ENEMY_TINT
 	else:
 		collision_layer = LAYER_PLAYER_BALL
-		collision_mask = MASK_ENEMIES
+		collision_mask = MASK_ENEMY_HURTBOX
 	var min_dist: float = max_range * (1.0 - range_randomness)
 	_target_distance = randf_range(min_dist, max_range)
 
@@ -60,33 +58,25 @@ func _physics_process(delta: float) -> void:
 		_impact()
 
 
-func _on_body_entered(body: Node2D) -> void:
-	if _impacted:
-		return
-	# Player balls still detect enemy bodies directly until Phase 8 migrates
-	# EnemyShip to a HurtboxComponent.
-	if not is_enemy_owned and body is EnemyShip:
-		_impacted = true
-		(body as EnemyShip).take_damage(_direction)
-		hit_registered.emit()
-		water_impacted.emit(global_position)
-		ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
-		queue_free()
-
-
 func _on_area_entered(area: Area2D) -> void:
 	if _impacted:
 		return
-	# Enemy balls now hit the player's HurtboxComponent.Area2D. Walk owner to
-	# resolve the Ship root and forward to its public take_damage entry.
-	if not is_enemy_owned:
-		return
+	# Phase 8 Step 39: both teams hit hurtbox Area2Ds. Resolve the entity
+	# root from the area's owner and forward to its public take_damage entry.
 	var entity: Node = HurtboxComponent.resolve_entity(area)
-	var ship: Ship = entity as Ship
-	if ship == null:
-		return
-	_impacted = true
-	ship.take_damage(_direction)
+	if is_enemy_owned:
+		var ship: Ship = entity as Ship
+		if ship == null:
+			return
+		_impacted = true
+		ship.take_damage(_direction)
+	else:
+		var enemy: EnemyShip = entity as EnemyShip
+		if enemy == null:
+			return
+		_impacted = true
+		enemy.take_damage(_direction)
+		hit_registered.emit()
 	water_impacted.emit(global_position)
 	ExplosionSprite.create(get_parent(), global_position, "cannonball_impact", _direction)
 	queue_free()

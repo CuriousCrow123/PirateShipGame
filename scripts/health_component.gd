@@ -9,6 +9,11 @@ extends Node
 ## Phase 5 Step 33: iframe ticking, _is_dead, _invincible, and the Shift+5
 ## cheat input handler all moved into ShipFSM. HealthComponent now queries
 ## the FSM for vulnerability and asks it to enter/exit DEAD on death/respawn.
+## Phase 8 Step 39: setup() takes primitives (max_health/max_lives/
+## respawn_delay) instead of a ShipStats Resource so EnemyShip can reuse
+## the component without a parallel stats Resource (EnemyArchetype provides
+## hp directly). The non-respawnable branch now skips the game_over emit
+## entirely so enemies don't trip the player game-over path.
 ##
 ## Respawn flow:
 ##   Ship.take_damage() → apply_damage() → _hp == 0 → fsm.enter_dead() →
@@ -29,8 +34,10 @@ const RESPAWN_IFRAME_DURATION: float = 2.5
 ## Player ships respawn until lives run out; enemies will set this false in Phase 8.
 @export var respawnable: bool = true
 
-var _stats: ShipStats = null
 var _fsm: ShipFSM = null
+var _max_health: int = 0
+var _max_lives: int = 0
+var _respawn_delay: float = 0.0
 var _hp: int = 0
 var _lives: int = 0
 var _respawn_cooldown: Cooldown = Cooldown.new()
@@ -53,24 +60,27 @@ func _process(_delta: float) -> void:
 
 
 ## Called by the entity root in its own _ready (after child _readys have run)
-## to inject the Resource and emit the initial status. Stats is intentionally
-## NOT an @export here because the player ship's stats Resource lives on the
-## main.tscn ship instance — injecting it from the parent keeps that wiring
-## centralized and avoids a parallel Health.stats override slot.
-func setup(stats: ShipStats, fsm: ShipFSM) -> void:
-	assert(stats != null, "HealthComponent.setup: stats Resource is null")
+## to inject the configuration and emit the initial status. Phase 8 Step 39:
+## switched from a ShipStats Resource ref to plain primitives so EnemyShip
+## can reuse the component (EnemyArchetype.hp drives enemy max_health, with
+## max_lives = 1 and respawn_delay = 0 for terminal death).
+func setup(max_health: int, max_lives: int, respawn_delay: float, fsm: ShipFSM) -> void:
+	assert(max_health > 0, "HealthComponent.setup: max_health must be > 0")
+	assert(max_lives > 0, "HealthComponent.setup: max_lives must be > 0")
 	assert(fsm != null, "HealthComponent.setup: ShipFSM is null")
-	_stats = stats
+	_max_health = max_health
+	_max_lives = max_lives
+	_respawn_delay = respawn_delay
 	_fsm = fsm
-	_hp = _stats.max_health
-	_lives = _stats.max_lives
+	_hp = _max_health
+	_lives = _max_lives
 	# Defer initial emission so the entity root has a chance to wire up.
 	call_deferred("_emit_initial_status")
 
 
 func _emit_initial_status() -> void:
-	health_changed.emit(_hp, _stats.max_health)
-	lives_changed.emit(_lives, _stats.max_lives)
+	health_changed.emit(_hp, _max_health)
+	lives_changed.emit(_lives, _max_lives)
 
 
 ## Single damage entry point. Returns true if the hit landed.
@@ -78,7 +88,7 @@ func apply_damage(_amount: int = 1) -> bool:
 	if not _fsm.is_vulnerable():
 		return false
 	_hp -= 1
-	health_changed.emit(_hp, _stats.max_health)
+	health_changed.emit(_hp, _max_health)
 	if _hp <= 0:
 		_enter_death()
 		return true
@@ -89,8 +99,8 @@ func apply_damage(_amount: int = 1) -> bool:
 ## Reset HP to full and start respawn iframes. Called by Ship root after
 ## the respawn_ready signal lands and the entity has been teleported.
 func reset_for_respawn() -> void:
-	_hp = _stats.max_health
-	health_changed.emit(_hp, _stats.max_health)
+	_hp = _max_health
+	health_changed.emit(_hp, _max_health)
 	_fsm.respawn(RESPAWN_IFRAME_DURATION)
 
 
@@ -117,16 +127,19 @@ func is_invincible() -> bool:
 func _enter_death() -> void:
 	_fsm.enter_dead()
 	_lives -= 1
-	lives_changed.emit(_lives, _stats.max_lives)
+	lives_changed.emit(_lives, _max_lives)
 	died.emit()
+	# Non-respawnable entities (enemies) terminate here — no game_over emit,
+	# no respawn cooldown. The entity root listens to `died` and runs its own
+	# destruction VFX / cleanup.
+	if not respawnable:
+		return
 	if _lives <= 0:
 		game_over.emit()
-		return
-	if not respawnable:
 		return
 	# Phase 6 Step 34a: wall-clock Cooldown + _process poll replaces the old
 	# SceneTreeTimer lambda. Contract is identical — respawn_ready emits once
 	# after respawn_delay elapses.
-	_respawn_cooldown.start(_stats.respawn_delay)
+	_respawn_cooldown.start(_respawn_delay)
 	_respawn_pending = true
 	set_process(true)

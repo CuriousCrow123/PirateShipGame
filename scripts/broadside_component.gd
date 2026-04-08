@@ -9,12 +9,16 @@ extends Node
 ## themselves were expanded in Step 26 to expose try_fire() + a `fired`
 ## signal; this component groups them by side and gates the salvo on a
 ## single Cooldown per side.
+##
+## Phase 8 Step 39: setup() takes a `broadside_cooldown` float instead of
+## a ShipStats Resource so EnemyShip can pass `EnemyArchetype.
+## broadside_cooldown` directly without a parallel stats Resource.
 
 signal cannon_fired(pos: Vector2, dir: Vector2)
 
 @export var fire_rate_mult: float = 1.0
 
-var _stats: ShipStats = null
+var _broadside_cooldown_duration: float = 0.0
 var _port_cannons: Array[Cannon] = []
 var _starboard_cannons: Array[Cannon] = []
 var _port_cooldown: Cooldown = Cooldown.new()
@@ -26,12 +30,14 @@ func _ready() -> void:
 	set_process(false)
 
 
-## Wired by Ship root after _ready. cannon_slots is the CannonSlots Node2D
-## containing PortCannon1/2/StarboardCannon1/2 markers.
-func setup(cannon_slots: Node2D, stats: ShipStats) -> void:
+## Wired by the entity root after _ready. cannon_slots is the CannonSlots
+## Node2D containing PortCannon1/2/StarboardCannon1/2 markers (or
+## PortCannon/StarboardCannon for enemies — any name beginning with
+## "Port"/"Starboard" works).
+func setup(cannon_slots: Node2D, broadside_cooldown: float) -> void:
 	assert(cannon_slots != null, "BroadsideComponent.setup: cannon_slots is null")
-	assert(stats != null, "BroadsideComponent.setup: stats is null")
-	_stats = stats
+	assert(broadside_cooldown > 0.0, "BroadsideComponent.setup: cooldown must be > 0")
+	_broadside_cooldown_duration = broadside_cooldown
 	for slot: Node in cannon_slots.get_children():
 		if slot.get_child_count() == 0:
 			continue
@@ -60,7 +66,7 @@ func fire_port() -> bool:
 	for cannon: Cannon in _port_cannons:
 		if cannon.visible:
 			cannon.try_fire()
-	_port_cooldown.start(_stats.broadside_cooldown / fire_rate_mult)
+	_port_cooldown.start(_broadside_cooldown_duration / fire_rate_mult)
 	return true
 
 
@@ -70,7 +76,7 @@ func fire_starboard() -> bool:
 	for cannon: Cannon in _starboard_cannons:
 		if cannon.visible:
 			cannon.try_fire()
-	_starboard_cooldown.start(_stats.broadside_cooldown / fire_rate_mult)
+	_starboard_cooldown.start(_broadside_cooldown_duration / fire_rate_mult)
 	return true
 
 

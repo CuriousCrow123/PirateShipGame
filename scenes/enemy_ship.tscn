@@ -1,9 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://c2enemyship01"]
+[gd_scene load_steps=13 format=3 uid="uid://c2enemyship01"]
 
 [ext_resource type="Script" uid="uid://dhh4bsq5v8nwf" path="res://scripts/enemy_ship.gd" id="1_enemy_ship"]
 [ext_resource type="Texture2D" uid="uid://cfyh5o1v8ew6a" path="res://textures/ships_spritesheet.png" id="2_spritesheet"]
 [ext_resource type="PackedScene" uid="uid://crkk3p72st73n" path="res://scenes/cannon.tscn" id="3_cannon"]
 [ext_resource type="Resource" path="res://resources/default_enemy_archetype.tres" id="4_archetype"]
+[ext_resource type="Script" path="res://scripts/ship_fsm.gd" id="5_fsm"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="6_health"]
+[ext_resource type="Script" path="res://scripts/hurtbox_component.gd" id="7_hurtbox"]
+[ext_resource type="Script" path="res://scripts/hit_feedback_component.gd" id="8_hit_feedback"]
+[ext_resource type="Script" path="res://scripts/broadside_component.gd" id="9_broadside"]
+[ext_resource type="Script" path="res://scripts/enemy_ai_movement.gd" id="10_ai_movement"]
+[ext_resource type="Script" path="res://scripts/audio_emitter_component.gd" id="11_audio_emitter"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hull"]
 size = Vector2(25, 54)
@@ -16,6 +23,38 @@ collision_mask = 3
 motion_mode = 1
 script = ExtResource("1_enemy_ship")
 archetype = ExtResource("4_archetype")
+
+[node name="FSM" type="Node" parent="."]
+script = ExtResource("5_fsm")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("6_health")
+respawnable = false
+
+[node name="Hurtbox" type="Node2D" parent="."]
+script = ExtResource("7_hurtbox")
+
+[node name="Area2D" type="Area2D" parent="Hurtbox"]
+collision_layer = 64
+collision_mask = 0
+monitorable = true
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox/Area2D"]
+shape = SubResource("RectangleShape2D_hull")
+
+[node name="HitFeedback" type="Node" parent="."]
+script = ExtResource("8_hit_feedback")
+shake_on_hit = false
+
+[node name="Broadside" type="Node" parent="."]
+script = ExtResource("9_broadside")
+
+[node name="AIMovement" type="Node" parent="."]
+script = ExtResource("10_ai_movement")
+
+[node name="AudioEmitter" type="Node" parent="."]
+script = ExtResource("11_audio_emitter")
 
 [node name="HullSprite" type="Sprite2D" parent="."]
 scale = Vector2(0.5, 0.5)
