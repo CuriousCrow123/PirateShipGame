@@ -12,24 +12,13 @@ const TrailsScript: Script = preload("res://scripts/trails.gd")
 const TrailWidthCurve: Curve = preload("res://resources/trail_width_curve.tres")
 const TrailGradientTex: Texture2D = preload("res://textures/WaterTrailGradient.png")
 
-# --- Wave progression tuning ----------------------------------------------
-# Wave 1 starts with WAVE_BASE_ENEMIES and grows by WAVE_ENEMY_INCREMENT each
-# wave. Concurrent alive cap grows with the wave so spawns trickle in instead
-# of dumping the full quota at once. Speed and reload modifiers compound per
-# wave but are clamped so the game stays playable indefinitely.
-const WAVE_BASE_ENEMIES: int = 3
-const WAVE_ENEMY_INCREMENT: int = 2
-const WAVE_MAX_CONCURRENT_BASE: int = 3
-const WAVE_MAX_CONCURRENT_INCREMENT: int = 2
-const WAVE_MAX_CONCURRENT_HARD_CAP: int = 10
-const WAVE_SPEED_PER_WAVE: float = 0.12
-const WAVE_SPEED_HARD_CAP: float = 1.6
-const WAVE_COOLDOWN_PER_WAVE: float = 0.16
-const WAVE_COOLDOWN_FLOOR: float = 0.6
-const WAVE_INTERMISSION_DURATION: float = 4.0
+# Wave progression is now driven by a WaveSet Resource (Phase 2 Step 14).
+# The procedural formula constants that used to live here have moved into
+# resources/waves/wave_NN.tres. WAVE_TOAST_LEAD_TIME stays here because it's
+# a UI lead-time, not a difficulty curve point.
 const WAVE_TOAST_LEAD_TIME: float = 1.5
-const WAVE_SPAWN_INTERVAL_BASE: float = 2.0
 
+@export var wave_set: WaveSet
 @export var spawn_distance: float = 550.0
 @export var despawn_distance: float = 1000.0
 
@@ -41,7 +30,7 @@ var _last_wake_pos: Vector2 = Vector2.ZERO
 # Wave state.
 var _current_wave: int = 0
 var _wave_phase: WavePhase = WavePhase.INTERMISSION
-var _intermission_timer: float = WAVE_INTERMISSION_DURATION
+var _intermission_timer: float = 4.0  # overwritten from WaveConfig in _ready
 var _toast_shown_for_wave: int = 0
 var _enemies_spawned_this_wave: int = 0
 var _enemies_to_spawn_this_wave: int = 0
@@ -73,6 +62,10 @@ func _ready() -> void:
 	assert(_lives_display != null, "Main: LivesDisplay not found")
 	assert(_game_over_screen != null, "Main: GameOverScreen not found")
 	assert(_mine_cooldown_display != null, "Main: MineCooldownDisplay not found")
+	assert(wave_set != null, "Main: wave_set (WaveSet) Resource is missing")
+	# Seed the first intermission timer from the WaveSet's first wave so the
+	# value is data-driven from frame 0.
+	_intermission_timer = wave_set.get_wave(0).intermission_duration
 
 	_stats = RunStats.new()
 
@@ -272,36 +265,42 @@ func _update_wave_state(delta: float) -> void:
 		WavePhase.CLEARING:
 			if _alive_enemy_count() == 0:
 				_stats.end_wave()
-				_intermission_timer = WAVE_INTERMISSION_DURATION
+				# Pull the next wave's intermission duration from the WaveSet
+				# so designers can tune per-wave breathers.
+				_intermission_timer = _wave_config_for(_current_wave).intermission_duration
 				_wave_phase = WavePhase.INTERMISSION
 
 
 func _begin_wave(wave: int) -> void:
 	_current_wave = wave
 	_enemies_spawned_this_wave = 0
-	_enemies_to_spawn_this_wave = WAVE_BASE_ENEMIES + (wave - 1) * WAVE_ENEMY_INCREMENT
+	_enemies_to_spawn_this_wave = _wave_config_for(wave).enemies_to_spawn
 	_spawn_cadence_timer = 0.0
 	_wave_phase = WavePhase.SPAWNING
 	_stats.start_wave(wave)
 
 
+func _wave_config_for(wave: int) -> WaveConfig:
+	# WaveSet uses 0-indexed lookups; the in-game wave counter is 1-indexed.
+	# get_wave() clamps past the end so play continues with the final wave's
+	# tuning indefinitely until Phase 3.5 ships the Victory transition.
+	return wave_set.get_wave(maxi(wave - 1, 0))
+
+
 func _current_max_concurrent() -> int:
-	var cap: int = WAVE_MAX_CONCURRENT_BASE + (_current_wave - 1) * WAVE_MAX_CONCURRENT_INCREMENT
-	return mini(cap, WAVE_MAX_CONCURRENT_HARD_CAP)
+	return _wave_config_for(_current_wave).max_concurrent
 
 
 func _current_spawn_interval() -> float:
-	# Cadence shrinks with the broadside cooldown multiplier so later waves
-	# also fill the field a little faster.
-	return WAVE_SPAWN_INTERVAL_BASE * _current_cooldown_mult()
+	return _wave_config_for(_current_wave).spawn_interval
 
 
 func _current_speed_mult() -> float:
-	return minf(1.0 + (_current_wave - 1) * WAVE_SPEED_PER_WAVE, WAVE_SPEED_HARD_CAP)
+	return _wave_config_for(_current_wave).speed_mult
 
 
 func _current_cooldown_mult() -> float:
-	return maxf(1.0 - (_current_wave - 1) * WAVE_COOLDOWN_PER_WAVE, WAVE_COOLDOWN_FLOOR)
+	return _wave_config_for(_current_wave).cooldown_mult
 
 
 func _alive_enemy_count() -> int:

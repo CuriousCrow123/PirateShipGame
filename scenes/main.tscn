@@ -10,6 +10,7 @@
 [ext_resource type="Curve" path="res://resources/trail_width_curve.tres" id="9_curve"]
 [ext_resource type="PackedScene" uid="uid://1god6doql3w" path="res://scenes/ship.tscn" id="10_ship"]
 [ext_resource type="Resource" path="res://resources/default_ship_stats.tres" id="21_ship_stats"]
+[ext_resource type="Resource" path="res://resources/waves/default_campaign.tres" id="22_campaign"]
 [ext_resource type="Script" uid="uid://cdnjypbejx6hp" path="res://scripts/water_chunks.gd" id="11_chunks"]
 [ext_resource type="Script" uid="uid://byewl1vi7jcfk" path="res://scripts/displacement_stamps.gd" id="12_stamps"]
 [ext_resource type="PackedScene" path="res://scenes/controls_overlay.tscn" id="13_overlay"]
@@ -41,6 +42,7 @@ colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1)
 
 [node name="Main" type="Node2D" unique_id=1211575893]
 script = ExtResource("3_main")
+wave_set = ExtResource("22_campaign")
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(176, 112)

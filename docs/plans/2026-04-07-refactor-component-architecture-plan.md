@@ -725,7 +725,7 @@ Phase 6 must address all 10. Unit-tested.
   (EnemyAIMovement). The legacy @exports stay on enemy_ship.gd as
   fallbacks so any spawner not yet using the archetype keeps working.
   enemy_ship.tscn assigns the default archetype via ExtResource.)*
-- [ ] **Step 14** — Create `WaveConfig.tres` + `WaveSet.tres` +
+- [x] **Step 14** — Create `WaveConfig.tres` + `WaveSet.tres` +
   **`wave_01.tres` … `wave_NN.tres`** hand-authored from the current
   procedural formula at [main.gd:8-31](../../scripts/main.gd#L8-L31).
   **Initial campaign length: 12 waves** (10 normal + 2 designed "boss" waves).

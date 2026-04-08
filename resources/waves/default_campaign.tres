@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WaveSet" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/wave_set.gd" id="1_script"]
+[ext_resource type="Resource" path="res://resources/waves/wave_01.tres" id="2_w01"]
+[ext_resource type="Resource" path="res://resources/waves/wave_02.tres" id="3_w02"]
+[ext_resource type="Resource" path="res://resources/waves/wave_03.tres" id="4_w03"]
+[ext_resource type="Resource" path="res://resources/waves/wave_04.tres" id="5_w04"]
+[ext_resource type="Resource" path="res://resources/waves/wave_05.tres" id="6_w05"]
+[ext_resource type="Resource" path="res://resources/waves/wave_06.tres" id="7_w06"]
+[ext_resource type="Resource" path="res://resources/waves/wave_07.tres" id="8_w07"]
+[ext_resource type="Resource" path="res://resources/waves/wave_08.tres" id="9_w08"]
+[ext_resource type="Resource" path="res://resources/waves/wave_09.tres" id="10_w09"]
+[ext_resource type="Resource" path="res://resources/waves/wave_10.tres" id="11_w10"]
+[ext_resource type="Resource" path="res://resources/waves/wave_11.tres" id="12_w11"]
+[ext_resource type="Resource" path="res://resources/waves/wave_12.tres" id="13_w12"]
+
+[resource]
+script = ExtResource("1_script")
+waves = Array[Resource]([ExtResource("2_w01"), ExtResource("3_w02"), ExtResource("4_w03"), ExtResource("5_w04"), ExtResource("6_w05"), ExtResource("7_w06"), ExtResource("8_w07"), ExtResource("9_w08"), ExtResource("10_w09"), ExtResource("11_w10"), ExtResource("12_w11"), ExtResource("13_w12")])
