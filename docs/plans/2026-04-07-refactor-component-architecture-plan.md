@@ -1158,7 +1158,7 @@ launch, play one wave, die, respawn, verify.**
   (today [scripts/cannon.gd](../../scripts/cannon.gd) is just a 19-line
   marker; this is a real expansion, not a refactor). Each CannonSlot child
   holds its own `Cooldown` and reads its own `WeaponConfig`.
-- [ ] **Step 27** — `BroadsideComponent` — thin orchestrator triggering
+- [x] **Step 27** — `BroadsideComponent` — thin orchestrator triggering
   port/starboard cannon groups. Replaces
   [ship.gd:435-453 `_fire_broadside`](../../scripts/ship.gd#L435-L453).
 - [ ] **Step 28** — `MineDropComponent` (emits `mine_cooldown_changed` for

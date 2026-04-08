@@ -24,8 +24,6 @@ signal invincibility_changed(active: bool)
 @export var dash_stats: DashStats
 @export var stats: ShipStats
 
-var _port_cooldown: float = 0.0
-var _starboard_cooldown: float = 0.0
 var _mine_cooldown_left: float = 0.0
 var _is_dead: bool = false
 var _input_locked: bool = false
@@ -42,6 +40,7 @@ var _spawn_rotation: float = 0.0
 @onready var _hurtbox: HurtboxComponent = $Hurtbox
 @onready var _hit_feedback: HitFeedbackComponent = $HitFeedback
 @onready var _dash: DashComponent = $Dash
+@onready var _broadside: BroadsideComponent = $Broadside
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -58,6 +57,7 @@ func _ready() -> void:
 	assert(_hurtbox != null, "Ship: Hurtbox node is missing")
 	assert(_hit_feedback != null, "Ship: HitFeedback node is missing")
 	assert(_dash != null, "Ship: Dash node is missing")
+	assert(_broadside != null, "Ship: Broadside node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -81,6 +81,8 @@ func _ready() -> void:
 	_dash.setup(self, dash_stats, _player_input, _fire_effect, _ghost_sources, _ghost_container)
 	_dash.dash_started.connect(_on_dash_started)
 	_dash.dash_ended.connect(_on_dash_ended)
+	_broadside.setup(_cannon_slots, stats)
+	_broadside.cannon_fired.connect(_on_broadside_cannon_fired)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -111,10 +113,6 @@ func _on_dash_ended() -> void:
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
-	if _port_cooldown > 0.0:
-		_port_cooldown -= delta
-	if _starboard_cooldown > 0.0:
-		_starboard_cooldown -= delta
 	if _mine_cooldown_left > 0.0:
 		_mine_cooldown_left -= delta
 
@@ -132,10 +130,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Invincibility cheat now lives in HealthComponent (A1 fusion).
 	if _input_locked:
 		return
-	if _player_input.is_fire_port_just_pressed(event) and _port_cooldown <= 0.0:
-		_fire_broadside("port")
-	elif _player_input.is_fire_starboard_just_pressed(event) and _starboard_cooldown <= 0.0:
-		_fire_broadside("starboard")
+	if _player_input.is_fire_port_just_pressed(event):
+		_broadside.fire_port()
+	elif _player_input.is_fire_starboard_just_pressed(event):
+		_broadside.fire_starboard()
 	elif _player_input.is_drop_mine_just_pressed(event) and _mine_cooldown_left <= 0.0:
 		_drop_mine()
 	elif _player_input.is_dash_just_pressed(event):
@@ -230,23 +228,8 @@ func _apply_config() -> void:
 			slot.get_child(0).visible = config.cannon_slots[i]
 
 
-func _fire_broadside(side: String) -> void:
-	var prefix: String = "Port" if side == "port" else "Starboard"
-	for slot: Node in _cannon_slots.get_children():
-		if not slot.name.begins_with(prefix):
-			continue
-		if slot.get_child_count() == 0:
-			continue
-		var cannon: Cannon = slot.get_child(0) as Cannon
-		if cannon == null or not cannon.visible:
-			continue
-		var result: Dictionary = cannon.fire()
-		cannon_fired.emit(result["position"], result["direction"])
-
-	if side == "port":
-		_port_cooldown = stats.broadside_cooldown
-	else:
-		_starboard_cooldown = stats.broadside_cooldown
+func _on_broadside_cannon_fired(pos: Vector2, dir: Vector2) -> void:
+	cannon_fired.emit(pos, dir)
 
 
 func _drop_mine() -> void:
