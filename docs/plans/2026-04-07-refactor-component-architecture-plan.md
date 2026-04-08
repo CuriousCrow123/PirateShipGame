@@ -215,6 +215,122 @@ must respect or address:
   Phase 0/1 retro. The corresponding entry in the Phase 0/1 retro
   above is now stale historical context, not a TODO.
 
+### Phase 3 + 3.5 execution retro (added 2026-04-07 after Steps 17–20a landed)
+
+Carry-over items discovered while executing Phase 3 and 3.5 that
+future steps must respect or address:
+
+- **Stale `.godot/uid_cache.bin` from the DashConfig→DashStats rename**:
+  the Phase 2 Step 16 rename commit (`c2d5743`) left a binary UID→path
+  mapping pointing at `res://scripts/dash_config.gd` which no longer
+  exists. Phase 3 Step 17's first smoke test tripped on it — hard
+  assertion failure at [scripts/ship.gd:73](../../scripts/ship.gd#L73)
+  because `resources/dash_stats.tres` couldn't resolve its script
+  ExtResource. Fixed by deleting `.godot/uid_cache.bin` and letting
+  Godot regenerate. **Consequence:** every subsequent non-editor run
+  now emits ~45 "invalid UID, using text path instead" warnings
+  because the MCP `run_project` cycle doesn't rebuild the UID cache
+  the way the editor does. All resolutions fall back to text paths,
+  so gameplay is unaffected, but the warning noise masks genuine
+  issues during smoke tests. **Future steps:** when the user next
+  opens the editor, the cache will regenerate and the warnings will
+  clear. Don't chase them until then.
+- **Class index cache hand-edits (Phase 2 retro still applies)**:
+  Phase 3 added `PlayerInputComponent` (Step 17) and `GameCamera`
+  (Step 19+20), both of which required manual edits to
+  `.godot/global_script_class_cache.cfg`. `KeybindsManager` is an
+  autoload with no `class_name`, so no cache edit was needed.
+- **`const X: PackedStringArray = PackedStringArray([...])` is not a
+  constant expression** in GDScript 2 — hit on
+  [autoload/keybinds_manager.gd](../../autoload/keybinds_manager.gd)
+  `REMAPPABLE_ACTIONS`. Workaround: use plain `const X: Array = [...]`.
+  Future Resource/autoload constants that want typed string arrays
+  should initialize with a var or accept an untyped Array constant.
+- **`JoyButton` / `JoyAxis` enums must be used, not `int`**, when
+  assigning `InputEventJoypadButton.button_index` or
+  `InputEventJoypadMotion.axis`. Typed `int` parameters trigger
+  4.6's "Integer used when enum expected" warning. See the last two
+  private helpers in `keybinds_manager.gd` for the corrected pattern
+  — applies to any future input-handling code that passes JoyButton/
+  JoyAxis through function parameters.
+- **Camera zoom-punch signal carries an ABSOLUTE zoom target**, not a
+  scale multiplier against `_base_zoom`. Phase 3 Step 19+20 had to
+  reconcile the ambiguous `scale` name in
+  `Events.camera_zoom_punch_requested(scale_amount, duration)` with
+  `DashStats.zoom_punch_target` (which is absolute, e.g. `1.1`). The
+  camera script's `_on_camera_zoom_punch_requested` documents this
+  choice. **Phase 4+ callers:** pass absolute zoom values, not
+  multipliers.
+- **Camera target injection is deferred**: `main.gd._ready` calls
+  `_camera.call_deferred("set_target", _ship)` even though Ship's
+  `_ready` has already run by the time Main's does. The deferral is
+  belt-and-suspenders documentation that the camera supports post-hoc
+  target injection and handles null gracefully, important for future
+  intro/victory scenes that toggle the target.
+- **`snap_to_target()` on respawn replaces `reset_smoothing()`**: the
+  plan's original wording said "call `reset_smoothing()` on the
+  respawn signal". The implementation went one step further — it
+  forcibly syncs `global_position` to the target AND calls
+  `reset_smoothing()`, so the camera doesn't lerp from the death
+  location even if `_physics_process` hasn't run yet. Phase 4+ should
+  use `snap_to_target()`, not raw `reset_smoothing()`, for any hard
+  teleport.
+- **Shake magnitude/decay constants moved from DashStats → GameCamera**:
+  `GameCamera.SHAKE_MAGNITUDE_PX` and `SHAKE_TRAUMA_DECAY` are now
+  the source of truth (hard-coded to the DashStats defaults at time
+  of migration: `3.0` and `2.0`). The DashStats fields
+  `shake_magnitude_px` and `shake_trauma_decay` are still read by
+  `ship.gd._start_dash` to pass `shake_trauma_initial` via the bus,
+  but the decay/magnitude fields are now dead weight on DashStats.
+  **Phase 11 cleanup:** either remove the dead fields from DashStats
+  or promote the constants back into a `CameraStats.tres` Resource.
+- **KeybindsManager is the 4th autoload** and the plan's autoload
+  order (`Events → GameState → AudioManager`) is now extended to
+  `Events → GameState → AudioManager → KeybindsManager`. Order still
+  matters: KeybindsManager doesn't touch other autoloads in `_ready`,
+  but any future autoload that relies on InputMap being finalized
+  should register AFTER KeybindsManager.
+- **No controls-menu UI** — Phase 3 Step 18 only shipped the
+  infrastructure (`rebind_action`, `save`, `reset_to_defaults`,
+  `gamepad_connected/disconnected` signals). `REMAPPABLE_ACTIONS`
+  excludes `toggle_explosion_mode` and `toggle_debug_overlay` so
+  debug shortcuts can't be accidentally rebound. The menu itself
+  lands in a post-Phase-11 follow-up (see Future Considerations).
+- **VictoryScreen reuses GameOverScreen via scene inheritance** —
+  `scenes/victory_screen.tscn` is a one-liner that inherits from
+  `game_over_screen.tscn`. A single `GameOverScreen` script drives
+  both; `show_results(stats, victory: bool)` picks title/subtitle.
+  The `Title` label was promoted to `unique_name_in_owner` so the
+  script can rewrite it at runtime. **Phase 10 folder reorg:** when
+  both scenes move to `features/hud/`, the inheritance `ExtResource`
+  path must update first (otherwise the child scene loses its base).
+- **`WavePhase.ENDED` is a terminal state** — once set in
+  `_on_game_over` or after final-wave-clear in `_update_wave_state`,
+  the wave FSM idles. `_on_game_over` early-returns if phase is
+  already `ENDED` to guard against a victory→death race where the
+  ship dies during the 1-second grace timer between
+  `Events.run_ended.emit(..., true)` and the victory screen sliding
+  in. **Phase 7 WaveDirector extraction must preserve this guard**
+  or the player can see both screens back-to-back.
+- **`wave_set.is_final_wave(_current_wave - 1)` off-by-one contract**:
+  `_current_wave` in `main.gd` is 1-indexed (UI-facing); `WaveSet`
+  methods are 0-indexed. The `-1` conversion lives in the CLEARING
+  branch of `_update_wave_state` and `_wave_config_for`. **Phase 7
+  WaveDirector must unify this** — either make everything 0-indexed
+  or add a 1-indexed wrapper on WaveSet and delete the `maxi(wave-1,
+  0)` calls scattered in main.gd.
+- **`WaveSet.get_wave` clamp is now defensive, not functional**:
+  the Phase 2 retro's TODO is resolved — main.gd emits victory
+  before any overflow read can happen. The clamp stays as a safety
+  net; do not remove it.
+- **DashStats still has unused camera-shake fields**: `shake_magnitude_px`,
+  `shake_trauma_decay`, and `zoom_punch_target` (the camera reads it
+  via the bus signal, so it's still *live* but its owner is now
+  DashStats-the-data-source, not a camera-feedback Resource).
+  Consider carving these into a `CameraFeedbackStats.tres` during
+  Phase 11 cleanup, or at minimum document that these fields feed
+  GameCamera via bus.
+
 ## Overview
 
 A big-bang refactor of PirateShipGame from a rapidly vibecoded codebase
