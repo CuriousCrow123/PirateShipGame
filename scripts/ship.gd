@@ -41,6 +41,7 @@ var _spawn_rotation: float = 0.0
 @onready var _dash: DashComponent = $Dash
 @onready var _broadside: BroadsideComponent = $Broadside
 @onready var _mine_drop: MineDropComponent = $MineDrop
+@onready var _audio: AudioEmitterComponent = $AudioEmitter
 @onready var _ghost_sources: Array[Sprite2D] = [$HullSprite, $PoleSprite, $SailSprite]
 @onready var _ghost_container: Node2D = get_parent() as Node2D
 
@@ -59,6 +60,7 @@ func _ready() -> void:
 	assert(_dash != null, "Ship: Dash node is missing")
 	assert(_broadside != null, "Ship: Broadside node is missing")
 	assert(_mine_drop != null, "Ship: MineDrop node is missing")
+	assert(_audio != null, "Ship: AudioEmitter node is missing")
 	assert(_ghost_container != null, "Ship: parent must be a Node2D world container")
 	assert(config != null, "Ship: config Resource is missing")
 	assert(dash_stats != null, "Ship: dash_stats Resource is missing")
@@ -86,6 +88,14 @@ func _ready() -> void:
 	_broadside.cannon_fired.connect(_on_broadside_cannon_fired)
 	_mine_drop.setup(self, stats)
 	_mine_drop.mine_dropped.connect(_on_mine_drop_dropped)
+	_audio.setup(self)
+	# Wire local audio events. AudioManager is currently a no-op, but the
+	# bus path is end-to-end testable: any clip added to the (future)
+	# SoundLibrary against these StringNames will play immediately.
+	_broadside.cannon_fired.connect(_on_audio_cannon_fired)
+	_mine_drop.mine_dropped.connect(_on_audio_mine_dropped)
+	_health_component.died.connect(_on_audio_died)
+	_hurtbox.hit_taken.connect(_on_audio_hit_taken)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -226,6 +236,22 @@ func _apply_config() -> void:
 
 func _on_broadside_cannon_fired(pos: Vector2, dir: Vector2) -> void:
 	cannon_fired.emit(pos, dir)
+
+
+func _on_audio_cannon_fired(_pos: Vector2, _dir: Vector2) -> void:
+	_audio.play(&"cannon_fire")
+
+
+func _on_audio_mine_dropped(_pos: Vector2) -> void:
+	_audio.play(&"mine_drop")
+
+
+func _on_audio_died() -> void:
+	_audio.play(&"ship_destroyed")
+
+
+func _on_audio_hit_taken(_source: Node) -> void:
+	_audio.play(&"ship_hit")
 
 
 func _on_mine_drop_dropped(pos: Vector2) -> void:

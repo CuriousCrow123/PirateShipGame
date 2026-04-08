@@ -1173,7 +1173,7 @@ launch, play one wave, die, respawn, verify.**
   component, no ADR. Skip this step.
 - [ ] **Step 31 (FORMERLY CheatComponent — REMOVED)** — Folded into
   HealthComponent in Step 21 per Appendix A1. Skip.
-- [ ] **Step 32** — `AudioEmitterComponent` — emits
+- [x] **Step 32** — `AudioEmitterComponent` — emits
   `sound_requested(sound_id: StringName, pos)` on local events (cannon shot,
   hit, explosion). **Now the 10th and final component** after the three fusions.
 
