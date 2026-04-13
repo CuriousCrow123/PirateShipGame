@@ -62,7 +62,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
 		if _touch_index != -1:
 			return
-		var vp_pos: Vector2 = _to_viewport_pos(event.position)
+		var vp_pos: Vector2 = _to_local_pos(event.position)
 		var vp_size: Vector2 = get_viewport_rect().size
 		if vp_pos.x > vp_size.x * 0.5:
 			return
@@ -78,7 +78,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
-	var vp_pos: Vector2 = _to_viewport_pos(event.position)
+	var vp_pos: Vector2 = _to_local_pos(event.position)
 	var offset: Vector2 = vp_pos - _base_center
 	if offset.length() > stick_radius:
 		offset = offset.normalized() * stick_radius
@@ -212,5 +212,8 @@ func _draw() -> void:
 	draw_circle(_base_center + _knob_offset, KNOB_RADIUS, KNOB_COLOR)
 
 
-func _to_viewport_pos(screen_pos: Vector2) -> Vector2:
-	return get_viewport().get_screen_transform().affine_inverse() * screen_pos
+## Full transform: screen → viewport → canvas → control local space.
+## Uses CanvasItem.get_screen_transform() (not Viewport's) so the
+## CanvasLayer transform and the Control's own position are included.
+func _to_local_pos(screen_pos: Vector2) -> Vector2:
+	return get_screen_transform().affine_inverse() * screen_pos

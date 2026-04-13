@@ -33,11 +33,11 @@ func _input(event: InputEvent) -> void:
 	var touch: InputEventScreenTouch = event as InputEventScreenTouch
 	if touch == null:
 		return
-	var vp_pos: Vector2 = _to_viewport_pos(touch.position)
+	var local_pos: Vector2 = _to_local_pos(touch.position)
 	if touch.pressed:
 		if _touch_index != -1:
 			return
-		if not get_global_rect().has_point(vp_pos):
+		if not Rect2(Vector2.ZERO, size).has_point(local_pos):
 			return
 		_touch_index = touch.index
 		_pressed = true
@@ -74,5 +74,6 @@ func _draw() -> void:
 		)
 
 
-func _to_viewport_pos(screen_pos: Vector2) -> Vector2:
-	return get_viewport().get_screen_transform().affine_inverse() * screen_pos
+## Full transform: screen → viewport → canvas → control local space.
+func _to_local_pos(screen_pos: Vector2) -> Vector2:
+	return get_screen_transform().affine_inverse() * screen_pos
