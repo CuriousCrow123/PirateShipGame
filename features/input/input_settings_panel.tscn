@@ -1,0 +1,206 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://features/input/input_settings_panel.gd" id="1_panel"]
+[ext_resource type="StyleBoxFlat" path="res://features/hud/ui_frame_style.tres" id="2_frame"]
+[ext_resource type="FontFile" path="res://assets/fonts/kims_bit_hand.ttf" id="3_font_raw"]
+[ext_resource type="Font" path="res://assets/fonts/kims_bit_hand_spaced.tres" id="4_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.15, 0.13, 0.1, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.75, 0.7, 0.55, 0.5)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.3, 0.27, 0.18, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.85, 0.55, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.2, 0.18, 0.13, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.78, 0.55, 0.7)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_focus"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.15, 0.13, 0.1, 0.7)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.85, 0.55, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+bg_color = Color(0.18, 0.15, 0.1, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.78, 0.55, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="InputSettingsPanel" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_panel")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0)
+mouse_filter = 2
+
+[node name="Centerer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Centerer"]
+custom_minimum_size = Vector2(160, 0)
+theme_override_styles/panel = ExtResource("2_frame")
+
+[node name="Content" type="VBoxContainer" parent="Centerer/Panel"]
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Centerer/Panel/Content"]
+theme_override_colors/font_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 16
+text = "INPUT MODE"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Centerer/Panel/Content"]
+custom_minimum_size = Vector2(0, 2)
+
+[node name="BtnKeyboard" type="Button" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+toggle_mode = true
+theme_override_colors/font_color = Color(0.9, 0.88, 0.78, 0.95)
+theme_override_colors/font_pressed_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_colors/font_focus_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_focus")
+text = "Keyboard"
+
+[node name="BtnGamepad" type="Button" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+toggle_mode = true
+theme_override_colors/font_color = Color(0.9, 0.88, 0.78, 0.95)
+theme_override_colors/font_pressed_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_colors/font_focus_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_focus")
+text = "Gamepad"
+
+[node name="BtnTouchJoy" type="Button" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+toggle_mode = true
+theme_override_colors/font_color = Color(0.9, 0.88, 0.78, 0.95)
+theme_override_colors/font_pressed_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_colors/font_focus_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_focus")
+text = "Touch - Joystick"
+
+[node name="BtnTouchTilt" type="Button" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+toggle_mode = true
+theme_override_colors/font_color = Color(0.9, 0.88, 0.78, 0.95)
+theme_override_colors/font_pressed_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_colors/font_focus_color = Color(0.95, 0.92, 0.83, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_focus")
+text = "Touch - Tilt"
+
+[node name="Sep" type="HSeparator" parent="Centerer/Panel/Content"]
+theme_override_colors/separator_color = Color(0.75, 0.7, 0.55, 0.4)
+
+[node name="BtnRumble" type="CheckButton" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.9, 0.88, 0.78, 0.95)
+theme_override_colors/font_pressed_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 11
+text = "Rumble"
+button_pressed = true
+
+[node name="Spacer2" type="Control" parent="Centerer/Panel/Content"]
+custom_minimum_size = Vector2(0, 2)
+
+[node name="BtnClose" type="Button" parent="Centerer/Panel/Content"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.95, 0.85, 0.55, 0.95)
+theme_override_colors/font_hover_color = Color(0.98, 0.95, 0.88, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_focus")
+text = "Close"

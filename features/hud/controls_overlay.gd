@@ -25,10 +25,16 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _dismissed:
 		return
-	var key_event := event as InputEventKey
-	if key_event == null:
-		return
-	if not key_event.is_pressed() or key_event.is_echo():
+	# Accept keyboard, gamepad, or touch as dismissal.
+	var accepted: bool = false
+	if event is InputEventKey:
+		var key_event: InputEventKey = event as InputEventKey
+		accepted = key_event.is_pressed() and not key_event.is_echo()
+	elif event is InputEventJoypadButton:
+		accepted = event.is_pressed()
+	elif event is InputEventScreenTouch:
+		accepted = (event as InputEventScreenTouch).pressed
+	if not accepted:
 		return
 	_dismissed = true
 	get_viewport().set_input_as_handled()

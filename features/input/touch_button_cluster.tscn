@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://features/input/touch_button_cluster.gd" id="1_cluster"]
+[ext_resource type="Script" path="res://features/input/touch_action_button.gd" id="2_button"]
+
+[node name="TouchButtonCluster" type="Control"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -88.0
+offset_top = -88.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_cluster")
+
+[node name="FirePort" type="Control" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("2_button")
+action = &"fire_port"
+button_label = "PORT"
+
+[node name="FireStarboard" type="Control" parent="."]
+offset_left = 44.0
+offset_top = 0.0
+offset_right = 84.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("2_button")
+action = &"fire_starboard"
+button_label = "STAR"
+
+[node name="Mine" type="Control" parent="."]
+offset_left = 0.0
+offset_top = 44.0
+offset_right = 40.0
+offset_bottom = 84.0
+mouse_filter = 2
+script = ExtResource("2_button")
+action = &"drop_mine"
+button_label = "MINE"
+
+[node name="Dash" type="Control" parent="."]
+offset_left = 44.0
+offset_top = 44.0
+offset_right = 84.0
+offset_bottom = 84.0
+mouse_filter = 2
+script = ExtResource("2_button")
+action = &"dash"
+button_label = "DASH"

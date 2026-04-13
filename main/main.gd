@@ -23,6 +23,7 @@ extends Node2D
 @onready var _spawn_service: SpawnService = $SpawnService
 @onready var _stats_tracker: StatsTracker = $StatsTracker
 @onready var _water_effects: WaterEffectsManager = $WaterEffectsManager
+@onready var _touch_overlay: TouchOverlay = $TouchOverlay
 
 
 func _ready() -> void:
@@ -36,6 +37,7 @@ func _ready() -> void:
 	assert(_spawn_service != null, "Main: SpawnService not found")
 	assert(_stats_tracker != null, "Main: StatsTracker not found")
 	assert(_water_effects != null, "Main: WaterEffectsManager not found")
+	assert(_touch_overlay != null, "Main: TouchOverlay not found")
 
 	var stats: RunStats = _stats_tracker.get_stats()
 	_water_effects.setup(_ship, _spawn_service)
@@ -54,6 +56,7 @@ func _ready() -> void:
 	_hp_display.setup(_ship)
 	_lives_display.setup(_ship)
 	_mine_cooldown_display.setup(_ship)
+	_touch_overlay.setup(_ship)
 	# Defer camera target injection: Ship's _ready has already run by the time
 	# Main._ready fires, but deferring keeps the contract explicit that the
 	# camera accepts target injection after-the-fact and handles null cleanly.

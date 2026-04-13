@@ -30,6 +30,9 @@
 [ext_resource type="Resource" path="res://features/water/water_tuning.tres" id="29_tuning"]
 [ext_resource type="Script" uid="uid://bg7s8ym2seffd" path="res://features/vfx/vfx_listener.gd" id="30_vfx_lis"]
 [ext_resource type="Script" uid="uid://csd7e461bveu4" path="res://features/water/water_listener.gd" id="31_water_lis"]
+[ext_resource type="Script" uid="uid://w323fgkj3al" path="res://systems/rumble_manager.gd" id="32_rumble"]
+[ext_resource type="PackedScene" path="res://features/input/touch_overlay.tscn" id="33_touch"]
+[ext_resource type="PackedScene" path="res://features/input/input_settings_panel.tscn" id="34_settings"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
 texture = ExtResource("2_tiles_tex")
@@ -163,3 +166,10 @@ script = ExtResource("30_vfx_lis")
 [node name="WaterListener" type="Node" parent="." unique_id=1528829532 node_paths=PackedStringArray("displacement_stamps")]
 script = ExtResource("31_water_lis")
 displacement_stamps = NodePath("../DisplacementViewport/SubViewport/Stamps")
+
+[node name="RumbleManager" type="Node" parent="." unique_id=610797908]
+script = ExtResource("32_rumble")
+
+[node name="TouchOverlay" parent="." unique_id=1532228996 instance=ExtResource("33_touch")]
+
+[node name="InputSettingsPanel" parent="." unique_id=241797949 instance=ExtResource("34_settings")]

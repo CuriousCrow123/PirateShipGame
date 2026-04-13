@@ -37,12 +37,12 @@ func _on_wave_announced(wave: int) -> void:
 
 
 func _on_cheat_toggled(cheat_id: StringName, active: bool) -> void:
-	# Only the invincibility cheat surfaces a HUD toast; other cheats use
-	# the debug overlay instead.
-	if cheat_id != &"invincibility":
-		return
-	var title: String = "INVINCIBLE ON" if active else "INVINCIBLE OFF"
-	show_message("CHEAT", title)
+	if cheat_id == &"invincibility":
+		var title: String = "INVINCIBLE ON" if active else "INVINCIBLE OFF"
+		show_message("CHEAT", title)
+	elif cheat_id == &"rumble":
+		var title: String = "RUMBLE ON" if active else "RUMBLE OFF"
+		show_message("CONTROLLER", title)
 
 
 func show_wave(wave: int) -> void:

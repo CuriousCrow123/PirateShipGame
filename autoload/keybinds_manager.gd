@@ -126,9 +126,11 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 ## Install default gamepad bindings for the 9 remappable actions. Guarded
 ## against duplicates so repeated calls (reset_to_defaults) are idempotent.
 func _ensure_default_gamepad_bindings() -> void:
-	# Left stick → turn; triggers → thrust/brake.
+	# Left stick → turn + thrust/brake; triggers also thrust/brake.
 	_add_default_joy_motion("turn_left", JOY_AXIS_LEFT_X, -1.0)
 	_add_default_joy_motion("turn_right", JOY_AXIS_LEFT_X, 1.0)
+	_add_default_joy_motion("move_forward", JOY_AXIS_LEFT_Y, -1.0)
+	_add_default_joy_motion("move_back", JOY_AXIS_LEFT_Y, 1.0)
 	_add_default_joy_motion("move_forward", JOY_AXIS_TRIGGER_RIGHT, 1.0)
 	_add_default_joy_motion("move_back", JOY_AXIS_TRIGGER_LEFT, 1.0)
 	# Shoulders fire broadsides; face buttons dash / drop mine.
@@ -137,6 +139,8 @@ func _ensure_default_gamepad_bindings() -> void:
 	_add_default_joy_button("dash", JOY_BUTTON_A)
 	_add_default_joy_button("drop_mine", JOY_BUTTON_X)
 	_add_default_joy_button("toggle_fullscreen", JOY_BUTTON_BACK)
+	_add_default_joy_button("toggle_rumble", JOY_BUTTON_Y)
+	_add_default_joy_button("toggle_input_settings", JOY_BUTTON_START)
 
 
 func _add_default_joy_button(action: String, button: JoyButton) -> void:
