@@ -10,7 +10,6 @@ const BG_COLOR: Color = Color(0.11, 0.1, 0.08, 0.55)
 const BG_PRESSED_COLOR: Color = Color(0.25, 0.22, 0.15, 0.7)
 const BORDER_COLOR: Color = Color(0.75, 0.7, 0.55, 0.7)
 const TEXT_COLOR: Color = Color(0.95, 0.85, 0.55, 0.95)
-const CORNER_RADIUS: float = 4.0
 const BORDER_WIDTH: float = 2.0
 
 @export var action: StringName = &""
@@ -27,25 +26,24 @@ func _ready() -> void:
 	assert(action != &"", "TouchActionButton: action must be set")
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_font = preload("res://assets/fonts/kims_bit_hand_spaced.tres")
+	queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
 	var touch: InputEventScreenTouch = event as InputEventScreenTouch
 	if touch == null:
 		return
-	var local: Vector2 = _screen_to_local(touch.position)
+	var vp_pos: Vector2 = _to_viewport_pos(touch.position)
 	if touch.pressed:
 		if _touch_index != -1:
 			return
-		if not _hit_test(local):
+		if not get_global_rect().has_point(vp_pos):
 			return
 		_touch_index = touch.index
 		_pressed = true
 		_fire_action(true)
 		queue_redraw()
-	else:
-		if touch.index != _touch_index:
-			return
+	elif touch.index == _touch_index:
 		_touch_index = -1
 		_pressed = false
 		_fire_action(false)
@@ -60,18 +58,11 @@ func _fire_action(pressed: bool) -> void:
 	Input.parse_input_event(ev)
 
 
-func _hit_test(local_pos: Vector2) -> bool:
-	return Rect2(Vector2.ZERO, size).has_point(local_pos)
-
-
 func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	var bg: Color = BG_PRESSED_COLOR if _pressed else BG_COLOR
-	# Background fill.
 	draw_rect(rect, bg)
-	# Border.
 	draw_rect(rect, BORDER_COLOR, false, BORDER_WIDTH)
-	# Label.
 	if _font != null and button_label != "":
 		var text_size: Vector2 = _font.get_string_size(
 			button_label, HORIZONTAL_ALIGNMENT_CENTER, -1, _font_size
@@ -83,8 +74,5 @@ func _draw() -> void:
 		)
 
 
-func _screen_to_local(screen_pos: Vector2) -> Vector2:
-	var vp: Viewport = get_viewport()
-	var xform: Transform2D = vp.get_screen_transform()
-	var viewport_pos: Vector2 = xform.affine_inverse() * screen_pos
-	return viewport_pos - global_position
+func _to_viewport_pos(screen_pos: Vector2) -> Vector2:
+	return get_viewport().get_screen_transform().affine_inverse() * screen_pos

@@ -62,12 +62,12 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
 		if _touch_index != -1:
 			return
+		var vp_pos: Vector2 = _to_viewport_pos(event.position)
 		var vp_size: Vector2 = get_viewport_rect().size
-		var local: Vector2 = _screen_to_local(event.position)
-		if local.x > vp_size.x * 0.5:
+		if vp_pos.x > vp_size.x * 0.5:
 			return
 		_touch_index = event.index
-		_base_center = local
+		_base_center = vp_pos
 		_knob_offset = Vector2.ZERO
 		_active = true
 		queue_redraw()
@@ -78,8 +78,8 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
-	var local: Vector2 = _screen_to_local(event.position)
-	var offset: Vector2 = local - _base_center
+	var vp_pos: Vector2 = _to_viewport_pos(event.position)
+	var offset: Vector2 = vp_pos - _base_center
 	if offset.length() > stick_radius:
 		offset = offset.normalized() * stick_radius
 	_knob_offset = offset
@@ -212,7 +212,5 @@ func _draw() -> void:
 	draw_circle(_base_center + _knob_offset, KNOB_RADIUS, KNOB_COLOR)
 
 
-func _screen_to_local(screen_pos: Vector2) -> Vector2:
-	var vp: Viewport = get_viewport()
-	var xform: Transform2D = vp.get_screen_transform()
-	return xform.affine_inverse() * screen_pos
+func _to_viewport_pos(screen_pos: Vector2) -> Vector2:
+	return get_viewport().get_screen_transform().affine_inverse() * screen_pos
